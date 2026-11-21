@@ -1,11 +1,11 @@
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=1.0.1';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=1.2.0';
 
 export const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, storageKey: 'apotek-salam-auth' },
 });
 
 export const DOMAIN_AKUN = '@apoteksalam.app';
-export const VERSI = '1.0.1';
+export const VERSI = '1.2.0';
 
 // Status sesi aplikasi
 export const S = { pengguna: null, peran: null, outlet: null, akses: [] };
