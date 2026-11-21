@@ -1,15 +1,15 @@
-import { sb, S, RUTE, rute, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.3.1';
-import { MENU, ITEM, ikon } from './menu.js?v=1.3.1';
-import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.3.1';
-import './halaman/home.js?v=1.3.1';
-import './halaman/master.js?v=1.3.1';
-import './halaman/pengguna.js?v=1.3.1';
-import './halaman/pengaturan.js?v=1.3.1';
-import './halaman/persediaan.js?v=1.3.1';
-import './halaman/pembelian.js?v=1.3.1';
-import './halaman/konsinyasi.js?v=1.3.1';
-import { halamanSegera } from './halaman/home.js?v=1.3.1';
-import { hitungPeringatan } from './halaman/persediaan.js?v=1.3.1';
+import { sb, S, RUTE, rute, bisa, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.3.2';
+import { MENU, ITEM, ikon } from './menu.js?v=1.3.2';
+import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.3.2';
+import './halaman/home.js?v=1.3.2';
+import './halaman/master.js?v=1.3.2';
+import './halaman/pengguna.js?v=1.3.2';
+import './halaman/pengaturan.js?v=1.3.2';
+import './halaman/persediaan.js?v=1.3.2';
+import './halaman/pembelian.js?v=1.3.2';
+import './halaman/konsinyasi.js?v=1.3.2';
+import { halamanSegera } from './halaman/home.js?v=1.3.2';
+import { hitungPeringatan } from './halaman/persediaan.js?v=1.3.2';
 
 const app = $('#app');
 const LOGO = 'img/logo-128.png';
@@ -23,19 +23,70 @@ function layarMasuk(pesan = '') {
     ${pesan ? `<div class="pesan galat">${esc(pesan)}</div>` : ''}<div data-pesan></div>
     <label class="isian"><span>Username</span><input name="u" autocomplete="username" autocapitalize="none" required></label>
     <label class="isian"><span>Kata Sandi</span><input name="p" type="password" autocomplete="current-password" required></label>
+    <label class="isian"><span>Shift</span><select name="s" data-shift><option value="">Memuat shift...</option></select></label>
     <button class="tombol penuh">Masuk</button>
     <p style="text-align:center;color:var(--teks-2);font-size:12px;margin:16px 0 0">Lupa kata sandi? Minta Pemilik mengatur ulang dari menu Daftar Pengguna.</p>
   </form></div>`;
   const f = $('form', app);
+  isiPilihanShift($('[data-shift]', f));
   f.onsubmit = async e => {
     e.preventDefault();
     const b = $('button', f); b.disabled = true; b.textContent = 'Memeriksa...';
+    const salah = m => { $('[data-pesan]', f).innerHTML = `<div class="pesan galat">${esc(m)}</div>`; b.disabled = false; b.textContent = 'Masuk'; };
     const u = f.u.value.trim().toLowerCase();
-    const { error } = await sb.auth.signInWithPassword({ email: u.includes('@') ? u : u + DOMAIN_AKUN, password: f.p.value });
-    if (error) { $('[data-pesan]', f).innerHTML = `<div class="pesan galat">${esc(pesanGalat(error))}</div>`; b.disabled = false; b.textContent = 'Masuk'; return; }
-    await sb.rpc('catat_masuk'); // builder supabase baru jalan saat di-await
+    const { data: masuk, error } = await sb.auth.signInWithPassword({ email: u.includes('@') ? u : u + DOMAIN_AKUN, password: f.p.value });
+    if (error) return salah(pesanGalat(error));
+    const shiftId = f.s.value ? Number(f.s.value) : null;
+    const { data: namaShift, error: e2 } = await sb.rpc('catat_masuk', { p_shift_id: shiftId });
+    if (e2) { await sb.auth.signOut(); return salah(pesanGalat(e2)); }
+    simpanShift(masuk.user.id, shiftId ? { id: shiftId, nama: namaShift } : { id: null, nama: 'Tanpa shift' });
     mulai();
   };
+}
+
+// ================= Shift =================
+let daftarShift = null;
+async function ambilShift() {
+  if (!daftarShift) { const { data, error } = await sb.rpc('daftar_shift'); if (error) throw error; daftarShift = data || []; }
+  return daftarShift;
+}
+// Shift yang sedang berjalan menurut jam sekarang (dipilih otomatis)
+function shiftSekarang(list) {
+  const j = new Date().toTimeString().slice(0, 5);
+  const cocok = list.filter(s => s.jam_mulai && s.jam_selesai && j >= s.jam_mulai.slice(0, 5) && j < s.jam_selesai.slice(0, 5));
+  return (cocok[cocok.length - 1] || list[0])?.id;
+}
+async function isiPilihanShift(sel, terpilih) {
+  try {
+    const list = await ambilShift();
+    const pilih = terpilih !== undefined ? terpilih : shiftSekarang(list);
+    sel.innerHTML = list.map(s => `<option value="${s.id}" ${s.id === pilih ? 'selected' : ''}>${esc(s.nama)}${s.jam_mulai ? ` (${s.jam_mulai.slice(0, 5)}–${(s.jam_selesai || '').slice(0, 5)})` : ''}</option>`).join('')
+      + `<option value="" ${pilih === null ? 'selected' : ''}>Tanpa shift (khusus Pemilik/Admin)</option>`;
+  } catch { sel.innerHTML = '<option value="">Tanpa shift (khusus Pemilik/Admin)</option>'; }
+}
+const kunciShift = uid => 'apotek-shift:' + uid;
+function simpanShift(uid, s) { try { localStorage.setItem(kunciShift(uid), JSON.stringify({ ...s, tgl: new Date().toDateString() })); } catch { /* abaikan */ } }
+function bacaShift(uid) {
+  try { const s = JSON.parse(localStorage.getItem(kunciShift(uid)) || 'null'); return s && s.tgl === new Date().toDateString() ? s : null; } catch { return null; }
+}
+// Minta shift bila belum ada (mis. dibuka di perangkat lain / hari berganti)
+function mintaShift(wajib) {
+  return new Promise(res => {
+    const m = modal({ judul: 'Pilih Shift', ukuran: 'kecil',
+      isi: `<p style="margin-top:0">Pilih shift kerja Anda hari ini.</p><form onsubmit="return false"><label class="isian"><span>Shift</span><select name="s" data-shift></select></label></form>`,
+      saatBuka: el => isiPilihanShift($('[data-shift]', el), S.shift ? S.shift.id : undefined),
+      tombol: [...(wajib ? [{ teks: 'Keluar', kelas: 'kedua', aksi: () => { keluar(); res(null); } }] : [{ teks: 'Batal', kelas: 'kedua', aksi: () => res(null) }]),
+        { teks: 'Simpan', aksi: async el => {
+          const v = $('[name=s]', el).value, id = v ? Number(v) : null;
+          if (id === null && !bisa('akses.tanpa_shift')) { toast('Login tanpa shift hanya untuk Pemilik/Admin. Pilih shift.', 'galat'); return false; }
+          const nama = id ? (await ambilShift()).find(s => s.id === id)?.nama : 'Tanpa shift';
+          await sb.rpc('catat_log', { p_modul: 'sistem', p_aksi: 'Shift', p_ket: 'Shift: ' + nama });
+          S.shift = { id, nama }; simpanShift(S.pengguna.id, S.shift);
+          $$('[data-info-shift]').forEach(x => x.textContent = nama);
+          res(S.shift);
+        } }] });
+    if (wajib) m.el.querySelector('[data-tutup]').remove();
+  });
 }
 
 function layarSiapkan() {
@@ -94,6 +145,7 @@ function kerangka() {
         <div class="info"><small>Outlet</small><b>${esc(o?.nama || '-')}</b></div>
         <div class="info"><small>Pengguna</small><b>${esc(S.pengguna.nama.toUpperCase())}</b></div>
         <div class="info"><small>Peran</small><b>${esc(S.peran.nama)}</b></div>
+        <div class="info"><small>Shift</small><b data-info-shift>${esc(S.shift?.nama || '-')}</b></div>
         <div class="kanan">
           <a class="tombol-ikon" href="#/persediaan/peringatan" data-lonceng title="Peringatan stok" style="color:#fff">${ikon('lonceng')}</a>
           <button class="tombol-ikon" data-muat title="Muat ulang">${ikon('muat')}</button>
@@ -145,11 +197,13 @@ function menuAkun() {
   const m = document.createElement('div');
   m.className = 'menu-akun';
   m.innerHTML = `<div class="kepala"><b>${esc(S.pengguna.nama)}</b><br><small>${esc(S.pengguna.username)} · ${esc(S.peran.nama)}</small></div>
+    <button data-ganti-shift>${ikon('muat')} Ganti Shift <small style="margin-left:auto;color:var(--teks-2)">${esc(S.shift?.nama || '')}</small></button>
     <button data-sandi>${ikon('kunci')} Ganti Kata Sandi</button><button data-keluar style="color:var(--merah)">${ikon('keluar')} Keluar</button>
     <div style="padding:6px 16px 10px;color:var(--teks-2);font-size:11px">Versi ${VERSI}</div>`;
   $('.topbar').append(m);
   m.onclick = e => {
     if (e.target.closest('[data-sandi]')) { m.remove(); gantiSandi(); }
+    if (e.target.closest('[data-ganti-shift]')) { m.remove(); mintaShift(false); }
     if (e.target.closest('[data-keluar]')) keluar();
   };
 }
@@ -238,7 +292,7 @@ function kepalaHp(hash, judul) {
     k.innerHTML = `<div class="baris"><img src="${LOGO}" alt=""><div><b>${esc(S.outlet?.nama || 'Apotek Salam')}</b><small>ID: ${esc(S.outlet?.kode || '')}</small></div>
       <div class="kanan"><a class="tombol-ikon" href="#/persediaan/peringatan" data-lonceng style="color:#fff">${ikon('lonceng')}</a><button class="tombol-ikon" onclick="location.reload()">${ikon('muat')}</button><a class="tombol-ikon" href="#/lainnya" style="color:#fff">${ikon('akun')}</a></div></div>
       <div class="sambut-hp"><div><b>Hi, ${esc(S.pengguna.nama.toUpperCase())}!</b><small>Selamat datang di Aplikasi Apotek Salam</small></div>
-      <div class="sesi">Peran:<br><span>${esc(S.peran.nama)}</span></div></div>`;
+      <div class="sesi">Shift:<br><span data-info-shift>${esc(S.shift?.nama || '-')}</span></div></div>`;
   } else {
     k.innerHTML = `<div class="judul-hp"><button class="tombol-ikon" onclick="history.length>1?history.back():location.hash='#/home'">${ikon('kiri')}</button><b>${esc(judul)}</b></div>`;
   }
@@ -256,8 +310,13 @@ async function mulai() {
   if (error || !p) { await sb.auth.signOut(); return layarMasuk(error ? pesanGalat(error) : 'Akun tidak terdaftar sebagai pengguna apotek.'); }
   if (!p.aktif) { await sb.auth.signOut(); return layarMasuk('Akun Anda dinonaktifkan. Hubungi Pemilik.'); }
   S.pengguna = p; S.peran = p.peran; S.outlet = p.outlet; S.akses = p.peran.akses || [];
+  S.shift = bacaShift(p.id);
   kerangka();
   tampilkan();
+  if (!S.shift) {
+    if (bisa('akses.tanpa_shift')) { S.shift = { id: null, nama: 'Tanpa shift' }; $$('[data-info-shift]').forEach(x => x.textContent = S.shift.nama); }
+    else await mintaShift(true);
+  }
 }
 
 window.addEventListener('hashchange', () => { if (S.pengguna) tampilkan(); });
