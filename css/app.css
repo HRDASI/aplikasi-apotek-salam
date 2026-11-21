@@ -126,6 +126,10 @@ table.tabel { width: 100%; border-collapse: collapse; background: #fff; }
 .tabel td.angka, .tabel th.angka { text-align: right; white-space: nowrap; }
 .tabel td.aksi { white-space: nowrap; text-align: right; width: 1%; }
 .tabel .kosong { text-align: center; color: var(--teks-2); padding: 28px; }
+[data-tabel-item] td { padding: 8px 6px; }
+[data-tabel-item] td:nth-child(2) { min-width: 170px; }
+[data-tabel-item] select.input { min-width: 120px; padding: 8px 6px; }
+[data-tabel-item] .input { padding: 8px 8px; }
 .paging { display: flex; align-items: center; gap: 8px; justify-content: flex-end; margin-top: 12px; color: var(--teks-2); font-size: 13px; }
 .chip { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--latar); color: var(--teks-2); }
 .chip.hijau { background: var(--hijau-muda); color: var(--hijau); }
