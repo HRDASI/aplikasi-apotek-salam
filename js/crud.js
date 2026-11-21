@@ -1,7 +1,7 @@
 // Halaman daftar + form tambah/ubah/hapus yang dipakai ulang oleh semua master data.
-import { sb, S, bisa, ambilRef, hapusCache } from './inti.js?v=1.0.1';
-import { ikon } from './menu.js?v=1.0.1';
-import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, bacaForm, unduhCSV, judulHalaman } from './ui.js?v=1.0.1';
+import { sb, S, bisa, ambilRef, hapusCache } from './inti.js?v=1.2.0';
+import { ikon } from './menu.js?v=1.2.0';
+import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, bacaForm, unduhCSV, judulHalaman } from './ui.js?v=1.2.0';
 
 /*
  cfg = {
@@ -78,11 +78,12 @@ export function halamanCrud(cfg) {
         .range(st.hal * per, st.hal * per + per - 1);
       if (error) { isi.innerHTML = `<tr><td class="kosong" colspan="99">${esc(pesanGalat(error))}</td></tr>`; return; }
       st.total = count || 0;
+      if (cfg.setelahMuat) await cfg.setelahMuat(data);
       st.data = data;
       isi.innerHTML = data.length ? data.map((r, i) => `<tr>
           ${kolomDaftar.map(k => `<td data-label="${esc(k.label)}" class="${['angka', 'uang', 'persen'].includes(k.tipe) ? 'angka' : ''}">${tampilSel(k, r)}</td>`).join('')}
           ${cfg.outlet ? `<td data-label="Outlet">${esc(r.outlet__ref?.nama || '')}</td>` : ''}
-          <td class="aksi">${bolehTulis ? `<button class="ikon-aksi" data-ubah="${i}" title="Ubah">${ikon('ubah')}</button><button class="ikon-aksi hapus" data-hapus="${i}" title="Hapus">${ikon('hapus')}</button>`
+          <td class="aksi">${(cfg.aksiBaris || []).map((a, j) => `<button class="ikon-aksi" data-aksi-baris="${j}:${i}" title="${esc(a.judul)}">${ikon(a.ikon)}</button>`).join('')}${bolehTulis ? `<button class="ikon-aksi" data-ubah="${i}" title="Ubah">${ikon('ubah')}</button><button class="ikon-aksi hapus" data-hapus="${i}" title="Hapus">${ikon('hapus')}</button>`
             : `<button class="ikon-aksi" data-lihat="${i}" title="Lihat">${ikon('info')}</button>`}</td></tr>`).join('')
         : `<tr><td class="kosong" colspan="99">${st.q ? 'Tidak ada data yang cocok.' : 'Belum ada data.' + (bolehTulis ? ' Klik <b>Tambah</b> untuk mengisi.' : '')}</td></tr>`;
       const dari = st.total ? st.hal * per + 1 : 0, sampai = Math.min(st.total, (st.hal + 1) * per);
@@ -151,6 +152,7 @@ export function halamanCrud(cfg) {
     el.addEventListener('click', async e => {
       const t = e.target.closest('button');
       if (!t) return;
+      if (t.dataset.aksiBaris) { const [j, i] = t.dataset.aksiBaris.split(':'); cfg.aksiBaris[j].fn(st.data[i]); return; }
       if (t.dataset.tambah !== undefined) bukaForm(null);
       else if (t.dataset.ubah !== undefined) bukaForm(st.data[t.dataset.ubah]);
       else if (t.dataset.lihat !== undefined) bukaForm(st.data[t.dataset.lihat], true);
