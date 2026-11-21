@@ -164,6 +164,10 @@ table.tabel { width: 100%; border-collapse: collapse; background: #fff; }
 .statistik { display: flex; flex-direction: column; gap: 2px; }
 .statistik small { color: var(--teks-2); font-weight: 700; }
 .statistik b { font-size: 22px; color: var(--teal-gelap); }
+.perhatian { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.perhatian a { text-decoration: none; color: inherit; padding: 10px 12px; border-radius: 10px; background: var(--latar); }
+.perhatian a:hover { background: var(--oranye-muda); }
+@media (max-width: 900px) { .perhatian { grid-template-columns: 1fr 1fr; } }
 .daftar-update li { padding: 8px 0; border-bottom: 1px solid var(--garis); list-style: none; display: flex; gap: 12px; }
 .daftar-update { padding: 0; margin: 0; }
 .daftar-update time { color: var(--teks-2); white-space: nowrap; font-size: 12.5px; min-width: 84px; }
