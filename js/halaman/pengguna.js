@@ -1,7 +1,7 @@
 // Manajemen Pengguna: daftar pengguna, peran & hak akses, log aktivitas.
-import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.3.1';
-import { MENU, ikon } from '../menu.js?v=1.3.1';
-import { esc, waktu, toast, modal, konfirmasi, pesanGalat, bacaForm, judulHalaman, unduhCSV } from '../ui.js?v=1.3.1';
+import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.3.2';
+import { MENU, ikon } from '../menu.js?v=1.3.2';
+import { esc, waktu, toast, modal, konfirmasi, pesanGalat, bacaForm, judulHalaman, unduhCSV } from '../ui.js?v=1.3.2';
 
 // ---------- Daftar Pengguna ----------
 rute('pengguna/daftar', async el => {
@@ -84,7 +84,8 @@ function pohonAkses(akses) {
       return `<div class="grup-akses"><label class="cek" style="margin:0"><input type="checkbox" value="${g.k}" data-grup ${grupPenuh ? 'checked' : ''}> ${esc(g.t)} <small style="color:var(--teks-2);font-weight:400">(semua submenu)</small></label>
         <div class="anak-akses">${g.anak.map(([k, t]) => `<label class="cek"><input type="checkbox" value="${g.k}.${k}" data-anak="${g.k}" ${grupPenuh || akses.includes(g.k + '.' + k) ? 'checked' : ''}> ${esc(t)}</label>`).join('')}</div></div>`;
     }).join('')}
-    <div class="grup-akses"><label class="cek" style="margin:0"><input type="checkbox" value="persediaan.lihat" ${cek('persediaan.lihat') ? 'checked' : ''}> Lihat daftar produk saja (tanpa mengubah)</label></div></div>`;
+    <div class="grup-akses"><label class="cek" style="margin:0"><input type="checkbox" value="persediaan.lihat" ${cek('persediaan.lihat') ? 'checked' : ''}> Lihat daftar produk saja (tanpa mengubah)</label></div>
+    <div class="grup-akses"><label class="cek" style="margin:0"><input type="checkbox" value="akses.tanpa_shift" ${cek('akses.tanpa_shift') ? 'checked' : ''}> Boleh login tanpa memilih shift (untuk Admin)</label></div></div>`;
 }
 function bacaAkses(m) {
   if (m.querySelector('[data-semua]').checked) return ['*'];
