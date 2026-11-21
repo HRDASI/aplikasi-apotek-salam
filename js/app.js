@@ -1,14 +1,15 @@
-import { sb, S, RUTE, rute, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.2.0';
-import { MENU, ITEM, ikon } from './menu.js?v=1.2.0';
-import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.2.0';
-import './halaman/home.js?v=1.2.0';
-import './halaman/master.js?v=1.2.0';
-import './halaman/pengguna.js?v=1.2.0';
-import './halaman/pengaturan.js?v=1.2.0';
-import './halaman/persediaan.js?v=1.2.0';
-import './halaman/pembelian.js?v=1.2.0';
-import './halaman/konsinyasi.js?v=1.2.0';
-import { halamanSegera } from './halaman/home.js?v=1.2.0';
+import { sb, S, RUTE, rute, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.3.1';
+import { MENU, ITEM, ikon } from './menu.js?v=1.3.1';
+import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.3.1';
+import './halaman/home.js?v=1.3.1';
+import './halaman/master.js?v=1.3.1';
+import './halaman/pengguna.js?v=1.3.1';
+import './halaman/pengaturan.js?v=1.3.1';
+import './halaman/persediaan.js?v=1.3.1';
+import './halaman/pembelian.js?v=1.3.1';
+import './halaman/konsinyasi.js?v=1.3.1';
+import { halamanSegera } from './halaman/home.js?v=1.3.1';
+import { hitungPeringatan } from './halaman/persediaan.js?v=1.3.1';
 
 const app = $('#app');
 const LOGO = 'img/logo-128.png';
@@ -94,6 +95,7 @@ function kerangka() {
         <div class="info"><small>Pengguna</small><b>${esc(S.pengguna.nama.toUpperCase())}</b></div>
         <div class="info"><small>Peran</small><b>${esc(S.peran.nama)}</b></div>
         <div class="kanan">
+          <a class="tombol-ikon" href="#/persediaan/peringatan" data-lonceng title="Peringatan stok" style="color:#fff">${ikon('lonceng')}</a>
           <button class="tombol-ikon" data-muat title="Muat ulang">${ikon('muat')}</button>
           <button class="tombol-ikon" data-akun title="Akun">${ikon('akun')}</button>
         </div>
@@ -201,6 +203,7 @@ async function tampilkan() {
   if (!fn) { location.hash = '#/home'; return; }
 
   konten.innerHTML = '';
+  $$('.latar-modal').forEach(m => m.remove()); // jendela dari halaman sebelumnya ikut ditutup
   window.scrollTo(0, 0);
   try {
     const j = await fn(konten, param);
@@ -212,13 +215,28 @@ async function tampilkan() {
   }
   document.title = (hash === 'home' ? '' : judul + ' | ') + 'Apotek Salam';
   kepalaHp(hash, judul);
+  perbaruiLonceng();
+}
+
+// Angka di ikon lonceng = jumlah semua peringatan stok (diperbarui paling sering tiap 2 menit)
+let loncengTerakhir = 0, loncengAngka = null;
+async function perbaruiLonceng() {
+  const item = ITEM.find(i => i.kunci === 'persediaan.peringatan');
+  const tampil = bisaSalahSatu(item.akses);
+  $$('[data-lonceng]').forEach(a => a.classList.toggle('sembunyi', !tampil));
+  if (!tampil) return;
+  if (Date.now() - loncengTerakhir > 120000) {
+    loncengTerakhir = Date.now();
+    try { const j = await hitungPeringatan(); loncengAngka = Object.values(j).reduce((a, b) => a + b, 0); } catch { loncengAngka = null; }
+  }
+  $$('[data-lonceng]').forEach(a => { a.querySelector('.titik')?.remove(); if (loncengAngka) a.insertAdjacentHTML('beforeend', `<span class="titik">${loncengAngka > 99 ? '99+' : loncengAngka}</span>`); });
 }
 
 function kepalaHp(hash, judul) {
   const k = $('[data-kepala-hp]');
   if (hash === 'home') {
     k.innerHTML = `<div class="baris"><img src="${LOGO}" alt=""><div><b>${esc(S.outlet?.nama || 'Apotek Salam')}</b><small>ID: ${esc(S.outlet?.kode || '')}</small></div>
-      <div class="kanan"><button class="tombol-ikon" onclick="location.reload()">${ikon('muat')}</button><a class="tombol-ikon" href="#/lainnya" style="color:#fff">${ikon('akun')}</a></div></div>
+      <div class="kanan"><a class="tombol-ikon" href="#/persediaan/peringatan" data-lonceng style="color:#fff">${ikon('lonceng')}</a><button class="tombol-ikon" onclick="location.reload()">${ikon('muat')}</button><a class="tombol-ikon" href="#/lainnya" style="color:#fff">${ikon('akun')}</a></div></div>
       <div class="sambut-hp"><div><b>Hi, ${esc(S.pengguna.nama.toUpperCase())}!</b><small>Selamat datang di Aplikasi Apotek Salam</small></div>
       <div class="sesi">Peran:<br><span>${esc(S.peran.nama)}</span></div></div>`;
   } else {
