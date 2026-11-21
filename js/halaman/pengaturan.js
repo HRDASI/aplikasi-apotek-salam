@@ -1,6 +1,6 @@
 // Pengaturan: Profil Bisnis (outlet aktif) & Konfigurasi.
-import { rute, sb, S, bisa } from '../inti.js?v=1.0.1';
-import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.0.1';
+import { rute, sb, S, bisa } from '../inti.js?v=1.2.0';
+import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.2.0';
 
 rute('pengaturan/profil', async el => {
   const boleh = bisa('pengaturan.profil');
