@@ -1,8 +1,8 @@
 // Halaman dokumen transaksi (daftar + editor) yang dipakai ulang:
 // rencana pembelian, SP, faktur, retur, penyesuaian, opname, perpindahan, konsinyasi.
-import { sb, S, bisa, ambilRef, rute } from './inti.js?v=1.2.0';
-import { ikon } from './menu.js?v=1.2.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.2.0';
+import { sb, S, bisa, ambilRef, rute } from './inti.js?v=1.3.1';
+import { ikon } from './menu.js?v=1.3.1';
+import { esc, angka, rupiah, tanggal, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.3.1';
 
 export const STATUS = {
   draft: ['Draft', ''], posting: ['Diposting', 'hijau'], batal: ['Batal', 'merah'], diproses: ['Diproses', 'teal'],
@@ -147,7 +147,7 @@ function halamanEditor(cfg) {
     const st = { header: {}, items: [], status: 'draft' };
     const baru = idParam === 'baru';
     if (baru) {
-      st.header = { tanggal: hariIni(), ...(typeof cfg.bawaan === 'function' ? cfg.bawaan() : cfg.bawaan || {}) };
+      st.header = { tanggal: hariIni(), ...(typeof cfg.bawaan === 'function' ? await cfg.bawaan() : cfg.bawaan || {}) };
       const pre = sessionStorage.getItem('prefill:' + cfg.jenis);
       if (pre) { sessionStorage.removeItem('prefill:' + cfg.jenis); const p = JSON.parse(pre); Object.assign(st.header, p.header || {}); st.items = p.items || []; }
     } else {
@@ -208,6 +208,10 @@ function halamanEditor(cfg) {
     formH.addEventListener('change', async e => {
       const k = cfg.header.find(x => x.f === e.target.name); if (!k) return;
       st.header[k.f] = e.target.value === '' ? null : (['ref', 'angka', 'uang', 'persen'].includes(k.tipe) ? Number(e.target.value) : e.target.value);
+      if (k.saatUbah) {
+        const obj = k.tipe === 'ref' ? (await ambilRef(k.ref, k.refKolom || 'id,nama', k.refUrut || 'nama')).find(o => o.id === st.header[k.f]) : null;
+        k.saatUbah(st.header, obj);
+      }
       if (k.ubahBatch) { for (const r of st.items) { r._batch = null; } await hidrasi(st.items); gambarItem(); }
       if (k.tipe === 'ref' || k.tipe === 'pilih') await gambarHeader();
       gambarTotal();
@@ -333,6 +337,7 @@ function halamanEditor(cfg) {
           const { error } = await sb.rpc('posting_dok', { p_jenis: cfg.jenis, p_id: id });
           if (error) { toast(pesanGalat(error), 'galat'); muatUlang(id); return; }
           toast('Berhasil diposting', 'sukses'); muatUlang(id);
+          if (cfg.setelahPosting) setTimeout(() => cfg.setelahPosting(id).catch(e => toast(pesanGalat(e), 'galat')), 600);
         });
       } else if (boleh && cfg.stok && st.status === 'posting' && cfg.bolehBatalPosting !== false) {
         tombol('Batalkan (kembalikan stok)', 'bahaya', async () => {
