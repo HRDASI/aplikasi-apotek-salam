@@ -1,7 +1,7 @@
 // Service worker: tampilan aplikasi tetap terbuka walau sinyal putus-putus.
 // Data (Supabase) tidak di-cache, selalu diambil langsung dari server.
-const C = 'apotek-salam-1.3.1';
-const FILES = ['./', 'index.html', 'css/app.css?v=1.3.1', 'js/app.js?v=1.3.1', 'img/logo-128.png', 'img/lamlam.png', 'manifest.webmanifest'];
+const C = 'apotek-salam-1.3.2';
+const FILES = ['./', 'index.html', 'css/app.css?v=1.3.2', 'js/app.js?v=1.3.2', 'img/logo-128.png', 'img/lamlam.png', 'manifest.webmanifest'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(C).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k)))).then(() => self.clients.claim()));
