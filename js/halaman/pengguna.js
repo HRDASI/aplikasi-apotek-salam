@@ -1,7 +1,7 @@
 // Manajemen Pengguna: daftar pengguna, peran & hak akses, log aktivitas.
-import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.0.1';
-import { MENU, ikon } from '../menu.js?v=1.0.1';
-import { esc, waktu, toast, modal, konfirmasi, pesanGalat, bacaForm, judulHalaman, unduhCSV } from '../ui.js?v=1.0.1';
+import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.2.0';
+import { MENU, ikon } from '../menu.js?v=1.2.0';
+import { esc, waktu, toast, modal, konfirmasi, pesanGalat, bacaForm, judulHalaman, unduhCSV } from '../ui.js?v=1.2.0';
 
 // ---------- Daftar Pengguna ----------
 rute('pengguna/daftar', async el => {
