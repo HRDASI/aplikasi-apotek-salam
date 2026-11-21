@@ -1,7 +1,7 @@
 // Master Data, Kontak, Multi Outlet, Metode Pembayaran: memakai halamanCrud.
-import { rute, sb, ambilRef } from '../inti.js?v=1.0.1';
-import { halamanCrud } from '../crud.js?v=1.0.1';
-import { esc, rupiah, angka } from '../ui.js?v=1.0.1';
+import { rute, sb, ambilRef } from '../inti.js?v=1.2.0';
+import { halamanCrud } from '../crud.js?v=1.2.0';
+import { esc, rupiah, angka } from '../ui.js?v=1.2.0';
 
 export const GOLONGAN = [
   ['bebas', 'Obat Bebas'], ['bebas_terbatas', 'Obat Bebas Terbatas'], ['keras', 'Obat Keras (K)'], ['okt', 'OKT'],
@@ -79,14 +79,13 @@ const kolomProduk = [
   { f: 'aktif', label: 'Aktif', tipe: 'bool', daftar: false },
   { f: 'keterangan', label: 'Keterangan', tipe: 'area', daftar: false },
 ];
-const cfgProduk = (judul, remah) => ({
+export const cfgProduk = (judul, remah) => ({
   judul, remah, tabel: 'produk', satuan: 'Produk', kunciTulis: ['master.produk', 'persediaan.produk'],
   kolom: kolomProduk, cari: ['nama', 'kode', 'barcode', 'nama_generik'], filterAktif: true, ukuranForm: 'besar',
   bawaan: { golongan: 'bebas', aktif: true },
   ekstraForm: satuanLainHtml, saatBukaForm: saatBukaProduk, setelahSimpan: simpanSatuanLain,
 });
 rute('master/produk', halamanCrud(cfgProduk('Master Produk', 'Master Data / Master Produk')));
-rute('persediaan/produk', halamanCrud(cfgProduk('Daftar Produk', 'Persediaan / Daftar Produk')));
 
 // ---------- Master kecil ----------
 const sederhana = (k, judul, tabel, kolomTambahan = [], ekstra = {}) =>
