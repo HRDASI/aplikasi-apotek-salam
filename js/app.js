@@ -1,11 +1,14 @@
-import { sb, S, RUTE, rute, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.0.1';
-import { MENU, ITEM, ikon } from './menu.js?v=1.0.1';
-import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.0.1';
-import './halaman/home.js?v=1.0.1';
-import './halaman/master.js?v=1.0.1';
-import './halaman/pengguna.js?v=1.0.1';
-import './halaman/pengaturan.js?v=1.0.1';
-import { halamanSegera } from './halaman/home.js?v=1.0.1';
+import { sb, S, RUTE, rute, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.2.0';
+import { MENU, ITEM, ikon } from './menu.js?v=1.2.0';
+import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.2.0';
+import './halaman/home.js?v=1.2.0';
+import './halaman/master.js?v=1.2.0';
+import './halaman/pengguna.js?v=1.2.0';
+import './halaman/pengaturan.js?v=1.2.0';
+import './halaman/persediaan.js?v=1.2.0';
+import './halaman/pembelian.js?v=1.2.0';
+import './halaman/konsinyasi.js?v=1.2.0';
+import { halamanSegera } from './halaman/home.js?v=1.2.0';
 
 const app = $('#app');
 const LOGO = 'img/logo-128.png';
@@ -177,17 +180,21 @@ async function tampilkan() {
   const bagian = hash.split('/');
   const konten = $('[data-konten]');
   const url = '#/' + hash;
-  const item = ITEM.find(i => i.url === url);
+  // menu yang cocok: persis, atau awalan terpanjang (mis. #/pembelian/faktur/12 -> Faktur Pembelian)
+  const item = ITEM.find(i => i.url === url) || ITEM.filter(i => url.startsWith(i.url + '/')).sort((a, b) => b.url.length - a.url.length)[0];
 
   // Tandai menu aktif
   $$('.menu a.aktif').forEach(a => a.classList.remove('aktif'));
   $$('.menu .grup.aktif-grup').forEach(a => a.classList.remove('aktif-grup'));
-  const a = $(`.menu a[data-url="${url}"]`);
+  const a = $(`.menu a[data-url="${item?.url || url}"]`);
   if (a) { a.classList.add('aktif'); const g = a.closest('.grup'); if (g) g.classList.add('buka', 'aktif-grup'); }
   $$('.nav-bawah a').forEach(n => n.classList.toggle('aktif', hash === n.dataset.nav || hash.startsWith(n.dataset.nav + '/')));
 
   let fn = RUTE[hash], param = [];
-  if (!fn && RUTE[bagian[0]]) { fn = RUTE[bagian[0]]; param = bagian.slice(1); }
+  for (let n = bagian.length - 1; !fn && n >= 1; n--) {
+    const k = bagian.slice(0, n).join('/');
+    if (RUTE[k]) { fn = RUTE[k]; param = bagian.slice(n); }
+  }
   let judul = item?.judul || 'Home';
   if (item && !bisaSalahSatu(item.akses)) fn = el => { el.innerHTML = '<div class="kartu segera"><h3>Tidak punya akses</h3><p>Menu ini tidak dibuka untuk peran Anda. Hubungi Pemilik bila perlu.</p></div>'; };
   else if (item && item.tahap > 1) fn = halamanSegera(item);
