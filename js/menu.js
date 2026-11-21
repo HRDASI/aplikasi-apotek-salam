@@ -56,12 +56,12 @@ export const MENU = [
     ['swamedikasi', 'Swamedikasi', 4], ['hpc', 'Home Pharmacy Care', 4], ['pio', 'Pel. Informasi Obat', 4],
     ['meso', 'MESO', 4], ['catatan', 'Catatan Pengobatan', 4], ['konseling', 'Konseling', 4]] },
   { k: 'persediaan', t: 'Persediaan', i: 'persediaan', anak: [
-    ['produk', 'Daftar Produk', 1, ['persediaan.lihat']], ['defecta', 'Defecta', 2], ['kedaluwarsa', 'Stok Kedaluwarsa', 2],
-    ['opname', 'Stok Opname', 2], ['penyesuaian', 'Penyesuaian Stok', 2], ['perpindahan', 'Perpindahan Stok', 2]] },
+    ['produk', 'Daftar Produk', 1, ['persediaan.lihat']], ['defecta', 'Defecta', 1], ['kedaluwarsa', 'Stok Kedaluwarsa', 1],
+    ['opname', 'Stok Opname', 1], ['penyesuaian', 'Penyesuaian Stok', 1], ['perpindahan', 'Perpindahan Stok', 1]] },
   { k: 'pembelian', t: 'Pembelian', i: 'pembelian', anak: [
-    ['rencana', 'Rencana Pembelian', 2], ['pesanan', 'Pesanan Pembelian', 2], ['faktur', 'Faktur Pembelian', 2], ['retur', 'Retur Pembelian', 2]] },
+    ['rencana', 'Rencana Pembelian', 1], ['pesanan', 'Pesanan Pembelian', 1], ['faktur', 'Faktur Pembelian', 1], ['retur', 'Retur Pembelian', 1]] },
   { k: 'konsinyasi', t: 'Konsinyasi Masuk', i: 'konsinyasi', anak: [
-    ['masuk', 'Konsinyasi Masuk', 2], ['status', 'Status Konsinyasi', 2], ['retur', 'Retur Konsinyasi', 2], ['stok', 'Stok Konsinyasi', 2]] },
+    ['masuk', 'Konsinyasi Masuk', 1], ['status', 'Status Konsinyasi', 1], ['retur', 'Retur Konsinyasi', 1], ['stok', 'Stok Konsinyasi', 1]] },
   { k: 'promo', t: 'Program Promo', i: 'promo', anak: [
     ['bundel', 'Bundel/Paket Produk', 3], ['diskon', 'Diskon Produk', 3], ['voucher', 'Voucher Diskon', 3], ['member', 'Program Member', 3]] },
   { k: 'keuangan', t: 'Keuangan', i: 'keuangan', anak: [
