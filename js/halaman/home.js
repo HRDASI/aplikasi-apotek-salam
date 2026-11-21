@@ -1,9 +1,11 @@
 // Home: sapaan, ikon modul (HP), ringkasan, aktivitas terakhir, pembaruan aplikasi.
-import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.2.0';
-import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.2.0';
-import { esc, angka, waktu } from '../ui.js?v=1.2.0';
+import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.3.1';
+import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.3.1';
+import { esc, angka, waktu } from '../ui.js?v=1.3.1';
+import { hitungPeringatan, JENIS_PERINGATAN } from './persediaan.js?v=1.3.1';
 
 export const PEMBARUAN = [
+  ['2026-11-22', 'PPN di faktur bisa dipilih (belum termasuk / sudah termasuk / tidak kena PPN) dengan tarif dari Master Pajak. Peringatan stok: hampir ED, berpotensi rugi, stok menipis/habis, belum ada harga jual.'],
   ['2026-11-22', 'Tahap 2: Persediaan (stok per batch & ED, kartu stok, defecta, opname, penyesuaian, pindah stok), Pembelian (rencana, SP, faktur, retur), Konsinyasi.'],
   ['2026-11-22', 'Tahap 1 (Fondasi): login & hak akses, Master Data, Kontak, Multi Outlet, Pengaturan, Log Aktivitas.'],
   ['2026-11-22', 'Aplikasi bisa dibuka di PC, Android, dan iPhone, dan bisa dipasang ke layar utama HP.'],
@@ -21,6 +23,8 @@ rute('home', async el => {
         <a class="tombol" href="#/pengguna/log">Aktivitas Saya</a></div><img src="img/lamlam.png" alt="Si Lamlam menyapa"></div>
       <div class="kartu"><div class="kepala-kartu teal">${ikon('info')} Ringkasan Data</div><div class="grid-2" data-ringkas>Memuat...</div></div>
     </div>
+    ${bisaSalahSatu(['persediaan.peringatan', 'persediaan.lihat']) ? `<div class="kartu" style="margin-bottom:16px"><div class="kepala-kartu oranye">${ikon('lonceng')} Perlu Perhatian
+      <a href="#/persediaan/peringatan" style="margin-left:auto">${ikon('panah')}</a></div><div class="perhatian" data-perhatian>Memuat...</div></div>` : ''}
     <div class="kartu hanya-hp" style="margin-bottom:16px"><div class="kepala-kartu teal">Ringkasan Data</div><div class="grid-2" data-ringkas2 style="grid-template-columns:1fr 1fr"></div></div>
     <div class="grid-2">
       <div class="kartu"><div class="kepala-kartu oranye">Aktivitas Terakhir Akun Anda <a href="#/pengguna/log" style="margin-left:auto">${ikon('panah')}</a></div>
@@ -29,6 +33,12 @@ rute('home', async el => {
         <ul class="daftar-update">${PEMBARUAN.map(([t, x]) => `<li><time>${t.split('-').reverse().join('-')}</time><span>${esc(x)}</span></li>`).join('')}</ul>
         <p style="color:var(--teks-2);font-size:12.5px;margin:12px 0 0">Berikutnya: Tahap 3 – ${esc(NAMA_TAHAP[3])}.</p></div>
     </div>`;
+
+  const kotakPerhatian = el.querySelector('[data-perhatian]');
+  if (kotakPerhatian) hitungPeringatan().then(j => {
+    kotakPerhatian.innerHTML = JENIS_PERINGATAN.map(([k, l, w]) => `<a href="#/persediaan/peringatan/${k}" class="statistik">
+      <small>${esc(l)}</small><b style="color:${j[k] ? (w === 'merah' ? 'var(--merah)' : '#c27c00') : 'var(--hijau)'}">${angka(j[k])}</b></a>`).join('');
+  }).catch(() => { kotakPerhatian.textContent = 'Gagal memuat peringatan.'; });
 
   const { data: akt } = await sb.from('log_aktivitas').select('waktu,keterangan,aksi').eq('pengguna_id', S.pengguna.id).order('waktu', { ascending: false }).limit(5);
   el.querySelector('[data-akt]').innerHTML = (akt || []).length ? akt.map((r, i) => `<tr><td>${i + 1}</td><td style="white-space:nowrap">${waktu(r.waktu)}</td><td>${esc(r.keterangan || r.aksi)}</td></tr>`).join('')
