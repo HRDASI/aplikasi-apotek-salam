@@ -1,7 +1,9 @@
 // Pembelian: Rencana Pembelian, Pesanan Pembelian (SP), Faktur Pembelian, Retur Pembelian.
-import { sb, S } from '../inti.js?v=1.2.0';
-import { esc, angka, rupiah, tanggal, toast, pesanGalat } from '../ui.js?v=1.2.0';
-import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.2.0';
+import { sb, S } from '../inti.js?v=1.3.1';
+import { esc, angka, rupiah, tanggal, toast, pesanGalat } from '../ui.js?v=1.3.1';
+import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.3.1';
+import { ambilKonfig, MODE_PPN } from './pengaturan.js?v=1.3.1';
+import { tampilCekHarga } from './persediaan.js?v=1.3.1';
 
 const refSupplier = (wajib = true) => ({ f: 'supplier_id', label: 'Supplier / PBF', tipe: 'ref', ref: 'supplier', wajib });
 const gudangOutlet = { f: 'gudang_id', label: 'Masuk ke Gudang', tipe: 'ref', ref: 'gudang', refKolom: 'id,nama,outlet_id', saring: o => o.outlet_id === S.pengguna.outlet_id, bantu: 'Kosongkan untuk gudang utama.' };
@@ -58,20 +60,43 @@ rutekanDokumen({
     { teks: 'Tandai Sudah Dipesan', jika: (st, b) => b && st.status === 'draft' && st.header.id, fn: async (st, a) => {
       await a.simpan(); const { error } = await sb.rpc('ubah_status_dok', { p_jenis: 'pesanan', p_id: st.header.id, p_status: 'dipesan' }); if (error) throw error; toast('SP ditandai dipesan', 'sukses'); a.tampilUlang(); } },
     { teks: 'Terima Barang (Buat Faktur)', kelas: 'oranye', jika: (st, b) => b && ['dipesan', 'sebagian'].includes(st.status),
-      fn: st => kirimKe('faktur', 'pembelian/faktur', { header: { supplier_id: st.header.supplier_id, pesanan_id: st.header.id },
-        items: st.items.filter(r => r.qty > r.qty_diterima).map(r => ({ produk_id: r.produk_id, satuan_id: r.satuan_id, isi: r.isi, qty: Number(r.qty) - Number(r.qty_diterima), bonus: 0, harga: Math.round(r.harga / 1.11), diskon_persen: 0 })) }) },
+      fn: async st => { const b = await bawaanFaktur(); const bagi = b.ppn_mode === 'tambah' ? 1 + b.ppn_persen / 100 : 1;
+        kirimKe('faktur', 'pembelian/faktur', { header: { supplier_id: st.header.supplier_id, pesanan_id: st.header.id },
+        items: st.items.filter(r => r.qty > r.qty_diterima).map(r => ({ produk_id: r.produk_id, satuan_id: r.satuan_id, isi: r.isi, qty: Number(r.qty) - Number(r.qty_diterima), bonus: 0, harga: Math.round(r.harga / bagi), diskon_persen: 0 })) }); } },
     { teks: 'Tandai Selesai', jika: (st, b) => b && ['dipesan', 'sebagian'].includes(st.status), fn: async (st, a) => {
       const { error } = await sb.rpc('ubah_status_dok', { p_jenis: 'pesanan', p_id: st.header.id, p_status: 'selesai' }); if (error) throw error; a.tampilUlang(); } },
   ],
 });
 
 // ---------- Faktur Pembelian ----------
+const tarifPPN = h => h.ppn_mode === 'tanpa' ? 0 : Number(h.ppn_persen || 0);
 const hitungFaktur = (h, it) => {
   const sub = sum(it, r => (r.qty || 0) * (r.harga || 0) * (1 - (r.diskon_persen || 0) / 100));
-  const dpp = sub - (h.diskon || 0);
-  const ppn = Math.round(dpp * (h.ppn_persen || 0) / 100);
+  const dpp = sub - (h.diskon || 0), t = tarifPPN(h);
+  if (h.ppn_mode === 'termasuk') { const ppn = Math.round(dpp - dpp / (1 + t / 100)); return { sub, dpp, ppn, total: dpp + (h.biaya_lain || 0), info: true }; }
+  const ppn = Math.round(dpp * t / 100);
   return { sub, dpp, ppn, total: dpp + ppn + (h.biaya_lain || 0) };
 };
+// harga beli produk sudah termasuk PPN; bila PPN faktur "ditambahkan", harga bawaan dibuat sebelum PPN
+const hargaFaktur = (p, isi, h) => Math.round((p.harga_beli || 0) * isi / (h.ppn_mode === 'tambah' ? 1 + tarifPPN(h) / 100 : 1));
+async function bawaanFaktur() {
+  const k = await ambilKonfig();
+  const { data: pajak } = await sb.from('pajak').select('id,persen');
+  const pj = (pajak || []).find(p => p.id === k.pembelian.pajak_id) || (pajak || []).find(p => Number(p.persen) === 11) || (pajak || []).find(p => Number(p.persen) > 0);
+  return { cara_bayar: 'tempo', ppn_mode: k.pembelian.ppn_mode || 'tambah', pajak_id: pj?.id ?? null, ppn_persen: Number(pj?.persen || 0), diskon: 0, biaya_lain: 0 };
+}
+
+// Setelah faktur diposting: cek produk yang marginnya jadi kecil / belum ada harga jual
+async function cekMarginFaktur(id) {
+  const k = await ambilKonfig();
+  const batas = Number(k.persediaan.batas_margin_persen || 0), saran = Number(k.persediaan.margin_saran_persen || 20);
+  const { data: it } = await sb.from('faktur_beli_item').select('produk_id').eq('faktur_id', id);
+  const ids = [...new Set((it || []).map(r => r.produk_id))];
+  if (!ids.length) return;
+  const { data: p } = await sb.from('produk').select('id,nama,harga_beli,harga_jual').in('id', ids);
+  const masalah = (p || []).filter(x => x.harga_jual <= 0 || (x.harga_beli > 0 && (x.harga_jual - x.harga_beli) / x.harga_beli * 100 < batas));
+  if (masalah.length) tampilCekHarga(masalah, batas, saran);
+}
 rutekanDokumen({
   jenis: 'faktur', rute: 'pembelian/faktur', judul: 'Faktur Pembelian', satuan: 'Faktur Pembelian', remah: 'Pembelian / Faktur Pembelian', stok: true,
   tabel: 'faktur_beli', tabelItem: 'faktur_beli_item', fk: 'faktur_id', kunci: 'pembelian.faktur',
@@ -85,10 +110,14 @@ rutekanDokumen({
     refSupplier(), gudangOutlet,
     { f: 'cara_bayar', label: 'Pembayaran', tipe: 'pilih', opsi: [['tempo', 'Tempo (utang)'], ['tunai', 'Tunai/Lunas']] },
     { f: 'jatuh_tempo', label: 'Jatuh Tempo', tipe: 'tanggal', bantu: 'Kosongkan: otomatis dari tempo supplier.', tampilJika: h => h.cara_bayar !== 'tunai' },
-    { f: 'diskon', label: 'Diskon Faktur (Rp)', tipe: 'uang' }, { f: 'ppn_persen', label: 'PPN (%)', tipe: 'persen', bantu: 'Biasanya 11%. Isi 0 bila harga sudah termasuk PPN.' },
+    { f: 'ppn_mode', label: 'PPN', tipe: 'pilih', opsi: MODE_PPN },
+    { f: 'pajak_id', label: 'Tarif PPN', tipe: 'ref', ref: 'pajak', refKolom: 'id,nama,persen', refUrut: 'persen', saring: o => Number(o.persen) > 0,
+      label2: o => `${o.nama} (${o.persen}%)`, tampilJika: h => h.ppn_mode !== 'tanpa', saatUbah: (h, o) => { h.ppn_persen = Number(o?.persen || 0); },
+      bantu: 'Tarif baru ditambah Pemilik di Master Data → Master Pajak.' },
+    { f: 'diskon', label: 'Diskon Faktur (Rp)', tipe: 'uang' },
     { f: 'biaya_lain', label: 'Biaya Lain (Rp)', tipe: 'uang', bantu: 'Mis. ongkos kirim/materai.' }, { f: 'catatan', label: 'Catatan', tipe: 'area' },
   ],
-  headerTambahan: ['pesanan_id'], bawaan: { cara_bayar: 'tempo', ppn_persen: 11, diskon: 0, biaya_lain: 0 },
+  headerTambahan: ['pesanan_id', 'ppn_persen'], bawaan: bawaanFaktur, setelahPosting: cekMarginFaktur,
   item: [
     { f: 'produk', label: 'Produk', tipe: 'produk' }, { f: 'satuan', label: 'Satuan', tipe: 'satuan' },
     { f: 'qty', label: 'Jumlah', tipe: 'angka', lebar: 75 }, { f: 'bonus', label: 'Bonus', tipe: 'angka', lebar: 70 },
@@ -96,11 +125,12 @@ rutekanDokumen({
     { f: 'no_batch', label: 'No. Batch', tipe: 'teks', lebar: 100 }, { f: 'ed', label: 'Kedaluwarsa', tipe: 'tanggal' },
     { f: 'sub', label: 'Subtotal', tipe: 'hitung', hitung: r => rupiah((r.qty || 0) * (r.harga || 0) * (1 - (r.diskon_persen || 0) / 100)) },
   ],
-  // harga beli produk sudah termasuk PPN; di faktur harga diisi sebelum PPN (HNA)
-  itemBaru: (p, h) => ({ qty: 1, bonus: 0, harga: Math.round((p.harga_beli || 0) / (1 + (h.ppn_persen || 0) / 100)), diskon_persen: 0 }),
-  hargaSatuan: (p, isi, h) => Math.round((p.harga_beli || 0) * isi / (1 + (h.ppn_persen || 0) / 100)), gabung: false,
-  total: (h, it) => { const t = hitungFaktur(h, it); return barisTotal([['Subtotal', rupiah(t.sub)], ['Diskon faktur', '- ' + rupiah(h.diskon || 0)], ['DPP', rupiah(t.dpp)],
-    [`PPN ${angka(h.ppn_persen || 0)}%`, rupiah(t.ppn)], ['Biaya lain', rupiah(h.biaya_lain || 0)], ['TOTAL', rupiah(t.total), true],
+  itemBaru: (p, h) => ({ qty: 1, bonus: 0, harga: hargaFaktur(p, 1, h), diskon_persen: 0 }),
+  hargaSatuan: hargaFaktur, gabung: false,
+  total: (h, it) => { const t = hitungFaktur(h, it); return barisTotal([['Subtotal', rupiah(t.sub)], ['Diskon faktur', '- ' + rupiah(h.diskon || 0)],
+    [t.info ? 'Total (sudah termasuk PPN)' : 'DPP', rupiah(t.dpp)],
+    [h.ppn_mode === 'tanpa' ? 'PPN' : t.info ? `PPN ${angka(tarifPPN(h))}% (sudah termasuk)` : `PPN ${angka(tarifPPN(h))}%`, h.ppn_mode === 'tanpa' ? 'Tidak kena PPN' : rupiah(t.ppn)],
+    ['Biaya lain', rupiah(h.biaya_lain || 0)], ['TOTAL', rupiah(t.total), true],
     ...(h.terbayar !== undefined && h.status === 'posting' ? [['Sudah dibayar', rupiah(h.terbayar)], ['Sisa utang', rupiah((h.total || 0) - (h.terbayar || 0))]] : [])]); },
   validasi: (h, it) => {
     if (it.some(r => !((r.qty || 0) + (r.bonus || 0) > 0))) return 'Jumlah + bonus setiap barang harus lebih dari 0.';
