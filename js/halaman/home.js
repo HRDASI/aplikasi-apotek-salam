@@ -1,10 +1,11 @@
 // Home: sapaan, ikon modul (HP), ringkasan, aktivitas terakhir, pembaruan aplikasi.
-import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.3.1';
-import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.3.1';
-import { esc, angka, waktu } from '../ui.js?v=1.3.1';
-import { hitungPeringatan, JENIS_PERINGATAN } from './persediaan.js?v=1.3.1';
+import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.3.2';
+import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.3.2';
+import { esc, angka, waktu } from '../ui.js?v=1.3.2';
+import { hitungPeringatan, JENIS_PERINGATAN } from './persediaan.js?v=1.3.2';
 
 export const PEMBARUAN = [
+  ['2026-11-22', 'Login memilih Shift. Pemilik/Admin boleh masuk tanpa shift (diatur di Peran & Hak Akses).'],
   ['2026-11-22', 'PPN di faktur bisa dipilih (belum termasuk / sudah termasuk / tidak kena PPN) dengan tarif dari Master Pajak. Peringatan stok: hampir ED, berpotensi rugi, stok menipis/habis, belum ada harga jual.'],
   ['2026-11-22', 'Tahap 2: Persediaan (stok per batch & ED, kartu stok, defecta, opname, penyesuaian, pindah stok), Pembelian (rencana, SP, faktur, retur), Konsinyasi.'],
   ['2026-11-22', 'Tahap 1 (Fondasi): login & hak akses, Master Data, Kontak, Multi Outlet, Pengaturan, Log Aktivitas.'],
