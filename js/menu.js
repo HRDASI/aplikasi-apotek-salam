@@ -56,7 +56,7 @@ export const MENU = [
     ['swamedikasi', 'Swamedikasi', 4], ['hpc', 'Home Pharmacy Care', 4], ['pio', 'Pel. Informasi Obat', 4],
     ['meso', 'MESO', 4], ['catatan', 'Catatan Pengobatan', 4], ['konseling', 'Konseling', 4]] },
   { k: 'persediaan', t: 'Persediaan', i: 'persediaan', anak: [
-    ['produk', 'Daftar Produk', 1, ['persediaan.lihat']], ['defecta', 'Defecta', 1], ['kedaluwarsa', 'Stok Kedaluwarsa', 1],
+    ['produk', 'Daftar Produk', 1, ['persediaan.lihat']], ['peringatan', 'Peringatan Stok', 1, ['persediaan.lihat']], ['defecta', 'Defecta', 1], ['kedaluwarsa', 'Stok Kedaluwarsa', 1],
     ['opname', 'Stok Opname', 1], ['penyesuaian', 'Penyesuaian Stok', 1], ['perpindahan', 'Perpindahan Stok', 1]] },
   { k: 'pembelian', t: 'Pembelian', i: 'pembelian', anak: [
     ['rencana', 'Rencana Pembelian', 1], ['pesanan', 'Pesanan Pembelian', 1], ['faktur', 'Faktur Pembelian', 1], ['retur', 'Retur Pembelian', 1]] },
