@@ -1,11 +1,11 @@
 // Persediaan: Daftar Produk (dengan stok & kartu stok), Defecta, Stok Kedaluwarsa, Stok Opname, Penyesuaian, Perpindahan.
-import { rute, sb, S, bisa } from '../inti.js?v=1.2.0';
-import { ikon } from '../menu.js?v=1.2.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.2.0';
-import { halamanCrud } from '../crud.js?v=1.2.0';
-import { cfgProduk } from './master.js?v=1.2.0';
-import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.2.0';
-import { ambilKonfig } from './pengaturan.js?v=1.2.0';
+import { rute, sb, S, bisa } from '../inti.js?v=1.3.1';
+import { ikon } from '../menu.js?v=1.3.1';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.3.1';
+import { halamanCrud } from '../crud.js?v=1.3.1';
+import { cfgProduk } from './master.js?v=1.3.1';
+import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.3.1';
+import { ambilKonfig } from './pengaturan.js?v=1.3.1';
 
 export const JENIS_MUTASI = {
   beli: 'Pembelian', retur_beli: 'Retur pembelian', penyesuaian: 'Penyesuaian', opname: 'Stok opname', pindah_keluar: 'Pindah keluar',
@@ -152,6 +152,104 @@ rute('persediaan/kedaluwarsa', async el => {
       { label: 'Stok', nilai: x => x.qty }, { label: 'Nilai HPP', nilai: x => Math.round(x.qty * x.hpp) }, { label: 'Gudang', nilai: x => x.gudang?.nama }, { label: 'Titipan', nilai: x => x.konsinyasi ? 'Ya' : '' }], data);
   });
   muat();
+});
+
+// ---------- Peringatan ----------
+const tglPlus = n => new Date(new Date(hariIni()).getTime() + n * 864e5).toISOString().slice(0, 10);
+export const JENIS_PERINGATAN = [
+  ['ed', 'Hampir / sudah ED', 'merah'], ['rugi', 'Berpotensi rugi', 'merah'], ['menipis', 'Stok menipis', 'oranye'],
+  ['habis', 'Stok habis', 'oranye'], ['harga', 'Belum ada harga jual', 'oranye'],
+];
+function kueriPeringatan(jenis, k, kepala = false) {
+  const o = S.pengguna.outlet_id;
+  const opsi = kepala ? { count: 'exact', head: true } : undefined;
+  if (jenis === 'ed') return sb.from('stok_batch').select(kepala ? 'id' : '*, produk:produk_id(nama,kode,satuan:satuan_id(nama)), gudang:gudang_id(nama)', opsi)
+    .eq('outlet_id', o).gt('qty', 0).not('ed', 'is', null).lte('ed', tglPlus(Number(k.persediaan.peringatan_ed_hari || 90))).order('ed');
+  let q = sb.from('peringatan_produk').select('*', opsi).eq('outlet_id', o);
+  if (jenis === 'rugi') q = q.gt('harga_jual', 0).lt('margin', Number(k.persediaan.batas_margin_persen || 0)).order('margin');
+  if (jenis === 'menipis') q = q.eq('menipis', true).order('nama');
+  if (jenis === 'habis') q = q.eq('habis', true).order('nama');
+  if (jenis === 'harga') q = q.eq('tanpa_harga', true).order('nama');
+  return q;
+}
+export async function hitungPeringatan() {
+  const k = await ambilKonfig();
+  const hasil = await Promise.all(JENIS_PERINGATAN.map(([j]) => kueriPeringatan(j, k, true)));
+  return Object.fromEntries(JENIS_PERINGATAN.map(([j], i) => [j, hasil[i].count || 0]));
+}
+
+const bolehHarga = () => bisa('master.produk') || bisa('persediaan.produk');
+async function simpanHargaJual(id, harga) {
+  const { error } = await sb.from('produk').update({ harga_jual: harga }).eq('id', id);
+  if (error) throw error;
+}
+// Jendela "cek harga jual" (dipakai setelah faktur diposting & di halaman peringatan)
+export function tampilCekHarga(daftar, batas, saran) {
+  const boleh = bolehHarga();
+  const saranHarga = x => Math.ceil(x.harga_beli * (1 + saran / 100) / 100) * 100;
+  modal({ judul: 'Cek Harga Jual', ukuran: 'besar', isi: `<p class="pesan peringatan" style="margin-top:0">Produk berikut <b>belum punya harga jual</b> atau marginnya <b>di bawah ${angka(batas)}%</b> setelah harga beli terbaru. Periksa harga jualnya.</p>
+    <div class="bungkus-tabel"><table class="tabel"><thead><tr><th>Produk</th><th class="angka">Harga beli</th><th class="angka">Harga jual</th><th class="angka">Margin</th><th class="angka">Saran (${angka(saran)}%)</th>${boleh ? '<th>Harga jual baru</th><th></th>' : ''}</tr></thead><tbody>
+    ${daftar.map((x, i) => { const m = x.harga_beli > 0 ? (x.harga_jual - x.harga_beli) / x.harga_beli * 100 : null; return `<tr><td><b>${esc(x.nama)}</b></td><td class="angka">${rupiah(x.harga_beli)}</td>
+      <td class="angka">${x.harga_jual > 0 ? rupiah(x.harga_jual) : '<span class="chip oranye">belum ada</span>'}</td><td class="angka">${m === null || x.harga_jual <= 0 ? '-' : `<span class="chip ${m < 0 ? 'merah' : 'oranye'}">${angka(m)}%</span>`}</td>
+      <td class="angka">${rupiah(saranHarga(x))}</td>${boleh ? `<td><input type="number" class="input" style="width:120px;text-align:right" min="0" data-harga="${i}" value="${saranHarga(x)}"></td>
+      <td><button class="tombol kecil" data-simpan-harga="${i}">Simpan</button></td>` : ''}</tr>`; }).join('')}</tbody></table></div>`,
+    tombol: [{ teks: 'Tutup', kelas: 'kedua' }],
+    saatBuka: m => m.addEventListener('click', async e => {
+      const b = e.target.closest('[data-simpan-harga]'); if (!b) return;
+      const i = b.dataset.simpanHarga, v = Number(m.querySelector(`[data-harga="${i}"]`).value);
+      if (!(v > 0)) return toast('Isi harga jual', 'galat');
+      b.disabled = true;
+      try { await simpanHargaJual(daftar[i].id || daftar[i].produk_id, v); b.textContent = '✓ Tersimpan'; b.classList.add('kedua'); } catch (er) { toast(pesanGalat(er), 'galat'); b.disabled = false; }
+    }),
+  });
+}
+
+rute('persediaan/peringatan', async (el, [tab]) => {
+  const k = await ambilKonfig();
+  const aktif = JENIS_PERINGATAN.some(j => j[0] === tab) ? tab : 'ed';
+  const jumlah = await hitungPeringatan();
+  el.innerHTML = judulHalaman('Peringatan Stok', 'Persediaan / Peringatan Stok', `<button class="tombol kedua" data-csv>${ikon('unduh')} Unduh</button>`) +
+    `<div class="kartu"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${JENIS_PERINGATAN.map(([j, l, w]) => `<a href="#/persediaan/peringatan/${j}" class="tombol ${j === aktif ? '' : 'kedua'} kecil">${esc(l)} <span class="chip ${jumlah[j] ? w : ''}" style="margin-left:4px">${jumlah[j]}</span></a>`).join('')}</div>
+    <p style="color:var(--teks-2);margin:0 0 10px" data-ket></p>
+    <div class="bungkus-tabel"><table class="tabel kartu-hp" data-tabel></table></div></div>`;
+  const ket = {
+    ed: `Batch yang ED-nya ≤ ${k.persediaan.peringatan_ed_hari} hari lagi atau sudah lewat. Atur batas hari di Pengaturan → Konfigurasi.`,
+    rugi: `Produk dengan margin di bawah ${k.persediaan.batas_margin_persen}% (dari harga beli termasuk PPN). Atur batas di Pengaturan → Konfigurasi.`,
+    menipis: 'Stok masih ada tapi sudah di bawah atau sama dengan stok minimum produk.',
+    habis: 'Stok habis padahal produk diberi stok minimum.',
+    harga: 'Produk aktif yang harga jualnya masih 0.',
+  };
+  el.querySelector('[data-ket]').textContent = ket[aktif];
+  const { data, error } = await kueriPeringatan(aktif, k).limit(2000);
+  if (error) return toast(pesanGalat(error), 'galat');
+  const t = el.querySelector('[data-tabel]');
+  const boleh = bolehHarga();
+  if (aktif === 'ed') {
+    t.innerHTML = `<thead><tr><th>Produk</th><th>Batch</th><th>ED</th><th>Sisa waktu</th><th class="angka">Stok</th><th class="angka">Nilai HPP</th><th>Gudang</th></tr></thead><tbody>${data.length ? data.map(x => { const h = selisihHari(x.ed);
+      return `<tr><td data-label="Produk"><b>${esc(x.produk?.nama)}</b>${x.konsinyasi ? ' <span class="chip oranye">titipan</span>' : ''}</td><td data-label="Batch">${esc(x.no_batch)}</td><td data-label="ED">${tanggal(x.ed)}</td>
+      <td data-label="Sisa waktu"><span class="chip ${h < 0 ? 'merah' : 'oranye'}">${h < 0 ? `lewat ${-h} hari` : h === 0 ? 'hari ini' : `${h} hari lagi`}</span></td><td data-label="Stok" class="angka">${angka(x.qty)} ${esc(x.produk?.satuan?.nama || '')}</td>
+      <td data-label="Nilai" class="angka">${rupiah(x.qty * x.hpp)}</td><td data-label="Gudang">${esc(x.gudang?.nama || '')}</td></tr>`; }).join('') : '<tr><td class="kosong" colspan="7">Aman, tidak ada. 👍</td></tr>'}</tbody>`;
+    if (data.length) el.querySelector('[data-ket]').innerHTML += ' <a href="#/persediaan/kedaluwarsa">Proses di halaman Stok Kedaluwarsa →</a>';
+  } else {
+    const hargaKolom = aktif === 'rugi' || aktif === 'harga';
+    t.innerHTML = `<thead><tr><th>Produk</th><th class="angka">Stok</th><th class="angka">Stok min</th><th class="angka">Harga beli</th><th class="angka">Harga jual</th><th class="angka">Margin</th><th></th></tr></thead><tbody>${data.length ? data.map((x, i) => `<tr>
+      <td data-label="Produk"><b>${esc(x.nama)}</b> <small style="color:var(--teks-2)">${esc(x.kode || '')}</small></td><td data-label="Stok" class="angka">${angka(x.stok)} ${esc(x.satuan || '')}</td>
+      <td data-label="Stok min" class="angka">${angka(x.stok_min)}</td><td data-label="Harga beli" class="angka">${rupiah(x.harga_beli)}</td><td data-label="Harga jual" class="angka">${rupiah(x.harga_jual)}</td>
+      <td data-label="Margin" class="angka">${x.margin === null || x.harga_jual <= 0 ? '-' : `<span class="chip ${x.margin < 0 ? 'merah' : x.margin < k.persediaan.batas_margin_persen ? 'oranye' : ''}">${angka(x.margin)}%</span>`}</td>
+      <td class="aksi">${hargaKolom && boleh ? `<button class="tombol kecil kedua" data-cek="${i}">Ubah harga</button>` : ''}${['menipis', 'habis'].includes(aktif) ? `<button class="tombol kecil kedua" data-pesan="${i}">Pesan</button>` : ''}</td></tr>`).join('')
+      : '<tr><td class="kosong" colspan="7">Aman, tidak ada. 👍</td></tr>'}</tbody>`;
+    if (['menipis', 'habis'].includes(aktif) && data.length) el.querySelector('[data-ket]').innerHTML += ' <a href="#/persediaan/defecta">Buat pesanan dari halaman Defecta →</a>';
+  }
+  el.addEventListener('click', e => {
+    const c = e.target.closest('[data-cek]');
+    if (c) { const x = data[c.dataset.cek]; tampilCekHarga([{ ...x, id: x.produk_id }], Number(k.persediaan.batas_margin_persen), Number(k.persediaan.margin_saran_persen)); }
+    if (e.target.closest('[data-pesan]')) location.hash = '#/persediaan/defecta';
+    if (e.target.closest('[data-csv]')) unduhCSV('peringatan-' + aktif, aktif === 'ed'
+      ? [{ label: 'Produk', nilai: x => x.produk?.nama }, { label: 'Batch', nilai: x => x.no_batch }, { label: 'ED', nilai: x => x.ed }, { label: 'Stok', nilai: x => x.qty }]
+      : [{ label: 'Kode', nilai: x => x.kode }, { label: 'Produk', nilai: x => x.nama }, { label: 'Stok', nilai: x => x.stok }, { label: 'Stok min', nilai: x => x.stok_min },
+        { label: 'Harga beli', nilai: x => x.harga_beli }, { label: 'Harga jual', nilai: x => x.harga_jual }, { label: 'Margin %', nilai: x => x.margin }], data);
+  });
+  return 'Peringatan Stok';
 });
 
 // ---------- Dokumen persediaan ----------
