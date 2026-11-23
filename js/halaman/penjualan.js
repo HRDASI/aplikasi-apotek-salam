@@ -1,10 +1,12 @@
 // Penjualan: Kasir (dengan sesi), Pesanan, Daftar, Retur, Tertolak, QRIS, Riwayat Sesi, cetak struk.
-import { rute, sb, S, bisa, ambilRef } from '../inti.js?v=1.5.1';
-import { ikon } from '../menu.js?v=1.5.1';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.5.1';
-import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.5.1';
-import { halamanCrud } from '../crud.js?v=1.5.1';
-import { ambilKonfig } from './pengaturan.js?v=1.5.1';
+import { rute, sb, S, bisa, ambilRef } from '../inti.js?v=1.6.1';
+import { ikon } from '../menu.js?v=1.6.1';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.6.1';
+import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.6.1';
+import { halamanCrud } from '../crud.js?v=1.6.1';
+import { ambilKonfig } from './pengaturan.js?v=1.6.1';
+import { cetakStrukHtml } from '../cetak.js?v=1.6.1';
+import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.6.1';
 
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const awalBulan = () => hariIni().slice(0, 8) + '01';
@@ -78,35 +80,10 @@ async function cetakRekapSesi(s) {
 }
 
 // ================= Struk =================
-const KUNCI_LEBAR = 'apotek-lebar-struk';
-export async function lebarStruk() {
-  let l = null; try { l = localStorage.getItem(KUNCI_LEBAR); } catch { /* */ }
-  if (l) return l;
-  return (await ambilKonfig()).struk.lebar || '58';
-}
-const baris = (a, b) => `<div class="r"><span>${esc(a)}</span><span>${esc(b)}</span></div>`;
-// Cetak lewat iframe tersembunyi (tidak diblokir pemblokir pop-up, tidak membuka jendela baru)
-export let htmlCetakTerakhir = '';
-function bukaJendelaCetak(isi, lebar, judul) {
-  const mm = lebar === '80' ? 72 : 48;
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(judul)}</title><style>
-    @page { size: ${lebar}mm auto; margin: 2mm; }
-    body { width: ${mm}mm; margin: 0 auto; font: 11px/1.35 'Courier New', monospace; color: #000; }
-    .c { text-align: center; } .r { display: flex; justify-content: space-between; gap: 6px; } .r span:last-child { text-align: right; white-space: nowrap; }
-    hr { border: 0; border-top: 1px dashed #000; margin: 4px 0; } .n { margin-top: 3px; } img { max-width: 60%; }</style></head><body>${isi}</body></html>`;
-  htmlCetakTerakhir = html;
-  document.querySelector('iframe[data-cetak]')?.remove();
-  const f = document.createElement('iframe');
-  f.dataset.cetak = '1';
-  f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
-  document.body.append(f);
-  f.contentDocument.open(); f.contentDocument.write(html); f.contentDocument.close();
-  let sudah = false;
-  const cetak = () => { if (sudah) return; sudah = true; try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { toast('Gagal mencetak: ' + e.message, 'galat'); } };
-  const img = f.contentDocument.images;
-  if (img.length && !img[0].complete) { img[0].onload = img[0].onerror = () => setTimeout(cetak, 50); setTimeout(cetak, 2000); } else setTimeout(cetak, 150);
-}
-
+// Cetak lewat modul cetak.js: Agen Cetak (langsung ke printer) atau dialog cetak.
+export async function lebarStruk() { return (await ambilKonfig()).struk.lebar || '80'; }
+export const baris = (a, b) => `<div class="r"><span>${esc(a)}</span><span>${esc(b)}</span></div>`;
+async function bukaJendelaCetak(isi, lebar, judul) { return cetakStrukHtml(isi, judul, lebar); }
 export async function cetakStruk(id) {
   const [{ data: j, error }, k] = await Promise.all([
     sb.from('penjualan').select('*, item:penjualan_item(*), bayar:penjualan_bayar(*, metode:metode_bayar_id(nama)), pelanggan:pelanggan_id(nama,stamp), dokter:dokter_id(nama), outlet:outlet_id(*)').eq('id', id).single(),
@@ -121,7 +98,7 @@ export async function cetakStruk(id) {
     .filter(x => x[1] > 0).map(([a, b]) => baris(a, '-' + angka(b))).join('');
   bukaJendelaCetak(`<div class="c">${logo}<b>${esc(o.nama)}</b><br>${esc(o.alamat || '')}${o.telp ? '<br>Telp ' + esc(o.telp) : ''}</div><hr>
     ${baris(j.no, waktu(j.waktu))}${baris('Kasir', j.pengguna_nama || '')}${j.pelanggan ? baris('Pelanggan', j.pelanggan.nama) : ''}${j.dokter ? baris('Dokter', j.dokter.nama) : ''}${j.no_resep ? baris('No. resep', j.no_resep) : ''}<hr>
-    ${items}<hr>${baris('Subtotal', angka(j.subtotal))}${pot}${j.embalase > 0 ? baris('Embalase', angka(j.embalase)) : ''}${j.tuslah > 0 ? baris('Tuslah', angka(j.tuslah)) : ''}
+    ${items}<hr>${baris('Subtotal', angka(j.subtotal))}${pot}${j.jasa_racik > 0 ? baris('Jasa racik', angka(j.jasa_racik)) : ''}${j.jasa_resep > 0 ? baris('Jasa resep', angka(j.jasa_resep)) : ''}${j.embalase > 0 ? baris('Embalase', angka(j.embalase)) : ''}${j.tuslah > 0 ? baris('Tuslah', angka(j.tuslah)) : ''}
     ${j.pembulatan !== 0 ? baris('Pembulatan', angka(j.pembulatan)) : ''}<div class="r" style="font-size:13px;font-weight:bold"><span>TOTAL</span><span>${angka(j.total)}</span></div>
     ${j.bayar.map(b => baris(b.metode?.nama || 'Bayar', angka(b.jumlah))).join('')}${baris('Kembali', angka(j.kembalian))}
     ${j.stamp_didapat > 0 ? baris('Stamp member', `+${angka(j.stamp_didapat)} (total ${angka(j.pelanggan?.stamp)})`) : ''}${j.status === 'batal' ? '<div class="c"><b>*** DIBATALKAN ***</b></div>' : ''}<hr>
@@ -130,11 +107,27 @@ export async function cetakStruk(id) {
 }
 
 // ================= Kasir =================
-const kosongkan = () => ({ items: [], header: { jenis_pelayanan_id: null, pelanggan_id: null, dokter_id: null, no_resep: '', diskon_nota: 0, voucher_kode: '', poin_dipakai: 0 }, pelanggan: null, pesanan_id: null, hasil: null });
+const kosongkan = () => ({ items: [], header: { jenis_pelayanan_id: null, pelanggan_id: null, dokter_id: null, no_resep: '', diskon_nota: 0, voucher_kode: '', poin_dipakai: 0 }, pelanggan: null, pesanan_id: null, resep: null, hasil: null });
 let K = kosongkan();
 
 rute('penjualan/kasir', async el => {
   await muatSesi();
+  // resep yang dikirim dari Penebusan Resep
+  const rk = sessionStorage.getItem('resep-ke-kasir');
+  if (rk) {
+    sessionStorage.removeItem('resep-ke-kasir');
+    const d = JSON.parse(rk);
+    K = kosongkan();
+    K.resep = d;
+    K.header.dokter_id = d.dokter_id || null;
+    K.header.no_resep = d.no;
+    if (d.pelanggan_id) K.pelanggan = (await sb.from('pelanggan').select('id,nama,telp,kode,member,stamp').eq('id', d.pelanggan_id).single()).data;
+    const info = await infoProduk(d.items.map(i => i.produk_id));
+    const jp = await ambilRef('jenis_pelayanan', 'id,nama,aktif');
+    K.header.jenis_pelayanan_id = jp.find(x => x.nama === 'Resep')?.id || null;
+    K.items = d.items.map(i => ({ produk_id: i.produk_id, nama: info[i.produk_id]?.nama, golongan: info[i.produk_id]?.golongan, satuan_id: i.satuan_id || info[i.produk_id]?.satuan_id,
+      satuanDasar: info[i.produk_id]?.satuan_id, satuanOpsi: info[i.produk_id]?.satuanOpsi, qty: i.qty, diskon_persen: 0, resep: true }));
+  }
   if (!S.sesi) { bukaSesiForm(el, () => tampilKasir(el)); return 'Kasir'; }
   await tampilKasir(el);
   return 'Kasir';
@@ -159,6 +152,7 @@ async function tampilKasir(induk) {
           <button class="tombol kedua kecil" data-tutup-sesi>Tutup Sesi</button></span></div>
       <div style="display:flex;gap:8px;margin:10px 0"><div style="flex:1"><input class="input input-besar" data-cari placeholder="Cari nama/kode obat atau scan barcode (F2)"></div>
         ${bundel?.length ? `<select class="input" style="width:auto" data-paket><option value="">+ Paket</option>${bundel.map(b => `<option value="${b.id}">${esc(b.nama)} · ${rupiah(b.harga)}</option>`).join('')}</select>` : ''}</div>
+      ${K.resep ? `<p class="pesan info" style="margin:0 0 8px">Menebus resep <b>${esc(K.resep.no)}</b> a.n. ${esc(K.resep.pasien)}${K.resep.racikan_ditebus ? ` · ${K.resep.racikan_ditebus} racikan` : ''}${K.resep.etiket ? ' · etiket dicetak setelah bayar' : ''}. <a href="#" data-lepas-resep>Lepas</a></p>` : ''}
       ${K.pesanan_id ? `<p class="pesan info" style="margin:0 0 8px">Mengerjakan pesanan <b>${esc(K.pesanan_no || '')}</b>${K.header.nama_pemesan ? ' atas nama ' + esc(K.header.nama_pemesan) : ''}. <a href="#" data-lepas-pesanan>Lepas</a></p>` : ''}
       <div class="bungkus-tabel"><table class="tabel tabel-kasir"><thead><tr><th>Produk</th><th>Satuan</th><th class="angka">Jumlah</th><th class="angka">Harga</th><th class="angka">Disk %</th><th class="angka">Subtotal</th><th></th></tr></thead><tbody data-keranjang></tbody></table></div>
     </div>
@@ -203,13 +197,13 @@ async function tampilKasir(induk) {
     const r = (l, v, c = '') => v ? `<div class="baris-total ${c}"><span>${l}</span><span>${v}</span></div>` : '';
     t.innerHTML = r('Subtotal', rupiah(h.subtotal)) + (h.diskon_pelanggan > 0 ? r('Diskon pelanggan', '- ' + rupiah(h.diskon_pelanggan)) : '') + (h.diskon_nota > 0 ? r('Diskon nota', '- ' + rupiah(h.diskon_nota)) : '')
       + (h.potongan_voucher > 0 ? r('Voucher', '- ' + rupiah(h.potongan_voucher)) : '') + (h.potongan_poin > 0 ? r(`Tukar ${angka(h.poin_dipakai)} poin`, '- ' + rupiah(h.potongan_poin)) : '')
-      + (h.embalase > 0 ? r('Embalase', rupiah(h.embalase)) : '') + (h.tuslah > 0 ? r('Tuslah', rupiah(h.tuslah)) : '') + (h.pembulatan ? r('Pembulatan', rupiah(h.pembulatan)) : '')
+      + (h.jasa_racik > 0 ? r('Jasa racik', rupiah(h.jasa_racik)) : '') + (h.jasa_resep > 0 ? r('Jasa pelayanan resep', rupiah(h.jasa_resep)) : '') + (h.embalase > 0 ? r('Embalase', rupiah(h.embalase)) : '') + (h.tuslah > 0 ? r('Tuslah', rupiah(h.tuslah)) : '') + (h.pembulatan ? r('Pembulatan', rupiah(h.pembulatan)) : '')
       + r('TOTAL', rupiah(h.total), 'besar') + (h.stamp_didapat > 0 ? r('Stamp member didapat', '+' + angka(h.stamp_didapat)) : '');
     el.querySelector('[data-total-hp]').textContent = rupiah(h.total);
     el.querySelector('[data-resep]').classList.toggle('wajib-resep', !!h.perlu_resep);
   };
-  const muatanHitung = () => ({ ...K.header, pelanggan_id: K.pelanggan?.id || null,
-    items: K.items.map(r => r.bundel_id ? { bundel_id: r.bundel_id, qty: r.qty, diskon_persen: r.diskon_persen || 0 } : { produk_id: r.produk_id, satuan_id: r.satuan_id, qty: r.qty, diskon_persen: r.diskon_persen || 0 }) });
+  const muatanHitung = () => ({ ...K.header, pelanggan_id: K.pelanggan?.id || null, resep_id: K.resep?.resep_id || null, racikan_ditebus: K.resep?.racikan_ditebus || 0,
+    items: K.items.map(r => r.bundel_id ? { bundel_id: r.bundel_id, qty: r.qty, diskon_persen: r.diskon_persen || 0 } : { produk_id: r.produk_id, satuan_id: r.satuan_id, qty: r.qty, diskon_persen: r.diskon_persen || 0, resep: !!r.resep }) });
   async function hitung() {
     const galat = el.querySelector('[data-galat]');
     if (!K.items.length) { K.hasil = null; galat.innerHTML = ''; gambarKeranjang(); gambarTotal(); return; }
@@ -223,7 +217,7 @@ async function tampilKasir(induk) {
   const hitungNanti = () => { clearTimeout(jedaHitung); jedaHitung = setTimeout(hitung, 250); };
 
   async function tambah(p) {
-    const ada = K.items.find(r => r.produk_id === p.id && r.satuan_id === (r.satuanDasar));
+    const ada = K.items.find(r => !r.resep && r.produk_id === p.id && r.satuan_id === (r.satuanDasar));
     if (ada) { ada.qty = Number(ada.qty) + 1; hitung(); return; }
     const info = (await infoProduk([p.id]))[p.id];
     K.items.push({ produk_id: p.id, nama: p.nama, golongan: info?.golongan, satuan_id: info.satuan_id, satuanDasar: info.satuan_id, satuanOpsi: info.satuanOpsi, qty: 1, diskon_persen: 0, stok: p.stok });
@@ -262,6 +256,7 @@ async function tampilKasir(induk) {
     if (b.hasAttribute('data-tertolak')) catatTertolak();
     if (b.hasAttribute('data-printer')) aturPrinter();
     if (b.hasAttribute('data-hapus-pelanggan')) { e.preventDefault(); K.pelanggan = null; K.header.poin_dipakai = 0; tampilKasir_(); }
+    if (b.hasAttribute('data-lepas-resep')) { e.preventDefault(); K = kosongkan(); tampilKasir_(); }
     if (b.hasAttribute('data-lepas-pesanan')) { e.preventDefault(); K.pesanan_id = null; K.pesanan_no = null; tampilKasir_(); }
   });
 
@@ -328,16 +323,18 @@ async function tampilKasir(induk) {
       tombol: [{ teks: 'Batal', kelas: 'kedua' }, { teks: 'Bayar', aksi: async m => {
         const byr = [...m.querySelectorAll('.baris-bayar')].map(r => ({ metode_bayar_id: Number(r.querySelector('[data-metode]').value), jumlah: Number(r.querySelector('[data-jumlah]').value || 0), referensi: r.querySelector('[data-ref]').value || null })).filter(x => x.jumlah > 0);
         if (!byr.length) { toast('Isi jumlah pembayaran', 'galat'); return false; }
-        const { data, error } = await sb.rpc('bayar_penjualan', { p: { ...muatanHitung(), pesanan_id: K.pesanan_id, bayar: byr } });
+        const { data, error } = await sb.rpc('bayar_penjualan', { p: { ...muatanHitung(), pesanan_id: K.pesanan_id, resep_tebus: K.resep?.resep_tebus || [], bayar: byr } });
         if (error) throw error;
+        const resepTadi = K.resep;
         K = kosongkan();
         tampilKasir_();
-        selesaiBayar(data, k);
+        selesaiBayar(data, k, resepTadi);
       } }] });
   }
 
-  function selesaiBayar(d, k) {
+  function selesaiBayar(d, k, resep) {
     if (k.struk.cetak_otomatis) cetakStruk(d.id);
+    if (resep?.etiket) ambilResep(resep.resep_id).then(r => cetakEtiket(r, resep.etiket_item)).catch(e => toast(pesanGalat(e), 'galat'));
     modal({ judul: 'Transaksi berhasil', ukuran: 'kecil', isi: `<div style="text-align:center"><div style="font-size:42px">✅</div><b>${esc(d.no)}</b>
       <div class="total-bayar" style="margin-top:12px"><small>Total</small><b>${rupiah(d.total)}</b><small>Kembalian</small><b style="color:var(--hijau);font-size:28px">${rupiah(d.kembalian)}</b></div>
       ${d.stamp_didapat > 0 ? `<p class="pesan info">Member mendapat <b>+${angka(d.stamp_didapat)} stamp</b> (total ${angka(d.stamp_total)})</p>` : ''}</div>`,
@@ -399,12 +396,7 @@ async function muatPesanan(p) {
     : { produk_id: i.produk_id, nama: i.nama, golongan: i.golongan, satuan_id: i.satuan_id, satuanDasar: info[i.produk_id]?.satuan_id, satuanOpsi: info[i.produk_id]?.satuanOpsi, qty: Number(i.qty), diskon_persen: Number(i.diskon_persen) });
 }
 
-function aturPrinter() {
-  let l = ''; try { l = localStorage.getItem(KUNCI_LEBAR) || ''; } catch { /* */ }
-  modal({ judul: 'Printer Struk Perangkat Ini', ukuran: 'kecil', isi: `<p style="margin-top:0">Atur ukuran kertas printer yang tersambung ke <b>perangkat ini</b>. Perangkat lain bisa diatur berbeda.</p>
-    <form onsubmit="return false"><label class="isian"><span>Ukuran kertas</span><select name="l"><option value="">Ikuti Konfigurasi</option><option value="58" ${l === '58' ? 'selected' : ''}>58 mm</option><option value="80" ${l === '80' ? 'selected' : ''}>80 mm</option></select></label></form>`,
-    tombol: [{ teks: 'Batal', kelas: 'kedua' }, { teks: 'Simpan', aksi: m => { try { const v = m.querySelector('[name=l]').value; if (v) localStorage.setItem(KUNCI_LEBAR, v); else localStorage.removeItem(KUNCI_LEBAR); } catch { /* */ } toast('Tersimpan untuk perangkat ini', 'sukses'); } }] });
-}
+function aturPrinter() { location.hash = '#/pengaturan/printer'; }
 
 const ALASAN_TOLAK = [['Stok habis', 'Stok habis'], ['Tidak dijual', 'Tidak dijual di apotek'], ['Harga', 'Pelanggan keberatan harga'], ['Butuh resep', 'Butuh resep dokter'], ['Lainnya', 'Lainnya']];
 function catatTertolak() {
