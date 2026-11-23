@@ -1,15 +1,17 @@
-import { sb, S, RUTE, rute, bisa, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.3.2';
-import { MENU, ITEM, ikon } from './menu.js?v=1.3.2';
-import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.3.2';
-import './halaman/home.js?v=1.3.2';
-import './halaman/master.js?v=1.3.2';
-import './halaman/pengguna.js?v=1.3.2';
-import './halaman/pengaturan.js?v=1.3.2';
-import './halaman/persediaan.js?v=1.3.2';
-import './halaman/pembelian.js?v=1.3.2';
-import './halaman/konsinyasi.js?v=1.3.2';
-import { halamanSegera } from './halaman/home.js?v=1.3.2';
-import { hitungPeringatan } from './halaman/persediaan.js?v=1.3.2';
+import { sb, S, RUTE, rute, bisa, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.4.2';
+import { MENU, ITEM, ikon } from './menu.js?v=1.4.2';
+import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.4.2';
+import './halaman/home.js?v=1.4.2';
+import './halaman/master.js?v=1.4.2';
+import './halaman/pengguna.js?v=1.4.2';
+import './halaman/pengaturan.js?v=1.4.2';
+import './halaman/persediaan.js?v=1.4.2';
+import './halaman/pembelian.js?v=1.4.2';
+import './halaman/konsinyasi.js?v=1.4.2';
+import './halaman/promo.js?v=1.4.2';
+import { muatSesi } from './halaman/penjualan.js?v=1.4.2';
+import { halamanSegera } from './halaman/home.js?v=1.4.2';
+import { hitungPeringatan } from './halaman/persediaan.js?v=1.4.2';
 
 const app = $('#app');
 const LOGO = 'img/logo-128.png';
@@ -142,6 +144,7 @@ function kerangka() {
     <div class="utama">
       <header class="topbar">
         <button class="tombol-ikon" data-toggle-sidebar title="Menu">${ikon('menu')}</button>
+        <div class="info"><small>Kode Sesi</small><b data-info-sesi>${esc(S.sesi?.kode || '-')}</b></div>
         <div class="info"><small>Outlet</small><b>${esc(o?.nama || '-')}</b></div>
         <div class="info"><small>Pengguna</small><b>${esc(S.pengguna.nama.toUpperCase())}</b></div>
         <div class="info"><small>Peran</small><b>${esc(S.peran.nama)}</b></div>
@@ -311,7 +314,9 @@ async function mulai() {
   if (!p.aktif) { await sb.auth.signOut(); return layarMasuk('Akun Anda dinonaktifkan. Hubungi Pemilik.'); }
   S.pengguna = p; S.peran = p.peran; S.outlet = p.outlet; S.akses = p.peran.akses || [];
   S.shift = bacaShift(p.id);
+  S.sesi = undefined;
   kerangka();
+  muatSesi().catch(() => {});
   tampilkan();
   if (!S.shift) {
     if (bisa('akses.tanpa_shift')) { S.shift = { id: null, nama: 'Tanpa shift' }; $$('[data-info-shift]').forEach(x => x.textContent = S.shift.nama); }
