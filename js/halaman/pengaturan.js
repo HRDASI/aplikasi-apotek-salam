@@ -1,6 +1,7 @@
 // Pengaturan: Profil Bisnis (outlet aktif) & Konfigurasi.
-import { rute, sb, S, bisa } from '../inti.js?v=1.5.1';
-import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.5.1';
+import { rute, sb, S, bisa } from '../inti.js?v=1.6.1';
+import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.6.1';
+import { bacaPrinter, simpanPrinter, statusAgen, cetakStrukHtml, cetakLabelHtml } from '../cetak.js?v=1.6.1';
 
 rute('pengaturan/profil', async el => {
   const boleh = bisa('pengaturan.profil');
@@ -29,11 +30,54 @@ rute('pengaturan/profil', async el => {
   });
 });
 
+// ---------- Printer & Cetak (per perangkat) ----------
+rute('pengaturan/printer', async el => {
+  const p = bacaPrinter();
+  el.innerHTML = judulHalaman('Printer & Cetak', 'Pengaturan / Printer & Cetak') + `<div style="max-width:820px">
+    <div class="kartu"><h3>Agen Cetak di perangkat ini</h3><div data-agen>Memeriksa...</div></div>
+    <form onsubmit="return false">
+    <div class="kartu"><h3>Cara mencetak</h3>
+      <label class="isian"><span>Mode</span><select name="mode"><option value="otomatis" ${p.mode !== 'dialog' ? 'selected' : ''}>Otomatis: langsung ke printer lewat Agen Cetak (bila menyala)</option><option value="dialog" ${p.mode === 'dialog' ? 'selected' : ''}>Selalu pakai dialog cetak browser</option></select></label></div>
+    <div class="kartu"><h3>Struk, rekap sesi & copy resep (thermal)</h3><div class="form-grid">
+      <label class="isian"><span>Printer</span><select name="struk_printer" data-daftar></select></label>
+      <label class="isian"><span>Lebar kertas</span><select name="struk_lebar"><option value="">Ikuti Konfigurasi</option><option value="58" ${p.struk.lebar === '58' ? 'selected' : ''}>58 mm</option><option value="80" ${p.struk.lebar === '80' ? 'selected' : ''}>80 mm</option></select></label></div>
+      <button type="button" class="tombol kedua kecil" data-tes="struk">Tes cetak struk</button></div>
+    <div class="kartu"><h3>Etiket & label (printer label)</h3><div class="form-grid">
+      <label class="isian"><span>Printer</span><select name="label_printer" data-daftar></select></label>
+      <label class="isian"><span>Salinan per etiket</span><input type="number" min="1" max="5" name="salinan" value="${p.salinanEtiket}"></label>
+      <label class="isian"><span>Lebar stiker (mm)</span><input type="number" min="20" max="110" name="label_lebar" value="${p.label.lebar}"></label>
+      <label class="isian"><span>Tinggi stiker (mm)</span><input type="number" min="15" max="150" name="label_tinggi" value="${p.label.tinggi}"></label></div>
+      <p style="color:var(--teks-2);font-size:13px;margin-top:0">Atur ukuran yang sama di driver printer label (Printing Preferences → ukuran kertas) agar tidak bergeser.</p>
+      <button type="button" class="tombol kedua kecil" data-tes="label">Tes cetak etiket</button></div>
+    <button class="tombol" data-simpan>Simpan untuk perangkat ini</button></form></div>`;
+  const s = await statusAgen();
+  el.querySelector('[data-agen]').innerHTML = s
+    ? `<p class="pesan info" style="margin:0">✅ Agen Cetak <b>terhubung</b> (versi ${esc(s.versi)}, komputer ${esc(s.komputer)}). ${s.printer.length} printer terdeteksi.</p>`
+    : `<p class="pesan peringatan" style="margin:0">Agen Cetak <b>tidak terdeteksi</b> di perangkat ini, jadi dicetak lewat dialog browser. Untuk cetak langsung tanpa dialog, pasang Agen Cetak di PC kasir (file <code>pasang-agen-cetak.ps1</code>). Di HP selalu memakai dialog cetak.</p>`;
+  const daftar = s?.printer || [];
+  el.querySelectorAll('[data-daftar]').forEach(sel => {
+    const v = sel.name === 'struk_printer' ? p.struk.printer : p.label.printer;
+    const opsi = [...new Set([...daftar, ...(v ? [v] : [])])];
+    sel.innerHTML = `<option value="">- pilih / dialog cetak -</option>` + opsi.map(n => `<option ${n === v ? 'selected' : ''}>${esc(n)}</option>`).join('');
+  });
+  const baca = () => { const f = el.querySelector('form'); return { mode: f.mode.value, struk: { printer: f.struk_printer.value, lebar: f.struk_lebar.value },
+    label: { ...p.label, printer: f.label_printer.value, lebar: Number(f.label_lebar.value || 50), tinggi: Number(f.label_tinggi.value || 30) }, salinanEtiket: Number(f.salinan.value || 1) }; };
+  el.querySelector('[data-simpan]').onclick = () => { simpanPrinter(baca()); toast('Pengaturan printer disimpan untuk perangkat ini', 'sukses'); };
+  el.querySelectorAll('[data-tes]').forEach(b => b.onclick = async () => {
+    simpanPrinter(baca());
+    const k = await ambilKonfig();
+    if (b.dataset.tes === 'struk') await cetakStrukHtml(`<div class="c"><b>${esc(S.outlet?.nama || 'Apotek Salam')}</b><br>TES CETAK STRUK</div><hr><div class="r"><span>Tanggal</span><span>${new Date().toLocaleString('id-ID')}</span></div><div class="r"><span>Printer</span><span>${esc(baca().struk.printer || 'dialog')}</span></div><hr><div class="c">Jika tulisan ini rapi, printer siap.</div>`, 'Tes struk', k.struk.lebar);
+    else await cetakLabelHtml([`<div class="kop"><span>${esc(S.outlet?.nama || 'Apotek Salam')}</span><span>No. 001</span></div><div class="nm">TES ETIKET</div><div class="signa">3 x sehari 1 tablet</div><div class="kecil">Sesudah makan · ${new Date().toLocaleDateString('id-ID')}</div><div class="jenis">OBAT DALAM</div>`], 'Tes etiket');
+    toast('Perintah cetak dikirim');
+  });
+});
+
 // Konfigurasi disimpan di tabel konfigurasi (kunci -> jsonb)
 export const KONFIG_BAWAAN = {
   struk: { lebar: '58', cetak_otomatis: false, tampil_logo: true, tampil_apoteker: true },
   penjualan: { stok_minus: false, pembulatan: 0, wajib_resep_obat_keras: true, diskon_maks_persen: 20 },
   persediaan: { peringatan_ed_hari: 90, metode_keluar: 'FEFO', batas_margin_persen: 5, margin_saran_persen: 20 },
+  pelayanan: { tarif_racik: 5000, persen_resep: 0, cetak_etiket: true },
   pembelian: { ppn_mode: 'tambah', pajak_id: null },
 };
 export const MODE_PPN = [['tambah', 'Belum termasuk PPN (PPN ditambahkan)'], ['termasuk', 'Sudah termasuk PPN'], ['tanpa', 'Tidak kena PPN']];
@@ -71,6 +115,10 @@ rute('pengaturan/konfigurasi', async el => {
       <label class="isian"><span>Saran margin harga jual (%)</span><input type="number" step="any" min="0" name="persediaan.margin_saran_persen" value="${k.persediaan.margin_saran_persen}">
         <small>Dipakai untuk menyarankan harga jual saat margin terlalu kecil.</small></label>
     </div></div>
+    <div class="kartu"><h3>Pelayanan Resep</h3><div class="form-grid">
+      <label class="isian"><span>Tarif racik per racikan (Rp)</span><input type="number" min="0" name="pelayanan.tarif_racik" value="${k.pelayanan.tarif_racik}"><small>Dikali jumlah racikan (R/ racikan) yang ditebus.</small></label>
+      <label class="isian"><span>Tambahan dari total nominal resep (%)</span><input type="number" step="any" min="0" name="pelayanan.persen_resep" value="${k.pelayanan.persen_resep}"><small>Persen dari total harga obat dalam resep, mis. 10.</small></label></div>
+      ${cek('pelayanan', 'cetak_etiket', 'Centang "cetak etiket" secara bawaan saat menebus resep')}</div>
     <div class="kartu"><h3>Pembelian</h3><div class="form-grid">
       <label class="isian"><span>PPN bawaan di faktur baru</span><select name="pembelian.ppn_mode">${MODE_PPN.map(([v, l]) => `<option value="${v}" ${k.pembelian.ppn_mode === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       <label class="isian"><span>Tarif PPN bawaan</span><select name="pembelian.pajak_id">${pajak.filter(p => Number(p.persen) > 0).map(p => `<option value="${p.id}" ${String(k.pembelian.pajak_id) === String(p.id) ? 'selected' : ''}>${esc(p.nama)} (${p.persen}%)</option>`).join('')}</select>
