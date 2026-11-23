@@ -1,10 +1,10 @@
 // Penjualan: Kasir (dengan sesi), Pesanan, Daftar, Retur, Tertolak, QRIS, Riwayat Sesi, cetak struk.
-import { rute, sb, S, bisa, ambilRef } from '../inti.js?v=1.4.2';
-import { ikon } from '../menu.js?v=1.4.2';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.4.2';
-import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.4.2';
-import { halamanCrud } from '../crud.js?v=1.4.2';
-import { ambilKonfig } from './pengaturan.js?v=1.4.2';
+import { rute, sb, S, bisa, ambilRef } from '../inti.js?v=1.5.1';
+import { ikon } from '../menu.js?v=1.5.1';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.5.1';
+import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.5.1';
+import { halamanCrud } from '../crud.js?v=1.5.1';
+import { ambilKonfig } from './pengaturan.js?v=1.5.1';
 
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const awalBulan = () => hariIni().slice(0, 8) + '01';
@@ -109,7 +109,7 @@ function bukaJendelaCetak(isi, lebar, judul) {
 
 export async function cetakStruk(id) {
   const [{ data: j, error }, k] = await Promise.all([
-    sb.from('penjualan').select('*, item:penjualan_item(*), bayar:penjualan_bayar(*, metode:metode_bayar_id(nama)), pelanggan:pelanggan_id(nama,poin), dokter:dokter_id(nama), outlet:outlet_id(*)').eq('id', id).single(),
+    sb.from('penjualan').select('*, item:penjualan_item(*), bayar:penjualan_bayar(*, metode:metode_bayar_id(nama)), pelanggan:pelanggan_id(nama,stamp), dokter:dokter_id(nama), outlet:outlet_id(*)').eq('id', id).single(),
     ambilKonfig(),
   ]);
   if (error) return toast(pesanGalat(error), 'galat');
@@ -124,7 +124,7 @@ export async function cetakStruk(id) {
     ${items}<hr>${baris('Subtotal', angka(j.subtotal))}${pot}${j.embalase > 0 ? baris('Embalase', angka(j.embalase)) : ''}${j.tuslah > 0 ? baris('Tuslah', angka(j.tuslah)) : ''}
     ${j.pembulatan !== 0 ? baris('Pembulatan', angka(j.pembulatan)) : ''}<div class="r" style="font-size:13px;font-weight:bold"><span>TOTAL</span><span>${angka(j.total)}</span></div>
     ${j.bayar.map(b => baris(b.metode?.nama || 'Bayar', angka(b.jumlah))).join('')}${baris('Kembali', angka(j.kembalian))}
-    ${j.poin_didapat > 0 ? baris('Poin didapat', '+' + angka(j.poin_didapat)) : ''}${j.status === 'batal' ? '<div class="c"><b>*** DIBATALKAN ***</b></div>' : ''}<hr>
+    ${j.stamp_didapat > 0 ? baris('Stamp member', `+${angka(j.stamp_didapat)} (total ${angka(j.pelanggan?.stamp)})`) : ''}${j.status === 'batal' ? '<div class="c"><b>*** DIBATALKAN ***</b></div>' : ''}<hr>
     ${ks.tampil_apoteker && o.apoteker ? `<div class="c">Apoteker: ${esc(o.apoteker)}${o.sipa ? '<br>SIPA ' + esc(o.sipa) : ''}</div>` : ''}
     <div class="c">${esc(o.catatan_struk || '')}</div>`, await lebarStruk(), 'Struk ' + j.no);
 }
@@ -164,7 +164,7 @@ async function tampilKasir(induk) {
     </div>
     <div class="kartu kasir-kanan">
       <label class="isian"><span>Pelanggan</span><div style="position:relative"><input class="input" data-cari-pelanggan placeholder="Cari nama / no. HP (opsional)" value="${esc(K.pelanggan?.nama || '')}"><div class="hasil-cari sembunyi" data-hasil-pelanggan style="left:0;right:0;top:44px"></div></div>
-        <small data-info-pelanggan>${K.pelanggan ? `Poin: ${angka(K.pelanggan.poin)} · <a href="#" data-hapus-pelanggan>hapus</a>` : ''}</small></label>
+        <small data-info-pelanggan>${K.pelanggan ? `${K.pelanggan.member ? `<span class="chip oranye">Member ${esc(K.pelanggan.kode || '')}</span> stamp ${angka(K.pelanggan.stamp)} · ` : ''}<a href="#" data-hapus-pelanggan>hapus</a>` : ''}</small></label>
       <label class="isian"><span>Jenis Pelayanan</span><select data-h="jenis_pelayanan_id">${jp.filter(x => x.aktif !== false).map(x => `<option value="${x.id}" ${x.id === K.header.jenis_pelayanan_id ? 'selected' : ''}>${esc(x.nama)}</option>`).join('')}</select></label>
       <div data-resep class="form-grid" style="gap:0 10px">
         <label class="isian"><span>Dokter</span><select data-h="dokter_id"><option value="">- pilih -</option>${dokter.map(d => `<option value="${d.id}" ${d.id === K.header.dokter_id ? 'selected' : ''}>${esc(d.nama)}</option>`).join('')}</select></label>
@@ -172,7 +172,6 @@ async function tampilKasir(induk) {
       <div class="form-grid" style="gap:0 10px">
         <label class="isian"><span>Diskon nota (Rp)</span><input type="number" min="0" step="any" data-h="diskon_nota" value="${K.header.diskon_nota || ''}"></label>
         <label class="isian"><span>Kode voucher</span><input data-h="voucher_kode" value="${esc(K.header.voucher_kode || '')}" style="text-transform:uppercase"></label></div>
-      <label class="isian ${K.pelanggan && k.member?.aktif === true ? '' : 'sembunyi'}" data-baris-poin><span>Tukar poin</span><input type="number" min="0" step="1" data-h="poin_dipakai" value="${K.header.poin_dipakai || ''}"></label>
       <div data-galat></div>
       <div data-total class="kasir-total"></div>
       <div style="display:flex;gap:8px;margin-top:12px"><button class="tombol kedua" data-tunda title="Simpan sebagai pesanan / tunda">Tunda</button>
@@ -205,7 +204,7 @@ async function tampilKasir(induk) {
     t.innerHTML = r('Subtotal', rupiah(h.subtotal)) + (h.diskon_pelanggan > 0 ? r('Diskon pelanggan', '- ' + rupiah(h.diskon_pelanggan)) : '') + (h.diskon_nota > 0 ? r('Diskon nota', '- ' + rupiah(h.diskon_nota)) : '')
       + (h.potongan_voucher > 0 ? r('Voucher', '- ' + rupiah(h.potongan_voucher)) : '') + (h.potongan_poin > 0 ? r(`Tukar ${angka(h.poin_dipakai)} poin`, '- ' + rupiah(h.potongan_poin)) : '')
       + (h.embalase > 0 ? r('Embalase', rupiah(h.embalase)) : '') + (h.tuslah > 0 ? r('Tuslah', rupiah(h.tuslah)) : '') + (h.pembulatan ? r('Pembulatan', rupiah(h.pembulatan)) : '')
-      + r('TOTAL', rupiah(h.total), 'besar') + (h.poin_didapat > 0 ? r('Poin didapat', '+' + angka(h.poin_didapat)) : '');
+      + r('TOTAL', rupiah(h.total), 'besar') + (h.stamp_didapat > 0 ? r('Stamp member didapat', '+' + angka(h.stamp_didapat)) : '');
     el.querySelector('[data-total-hp]').textContent = rupiah(h.total);
     el.querySelector('[data-resep]').classList.toggle('wajib-resep', !!h.perlu_resep);
   };
@@ -274,9 +273,9 @@ async function tampilKasir(induk) {
     const q = ip.value.replace(/[,()%*]/g, ' ').trim();
     if (!q) { hp.classList.add('sembunyi'); return; }
     jedaP = setTimeout(async () => {
-      const { data } = await sb.from('pelanggan').select('id,nama,telp,poin,kategori:kategori_pelanggan_id(nama,diskon_persen)').eq('aktif', true).or(`nama.ilike.%${q}%,telp.ilike.%${q}%,kode.ilike.%${q}%`).limit(10);
+      const { data } = await sb.from('pelanggan').select('id,nama,telp,kode,member,stamp,kategori:kategori_pelanggan_id(nama,diskon_persen)').eq('aktif', true).or(`nama.ilike.%${q}%,telp.ilike.%${q}%,kode.ilike.%${q}%`).limit(10);
       hasilP = data || [];
-      hp.innerHTML = hasilP.length ? hasilP.map((p, i) => `<a data-p="${i}"><b>${esc(p.nama)}</b> <small>${esc(p.telp || '')} · poin ${angka(p.poin)}${p.kategori ? ' · ' + esc(p.kategori.nama) : ''}</small></a>`).join('') : '<a>Tidak ditemukan</a>';
+      hp.innerHTML = hasilP.length ? hasilP.map((p, i) => `<a data-p="${i}"><b>${esc(p.nama)}</b> <small>${esc(p.kode || '')} ${esc(p.telp || '')}${p.member ? ' · member, stamp ' + angka(p.stamp) : ''}${p.kategori ? ' · ' + esc(p.kategori.nama) : ''}</small></a>`).join('') : '<a>Tidak ditemukan</a>';
       hp.classList.remove('sembunyi');
     }, 250);
   });
@@ -341,7 +340,7 @@ async function tampilKasir(induk) {
     if (k.struk.cetak_otomatis) cetakStruk(d.id);
     modal({ judul: 'Transaksi berhasil', ukuran: 'kecil', isi: `<div style="text-align:center"><div style="font-size:42px">✅</div><b>${esc(d.no)}</b>
       <div class="total-bayar" style="margin-top:12px"><small>Total</small><b>${rupiah(d.total)}</b><small>Kembalian</small><b style="color:var(--hijau);font-size:28px">${rupiah(d.kembalian)}</b></div>
-      ${d.poin_didapat > 0 ? `<p>Pelanggan mendapat <b>${angka(d.poin_didapat)} poin</b></p>` : ''}</div>`,
+      ${d.stamp_didapat > 0 ? `<p class="pesan info">Member mendapat <b>+${angka(d.stamp_didapat)} stamp</b> (total ${angka(d.stamp_total)})</p>` : ''}</div>`,
       tombol: [{ teks: 'Cetak Struk', kelas: 'kedua', aksi: () => { cetakStruk(d.id); return false; } }, { teks: 'Transaksi Baru', aksi: () => setTimeout(() => document.querySelector('[data-cari]')?.focus(), 50) }] });
   }
 
@@ -394,7 +393,7 @@ async function muatPesanan(p) {
   K = kosongkan();
   K.pesanan_id = p.id; K.pesanan_no = p.no;
   Object.assign(K.header, { jenis_pelayanan_id: p.jenis_pelayanan_id, dokter_id: p.dokter_id, no_resep: p.no_resep || '', diskon_nota: Number(p.diskon_nota || 0), nama_pemesan: p.nama_pemesan });
-  if (p.pelanggan_id) K.pelanggan = (await sb.from('pelanggan').select('id,nama,telp,poin').eq('id', p.pelanggan_id).single()).data;
+  if (p.pelanggan_id) K.pelanggan = (await sb.from('pelanggan').select('id,nama,telp,kode,member,stamp').eq('id', p.pelanggan_id).single()).data;
   const info = await infoProduk(p.item.filter(i => i.produk_id).map(i => i.produk_id));
   K.items = p.item.sort((a, b) => a.id - b.id).map(i => i.bundel_id ? { bundel_id: i.bundel_id, nama: i.nama, qty: Number(i.qty), diskon_persen: Number(i.diskon_persen) }
     : { produk_id: i.produk_id, nama: i.nama, golongan: i.golongan, satuan_id: i.satuan_id, satuanDasar: info[i.produk_id]?.satuan_id, satuanOpsi: info[i.produk_id]?.satuanOpsi, qty: Number(i.qty), diskon_persen: Number(i.diskon_persen) });
