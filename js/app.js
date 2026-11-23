@@ -1,17 +1,18 @@
-import { sb, S, RUTE, rute, bisa, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.4.2';
-import { MENU, ITEM, ikon } from './menu.js?v=1.4.2';
-import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.4.2';
-import './halaman/home.js?v=1.4.2';
-import './halaman/master.js?v=1.4.2';
-import './halaman/pengguna.js?v=1.4.2';
-import './halaman/pengaturan.js?v=1.4.2';
-import './halaman/persediaan.js?v=1.4.2';
-import './halaman/pembelian.js?v=1.4.2';
-import './halaman/konsinyasi.js?v=1.4.2';
-import './halaman/promo.js?v=1.4.2';
-import { muatSesi } from './halaman/penjualan.js?v=1.4.2';
-import { halamanSegera } from './halaman/home.js?v=1.4.2';
-import { hitungPeringatan } from './halaman/persediaan.js?v=1.4.2';
+import { sb, S, RUTE, rute, bisa, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.5.1';
+import { MENU, ITEM, ikon } from './menu.js?v=1.5.1';
+import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.5.1';
+import './halaman/home.js?v=1.5.1';
+import './halaman/master.js?v=1.5.1';
+import './halaman/pengguna.js?v=1.5.1';
+import './halaman/pengaturan.js?v=1.5.1';
+import './halaman/persediaan.js?v=1.5.1';
+import './halaman/pembelian.js?v=1.5.1';
+import './halaman/konsinyasi.js?v=1.5.1';
+import './halaman/promo.js?v=1.5.1';
+import { muatSesi } from './halaman/penjualan.js?v=1.5.1';
+import { tampilKartuPublik } from './halaman/member.js?v=1.5.1';
+import { halamanSegera } from './halaman/home.js?v=1.5.1';
+import { hitungPeringatan } from './halaman/persediaan.js?v=1.5.1';
 
 const app = $('#app');
 const LOGO = 'img/logo-128.png';
@@ -303,6 +304,9 @@ function kepalaHp(hash, judul) {
 
 // ================= Mulai =================
 async function mulai() {
+  // Kartu member publik: dibuka member dari link WhatsApp, tanpa login
+  const kartu = location.hash.match(/^#\/kartu\/([0-9a-f]{16,})/);
+  if (kartu) return tampilKartuPublik(app, kartu[1]);
   const { data: { session } } = await sb.auth.getSession();
   if (!session) {
     const { data: siap, error } = await sb.rpc('sudah_disiapkan');
