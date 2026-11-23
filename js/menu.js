@@ -49,8 +49,8 @@ export const MENU = [
     ['umum', 'Dashboard Umum', 5], ['penjualan', 'Dashboard Penjualan', 5], ['pembelian', 'Dashboard Pembelian', 5],
     ['persediaan', 'Dashboard Persediaan', 5], ['keuangan', 'Dash. Keuangan', 5]] },
   { k: 'penjualan', t: 'Penjualan', i: 'penjualan', anak: [
-    ['kasir', 'Kasir', 3], ['pesanan', 'Pesanan Penjualan', 3], ['daftar', 'Daftar Penjualan', 3],
-    ['retur', 'Retur Penjualan', 3], ['tertolak', 'Penjualan Tertolak', 3], ['qris', 'QRIS', 3]] },
+    ['kasir', 'Kasir', 1], ['pesanan', 'Pesanan Penjualan', 1], ['daftar', 'Daftar Penjualan', 1],
+    ['retur', 'Retur Penjualan', 1], ['tertolak', 'Penjualan Tertolak', 1], ['qris', 'QRIS', 1]] },
   { k: 'pelayanan', t: 'Pelayanan Apotek', i: 'pelayanan', anak: [
     ['penerimaan_resep', 'Penerimaan Resep', 4], ['penebusan_resep', 'Penebusan Resep', 4], ['racikan', 'Template Racikan', 4],
     ['swamedikasi', 'Swamedikasi', 4], ['hpc', 'Home Pharmacy Care', 4], ['pio', 'Pel. Informasi Obat', 4],
@@ -63,7 +63,7 @@ export const MENU = [
   { k: 'konsinyasi', t: 'Konsinyasi Masuk', i: 'konsinyasi', anak: [
     ['masuk', 'Konsinyasi Masuk', 1], ['status', 'Status Konsinyasi', 1], ['retur', 'Retur Konsinyasi', 1], ['stok', 'Stok Konsinyasi', 1]] },
   { k: 'promo', t: 'Program Promo', i: 'promo', anak: [
-    ['bundel', 'Bundel/Paket Produk', 3], ['diskon', 'Diskon Produk', 3], ['voucher', 'Voucher Diskon', 3], ['member', 'Program Member', 3]] },
+    ['bundel', 'Bundel/Paket Produk', 1], ['diskon', 'Diskon Produk', 1], ['voucher', 'Voucher Diskon', 1], ['member', 'Program Member', 1]] },
   { k: 'keuangan', t: 'Keuangan', i: 'keuangan', anak: [
     ['akun_kas', 'Daftar Akun Kas', 5], ['buku_kas', 'Buku Kas', 5], ['utang', 'Utang Usaha', 5], ['piutang', 'Piutang Usaha', 5]] },
   { k: 'akuntansi', t: 'Akuntansi', i: 'akuntansi', anak: [
@@ -77,7 +77,7 @@ export const MENU = [
     ['pareto', 'Analisis Pareto', 5], ['pembelian', 'Analisis Pembelian', 5], ['harga', 'Analisis Harga', 5]] },
   { k: 'pengguna', t: 'Manajemen Pengguna', i: 'pengguna', anak: [
     ['daftar', 'Daftar Pengguna', 1], ['peran', 'Peran & Hak Akses', 1], ['jadwal', 'Jadwal Kerja', 6],
-    ['presensi', 'Riwayat Presensi', 6], ['sesi', 'Riwayat Shift/Sesi', 3], ['log', 'Log Aktivitas', 1, ['*semua']]] },
+    ['presensi', 'Riwayat Presensi', 6], ['sesi', 'Riwayat Shift/Sesi', 1, ['penjualan.kasir']], ['log', 'Log Aktivitas', 1, ['*semua']]] },
   { k: 'gaji', t: 'Gaji Karyawan', i: 'gaji', anak: [
     ['pokok', 'Daftar Gaji Pokok', 6], ['tunjangan', 'Daftar Tunjangan', 6], ['potongan', 'Daftar Potongan Gaji', 6],
     ['hitung', 'Perhitungan Gaji', 6], ['bayar', 'Pembayaran Gaji', 6]] },
