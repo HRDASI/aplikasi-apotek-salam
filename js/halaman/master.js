@@ -1,7 +1,8 @@
 // Master Data, Kontak, Multi Outlet, Metode Pembayaran: memakai halamanCrud.
-import { rute, sb, ambilRef } from '../inti.js?v=1.4.2';
-import { halamanCrud } from '../crud.js?v=1.4.2';
-import { esc, rupiah, angka } from '../ui.js?v=1.4.2';
+import { rute, sb, ambilRef } from '../inti.js?v=1.5.1';
+import { halamanCrud } from '../crud.js?v=1.5.1';
+import { esc, rupiah, angka, toast } from '../ui.js?v=1.5.1';
+import { bukaKartu } from './member.js?v=1.5.1';
 
 export const GOLONGAN = [
   ['bebas', 'Obat Bebas'], ['bebas_terbatas', 'Obat Bebas Terbatas'], ['keras', 'Obat Keras (K)'], ['okt', 'OKT'],
@@ -119,8 +120,10 @@ kontak('pelanggan', 'Pelanggan', 'pelanggan', [
   { f: 'alamat', label: 'Alamat', tipe: 'area', daftar: false },
   { f: 'alergi', label: 'Riwayat Alergi Obat', tipe: 'area', daftar: false },
   { f: 'catatan', label: 'Catatan', tipe: 'area', daftar: false },
-  { f: 'poin', label: 'Poin', tipe: 'angka', form: false },
-  { f: 'aktif', label: 'Aktif', tipe: 'bool', daftar: false }], { cari: ['nama', 'kode', 'telp'] });
+  { f: 'member', label: 'Member', tipe: 'bool', form: false, tampil: r => r.member ? `<span class="chip oranye">${esc(r.kode || 'Member')}</span>` : '' },
+  { f: 'stamp', label: 'Stamp', tipe: 'angka', form: false },
+  { f: 'aktif', label: 'Aktif', tipe: 'bool', daftar: false }], { cari: ['nama', 'kode', 'telp'],
+  aksiBaris: [{ ikon: 'kontak', judul: 'Kartu member', fn: p => p.member ? bukaKartu(p) : toast('Belum member. Daftarkan di Program Promo → Program Member.', 'galat') }] });
 kontak('sales', 'Sales/Pelayan', 'sales', [
   { f: 'nama', label: 'Nama', wajib: true }, { f: 'telp', label: 'No. HP', tipe: 'telp' }, { f: 'catatan', label: 'Catatan', tipe: 'area', daftar: false },
   { f: 'aktif', label: 'Aktif', tipe: 'bool' }]);
