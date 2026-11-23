@@ -1,10 +1,11 @@
 // Home: sapaan, ikon modul (HP), ringkasan, aktivitas terakhir, pembaruan aplikasi.
-import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.5.1';
-import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.5.1';
-import { esc, angka, waktu } from '../ui.js?v=1.5.1';
-import { hitungPeringatan, JENIS_PERINGATAN } from './persediaan.js?v=1.5.1';
+import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.6.1';
+import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.6.1';
+import { esc, angka, waktu } from '../ui.js?v=1.6.1';
+import { hitungPeringatan, JENIS_PERINGATAN } from './persediaan.js?v=1.6.1';
 
 export const PEMBARUAN = [
+  ['2026-11-24', 'Tahap 4: Pelayanan Apotek — resep (foto + ketik, skrining, racikan), tebus di kasir (jasa racik + %), etiket & copy resep, swamedikasi, HPC, PIO, MESO, konseling, catatan pengobatan. Agen Cetak: struk & etiket langsung ke printer.'],
   ['2026-11-23', 'QRIS BRI terpasang di kasir. Program member model stamp: kartu member digital + link, kirim WhatsApp, katalog hadiah, tukar stamp.'],
   ['2026-11-23', 'Tahap 3: Kasir dengan sesi (kas awal & tutup sesi), struk 58/80 mm, pembayaran campur & QRIS, pesanan, retur, penjualan tertolak, promo (diskon, paket, voucher, member/poin).'],
   ['2026-11-22', 'Login memilih Shift. Pemilik/Admin boleh masuk tanpa shift (diatur di Peran & Hak Akses).'],
@@ -34,7 +35,7 @@ rute('home', async el => {
         <div class="bungkus-tabel"><table class="tabel"><thead><tr><th>No.</th><th>Waktu</th><th>Aktivitas</th></tr></thead><tbody data-akt><tr><td colspan="3" class="kosong">Memuat...</td></tr></tbody></table></div></div>
       <div class="kartu"><div class="kepala-kartu teal">Update Aplikasi</div>
         <ul class="daftar-update">${PEMBARUAN.map(([t, x]) => `<li><time>${t.split('-').reverse().join('-')}</time><span>${esc(x)}</span></li>`).join('')}</ul>
-        <p style="color:var(--teks-2);font-size:12.5px;margin:12px 0 0">Berikutnya: Tahap 4 – ${esc(NAMA_TAHAP[4])}.</p></div>
+        <p style="color:var(--teks-2);font-size:12.5px;margin:12px 0 0">Berikutnya: Tahap 5 – ${esc(NAMA_TAHAP[5])}.</p></div>
     </div>`;
 
   const kotakPerhatian = el.querySelector('[data-perhatian]');
@@ -80,6 +81,6 @@ export function halamanSegera(item) {
   return el => {
     el.innerHTML = `<div class="kartu segera"><div class="ikon-besar">${ikon(item.ikon)}</div>
       <h3>${esc(item.judul)}</h3>
-      <p>Menu ini dibuat di <b>Tahap ${item.tahap}: ${esc(NAMA_TAHAP[item.tahap])}</b>. Saat ini sudah selesai sampai Tahap 3.</p></div>`;
+      <p>Menu ini dibuat di <b>Tahap ${item.tahap}: ${esc(NAMA_TAHAP[item.tahap])}</b>. Saat ini sudah selesai sampai Tahap 4.</p></div>`;
   };
 }
