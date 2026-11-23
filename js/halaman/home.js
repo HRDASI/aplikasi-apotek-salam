@@ -1,10 +1,11 @@
 // Home: sapaan, ikon modul (HP), ringkasan, aktivitas terakhir, pembaruan aplikasi.
-import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.4.2';
-import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.4.2';
-import { esc, angka, waktu } from '../ui.js?v=1.4.2';
-import { hitungPeringatan, JENIS_PERINGATAN } from './persediaan.js?v=1.4.2';
+import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.5.1';
+import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.5.1';
+import { esc, angka, waktu } from '../ui.js?v=1.5.1';
+import { hitungPeringatan, JENIS_PERINGATAN } from './persediaan.js?v=1.5.1';
 
 export const PEMBARUAN = [
+  ['2026-11-23', 'QRIS BRI terpasang di kasir. Program member model stamp: kartu member digital + link, kirim WhatsApp, katalog hadiah, tukar stamp.'],
   ['2026-11-23', 'Tahap 3: Kasir dengan sesi (kas awal & tutup sesi), struk 58/80 mm, pembayaran campur & QRIS, pesanan, retur, penjualan tertolak, promo (diskon, paket, voucher, member/poin).'],
   ['2026-11-22', 'Login memilih Shift. Pemilik/Admin boleh masuk tanpa shift (diatur di Peran & Hak Akses).'],
   ['2026-11-22', 'PPN di faktur bisa dipilih (belum termasuk / sudah termasuk / tidak kena PPN) dengan tarif dari Master Pajak. Peringatan stok: hampir ED, berpotensi rugi, stok menipis/habis, belum ada harga jual.'],
