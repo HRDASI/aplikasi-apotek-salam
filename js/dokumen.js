@@ -1,8 +1,8 @@
 // Halaman dokumen transaksi (daftar + editor) yang dipakai ulang:
 // rencana pembelian, SP, faktur, retur, penyesuaian, opname, perpindahan, konsinyasi.
-import { sb, S, bisa, ambilRef, rute } from './inti.js?v=1.3.2';
-import { ikon } from './menu.js?v=1.3.2';
-import { esc, angka, rupiah, tanggal, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.3.2';
+import { sb, S, bisa, ambilRef, rute } from './inti.js?v=1.4.2';
+import { ikon } from './menu.js?v=1.4.2';
+import { esc, angka, rupiah, tanggal, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.4.2';
 
 export const STATUS = {
   draft: ['Draft', ''], posting: ['Diposting', 'hijau'], batal: ['Batal', 'merah'], diproses: ['Diproses', 'teal'],
