@@ -52,9 +52,9 @@ export const MENU = [
     ['kasir', 'Kasir', 1], ['pesanan', 'Pesanan Penjualan', 1], ['daftar', 'Daftar Penjualan', 1],
     ['retur', 'Retur Penjualan', 1], ['tertolak', 'Penjualan Tertolak', 1], ['qris', 'QRIS', 1]] },
   { k: 'pelayanan', t: 'Pelayanan Apotek', i: 'pelayanan', anak: [
-    ['penerimaan_resep', 'Penerimaan Resep', 4], ['penebusan_resep', 'Penebusan Resep', 4], ['racikan', 'Template Racikan', 4],
-    ['swamedikasi', 'Swamedikasi', 4], ['hpc', 'Home Pharmacy Care', 4], ['pio', 'Pel. Informasi Obat', 4],
-    ['meso', 'MESO', 4], ['catatan', 'Catatan Pengobatan', 4], ['konseling', 'Konseling', 4]] },
+    ['penerimaan_resep', 'Penerimaan Resep', 1], ['penebusan_resep', 'Penebusan Resep', 1, ['penjualan.kasir']], ['racikan', 'Template Racikan', 1],
+    ['swamedikasi', 'Swamedikasi', 1], ['hpc', 'Home Pharmacy Care', 1], ['pio', 'Pel. Informasi Obat', 1],
+    ['meso', 'MESO', 1], ['catatan', 'Catatan Pengobatan', 1], ['konseling', 'Konseling', 1]] },
   { k: 'persediaan', t: 'Persediaan', i: 'persediaan', anak: [
     ['produk', 'Daftar Produk', 1, ['persediaan.lihat']], ['peringatan', 'Peringatan Stok', 1, ['persediaan.lihat']], ['defecta', 'Defecta', 1], ['kedaluwarsa', 'Stok Kedaluwarsa', 1],
     ['opname', 'Stok Opname', 1], ['penyesuaian', 'Penyesuaian Stok', 1], ['perpindahan', 'Perpindahan Stok', 1]] },
@@ -84,7 +84,7 @@ export const MENU = [
   { k: 'kpi', t: 'Manajemen KPI', i: 'kpi', anak: [
     ['parameter', 'Parameter KPI', 6], ['karyawan', 'KPI Karyawan', 6], ['pencapaian', 'Pencapaian KPI', 6], ['laporan', 'Laporan KPI', 6]] },
   { k: 'pengaturan', t: 'Pengaturan', i: 'pengaturan', anak: [
-    ['profil', 'Profil Bisnis', 1], ['metode_bayar', 'Metode Pembayaran', 1], ['konfigurasi', 'Konfigurasi', 1], ['integrasi', 'Integrasi Platform Lain', 6]] },
+    ['profil', 'Profil Bisnis', 1], ['metode_bayar', 'Metode Pembayaran', 1], ['konfigurasi', 'Konfigurasi', 1], ['printer', 'Printer & Cetak', 1, ['*semua']], ['integrasi', 'Integrasi Platform Lain', 6]] },
   { k: 'outlet', t: 'Multi Outlet', i: 'outlet', anak: [['daftar', 'Daftar Outlet', 1]] },
   { k: 'master', t: 'Master Data', i: 'master', anak: [
     ['produk', 'Master Produk', 1], ['kategori', 'Master Kategori', 1], ['satuan', 'Master Satuan', 1], ['rak', 'Master Rak', 1],
