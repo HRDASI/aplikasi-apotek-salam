@@ -1,7 +1,7 @@
 // Halaman daftar + form tambah/ubah/hapus yang dipakai ulang oleh semua master data.
-import { sb, S, bisa, ambilRef, hapusCache } from './inti.js?v=1.3.2';
-import { ikon } from './menu.js?v=1.3.2';
-import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, bacaForm, unduhCSV, judulHalaman } from './ui.js?v=1.3.2';
+import { sb, S, bisa, ambilRef, hapusCache } from './inti.js?v=1.4.2';
+import { ikon } from './menu.js?v=1.4.2';
+import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, bacaForm, unduhCSV, judulHalaman } from './ui.js?v=1.4.2';
 
 /*
  cfg = {
