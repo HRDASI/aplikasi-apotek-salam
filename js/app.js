@@ -1,22 +1,19 @@
-import { sb, S, RUTE, rute, bisa, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.8.0';
-import { MENU, ITEM, ikon } from './menu.js?v=1.8.0';
-import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.8.0';
-import './halaman/home.js?v=1.8.0';
-import './halaman/master.js?v=1.8.0';
-import './halaman/pengguna.js?v=1.8.0';
-import './halaman/pengaturan.js?v=1.8.0';
-import './halaman/persediaan.js?v=1.8.0';
-import './halaman/pembelian.js?v=1.8.0';
-import './halaman/konsinyasi.js?v=1.8.0';
-import './halaman/promo.js?v=1.8.0';
-import './halaman/pelayanan.js?v=1.8.0';
-import './halaman/keuangan.js?v=1.8.0';
-import './halaman/akuntansi.js?v=1.8.0';
-import './halaman/laporan.js?v=1.8.0';
-import { muatSesi } from './halaman/penjualan.js?v=1.8.0';
-import { tampilKartuPublik } from './halaman/member.js?v=1.8.0';
-import { halamanSegera } from './halaman/home.js?v=1.8.0';
-import { hitungPeringatan } from './halaman/persediaan.js?v=1.8.0';
+import { sb, S, RUTE, rute, bisa, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.9.0';
+import { MENU, ITEM, ikon } from './menu.js?v=1.9.0';
+import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.9.0';
+import './halaman/home.js?v=1.9.0';
+import { muatSesi } from './inti.js?v=1.9.0';
+import { halamanSegera } from './halaman/home.js?v=1.9.0';
+
+// Kode tiap modul baru diunduh saat menunya dibuka, supaya aplikasi cepat terbuka.
+const muatMaster = () => import('./halaman/master.js?v=1.9.0'), muatJual = () => import('./halaman/penjualan.js?v=1.9.0'), muatLaporan = () => Promise.all([import('./halaman/laporan.js?v=1.9.0'), import('./halaman/akuntansi.js?v=1.9.0')]);
+const muatStok = () => import('./halaman/persediaan.js?v=1.9.0');
+const MODUL = {
+  master: muatMaster, kontak: muatMaster, outlet: muatMaster, pengaturan: () => Promise.all([import('./halaman/pengaturan.js?v=1.9.0'), muatMaster()]),
+  pengguna: () => Promise.all([import('./halaman/pengguna.js?v=1.9.0'), muatJual()]), penjualan: muatJual, pelayanan: () => import('./halaman/pelayanan.js?v=1.9.0'), persediaan: muatStok,
+  pembelian: () => import('./halaman/pembelian.js?v=1.9.0'), konsinyasi: () => import('./halaman/konsinyasi.js?v=1.9.0'), promo: () => Promise.all([import('./halaman/promo.js?v=1.9.0'), import('./halaman/member.js?v=1.9.0')]),
+  keuangan: () => import('./halaman/keuangan.js?v=1.9.0'), akuntansi: () => import('./halaman/akuntansi.js?v=1.9.0'), laporan: muatLaporan, analisis: muatLaporan, dashboard: muatLaporan,
+};
 
 const app = $('#app');
 const LOGO = 'img/logo-128.png';
@@ -142,7 +139,7 @@ function kerangka() {
   app.innerHTML = `<div class="kerangka">
     <aside class="sidebar">
       <div class="merek"><img src="${LOGO}" alt=""><div><b>${esc(o?.nama || 'Apotek Salam')}</b><span>${esc(o?.kode || '')}</span></div></div>
-      <div class="cari-fitur"><input placeholder="Cari fitur disini" data-cari-fitur><div class="hasil-cari sembunyi" data-hasil-cari></div></div>
+      <div class="cari-fitur"><input placeholder="Cari menu… (tekan /)" aria-label="Cari menu" data-cari-fitur><div class="hasil-cari sembunyi" data-hasil-cari></div></div>
       <nav class="menu">${htmlMenu()}</nav>
     </aside>
     <div class="tutup-sidebar" data-tutup-sidebar></div>
@@ -165,7 +162,7 @@ function kerangka() {
       <nav class="nav-bawah">
         <a href="#/home" data-nav="home">${ikon('home')}Home</a>
         <a href="#/persediaan/produk" data-nav="persediaan">${ikon('produk')}Produk</a>
-        <a href="#/penjualan/kasir" data-nav="penjualan/kasir">${ikon('kasir')}Kasir</a>
+        <a href="#/penjualan/kasir" data-nav="penjualan/kasir" class="nav-kasir"><span>${ikon('kasir')}</span>Kasir</a>
         <a href="#/penjualan/daftar" data-nav="penjualan/daftar">${ikon('penjualan')}Penjualan</a>
         <a href="#/lainnya" data-nav="lainnya">${ikon('lainnya')}Lainnya</a>
       </nav>
@@ -196,8 +193,12 @@ function kerangka() {
     hasil.classList.remove('sembunyi');
   };
   inp.onkeydown = e => { if (e.key === 'Enter') { const a = $('a[href]', hasil); if (a) location.hash = a.getAttribute('href'); inp.value = ''; hasil.classList.add('sembunyi'); } if (e.key === 'Escape') { inp.value = ''; hasil.classList.add('sembunyi'); } };
+  if (!kerangka.siap) {
+    kerangka.siap = true;
+    document.addEventListener('keydown', e => { if (e.key === '/' && !e.target.closest('input,select,textarea') && !$('.latar-modal')) { const c = $('[data-cari-fitur]'); if (c && innerWidth > 900) { e.preventDefault(); c.focus(); } } });
+    document.addEventListener('click', e => { if (!e.target.closest('.cari-fitur')) $('[data-hasil-cari]')?.classList.add('sembunyi'); if (!e.target.closest('.menu-akun')) $('.menu-akun')?.remove(); });
+  }
   hasil.onclick = () => { inp.value = ''; hasil.classList.add('sembunyi'); document.body.classList.remove('sidebar-buka'); };
-  document.addEventListener('click', e => { if (!e.target.closest('.cari-fitur')) hasil.classList.add('sembunyi'); if (!e.target.closest('.menu-akun')) $('.menu-akun')?.remove(); });
 }
 
 function menuAkun() {
@@ -237,10 +238,13 @@ async function keluar() {
 }
 
 // ================= Router =================
+let nav = 0;
 async function tampilkan() {
   const hash = location.hash.replace(/^#\/?/, '') || 'home';
+  const ini = ++nav;
   if (hash === 'keluar') return keluar();
   if (hash === 'akun') { history.replaceState(null, '', '#/lainnya'); gantiSandi(); return tampilkan(); }
+  if (hash === 'ganti-shift') { history.replaceState(null, '', '#/lainnya'); mintaShift(false); return tampilkan(); }
   const bagian = hash.split('/');
   const konten = $('[data-konten]');
   const url = '#/' + hash;
@@ -254,6 +258,20 @@ async function tampilkan() {
   if (a) { a.classList.add('aktif'); const g = a.closest('.grup'); if (g) g.classList.add('buka', 'aktif-grup'); }
   $$('.nav-bawah a').forEach(n => n.classList.toggle('aktif', hash === n.dataset.nav || hash.startsWith(n.dataset.nav + '/')));
 
+  // tandai menu & judul dulu supaya sentuhan langsung terasa, baru muat isinya
+  kepalaHp(hash, hash.startsWith('modul/') ? (MENU.find(m => m.k === bagian[1])?.t || '') : item?.judul || (hash === 'lainnya' ? 'Menu Lainnya' : 'Home'));
+  document.body.classList.add('memuat');
+  if (MODUL[bagian[0]]) {
+    try { await MODUL[bagian[0]](); }
+    catch (e) {
+      console.error(e);
+      if (ini !== nav) return;
+      document.body.classList.remove('memuat');
+      konten.innerHTML = '<div class="kartu segera"><h3>Halaman belum bisa dibuka</h3><p>Periksa koneksi internet lalu coba lagi.</p><button class="tombol" onclick="location.reload()">Muat ulang</button></div>';
+      return;
+    }
+    if (ini !== nav) return;
+  }
   let fn = RUTE[hash], param = [];
   for (let n = bagian.length - 1; !fn && n >= 1; n--) {
     const k = bagian.slice(0, n).join('/');
@@ -262,19 +280,25 @@ async function tampilkan() {
   let judul = item?.judul || 'Home';
   if (item && !bisaSalahSatu(item.akses)) fn = el => { el.innerHTML = '<div class="kartu segera"><h3>Tidak punya akses</h3><p>Menu ini tidak dibuka untuk peran Anda. Hubungi Pemilik bila perlu.</p></div>'; };
   else if (item && item.tahap > 1) fn = halamanSegera(item);
-  if (!fn) { location.hash = '#/home'; return; }
+  if (!fn) { document.body.classList.remove('memuat'); location.hash = '#/home'; return; }
 
-  konten.innerHTML = '';
+  // Wadah baru tiap halaman: tombol & data halaman lama tidak ikut aktif di halaman baru
+  const wadah = document.createElement('div');
+  wadah.className = 'halaman';
+  konten.replaceChildren(wadah);
   $$('.latar-modal').forEach(m => m.remove()); // jendela dari halaman sebelumnya ikut ditutup
   window.scrollTo(0, 0);
   try {
-    const j = await fn(konten, param);
+    const j = await fn(wadah, param);
+    if (ini !== nav) return;
     if (typeof j === 'string') judul = j;
     if (hash.startsWith('modul/')) judul = MENU.find(m => m.k === bagian[1])?.t || judul;
   } catch (e) {
     console.error(e);
-    konten.innerHTML = `<div class="pesan galat">${esc(pesanGalat(e))}</div>`;
+    if (ini !== nav) return;
+    wadah.innerHTML = `<div class="kartu segera"><h3>Data belum bisa ditampilkan</h3><p>${esc(pesanGalat(e))}</p><button class="tombol" style="margin-top:12px" onclick="location.reload()">Coba lagi</button></div>`;
   }
+  document.body.classList.remove('memuat');
   document.title = (hash === 'home' ? '' : judul + ' | ') + 'Apotek Salam';
   kepalaHp(hash, judul);
   perbaruiLonceng();
@@ -289,7 +313,7 @@ async function perbaruiLonceng() {
   if (!tampil) return;
   if (Date.now() - loncengTerakhir > 120000) {
     loncengTerakhir = Date.now();
-    try { const j = await hitungPeringatan(); loncengAngka = Object.values(j).reduce((a, b) => a + b, 0); } catch { loncengAngka = null; }
+    try { const j = await (await muatStok()).hitungPeringatan(); loncengAngka = Object.values(j).reduce((a, b) => a + b, 0); } catch { loncengAngka = null; }
   }
   $$('[data-lonceng]').forEach(a => { a.querySelector('.titik')?.remove(); if (loncengAngka) a.insertAdjacentHTML('beforeend', `<span class="titik">${loncengAngka > 99 ? '99+' : loncengAngka}</span>`); });
 }
@@ -310,7 +334,7 @@ function kepalaHp(hash, judul) {
 async function mulai() {
   // Kartu member publik: dibuka member dari link WhatsApp, tanpa login
   const kartu = location.hash.match(/^#\/kartu\/([0-9a-f]{16,})/);
-  if (kartu) return tampilKartuPublik(app, kartu[1]);
+  if (kartu) return (await import('./halaman/member.js?v=1.9.0')).tampilKartuPublik(app, kartu[1]);
   const { data: { session } } = await sb.auth.getSession();
   if (!session) {
     const { data: siap, error } = await sb.rpc('sudah_disiapkan');
@@ -336,4 +360,17 @@ window.addEventListener('hashchange', () => { if (S.pengguna) tampilkan(); });
 sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_OUT' && S.pengguna) { S.pengguna = null; layarMasuk(); } });
 mulai();
 
-if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+// ---------- Koneksi & versi baru ----------
+function pitaInfo(kelas, html) { $('.pita-info.' + kelas)?.remove(); if (html) document.body.insertAdjacentHTML('beforeend', `<div class="pita-info ${kelas}" role="status">${html}</div>`); }
+const cekSinyal = () => pitaInfo('putus', navigator.onLine ? '' : 'Tidak ada internet. Transaksi belum bisa disimpan sampai tersambung lagi.');
+addEventListener('online', () => { cekSinyal(); toast('Internet tersambung lagi', 'sukses'); });
+addEventListener('offline', cekSinyal);
+cekSinyal();
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').then(r => {
+  r.addEventListener('updatefound', () => {
+    const w = r.installing, lama = navigator.serviceWorker.controller;
+    w?.addEventListener('statechange', () => { if (w.state === 'activated' && lama) pitaInfo('baru', 'Versi baru tersedia. <button class="tombol kecil" onclick="location.reload()">Muat ulang</button> <button class="ikon-aksi" aria-label="Nanti" onclick="this.parentElement.remove()">✕</button>'); });
+  });
+  // HP yang dibiarkan terbuka tetap tahu ada versi baru
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) r.update().catch(() => {}); });
+}).catch(() => {});
