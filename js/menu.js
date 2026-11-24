@@ -85,7 +85,7 @@ export const MENU = [
   { k: 'kpi', t: 'Manajemen KPI', i: 'kpi', anak: [
     ['parameter', 'Parameter KPI', 6], ['karyawan', 'KPI Karyawan', 6], ['pencapaian', 'Pencapaian KPI', 6], ['laporan', 'Laporan KPI', 6]] },
   { k: 'pengaturan', t: 'Pengaturan', i: 'pengaturan', anak: [
-    ['profil', 'Profil Bisnis', 1], ['metode_bayar', 'Metode Pembayaran', 1], ['konfigurasi', 'Konfigurasi', 1], ['printer', 'Printer & Cetak', 1, ['*semua']], ['offline', 'Mode Offline & Sinkron', 1, ['*semua']], ['integrasi', 'Integrasi Platform Lain', 6]] },
+    ['profil', 'Profil Bisnis', 1], ['metode_bayar', 'Metode Pembayaran', 1], ['konfigurasi', 'Konfigurasi', 1], ['printer', 'Printer & Cetak', 1, ['*semua']], ['offline', 'Mode Offline & Sinkron', 1, ['*semua']], ['impor', 'Impor Data', 1], ['integrasi', 'Integrasi Platform Lain', 6]] },
   { k: 'outlet', t: 'Multi Outlet', i: 'outlet', anak: [['daftar', 'Daftar Outlet', 1]] },
   { k: 'master', t: 'Master Data', i: 'master', anak: [
     ['produk', 'Master Produk', 1], ['kategori', 'Master Kategori', 1], ['satuan', 'Master Satuan', 1], ['rak', 'Master Rak', 1],
