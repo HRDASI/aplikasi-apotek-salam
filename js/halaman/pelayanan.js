@@ -1,14 +1,14 @@
 // Pelayanan Apotek: Penerimaan Resep (foto + ketik, skrining, R/ jadi & racikan), Penebusan (ke kasir),
 // Template Racikan, Swamedikasi, Home Pharmacy Care, PIO, MESO, Catatan Pengobatan, Konseling,
 // cetak etiket (printer label) & copy resep (thermal / A5).
-import { rute, sb, S, bisa, ambilRef, KONEKSI, atauOffline } from '../inti.js?v=1.10.0';
-import * as OFF from '../offline.js?v=1.10.0';
-import { ikon } from '../menu.js?v=1.10.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.10.0';
-import { pasangCariProduk, infoProduk } from '../dokumen.js?v=1.10.0';
-import { halamanCrud } from '../crud.js?v=1.10.0';
-import { ambilKonfig } from './pengaturan.js?v=1.10.0';
-import { cetakStrukHtml, cetakLabelHtml, cetakKertasBiasa } from '../cetak.js?v=1.10.0';
+import { rute, sb, S, bisa, ambilRef, KONEKSI, atauOffline } from '../inti.js?v=1.11.0';
+import * as OFF from '../offline.js?v=1.11.0';
+import { ikon } from '../menu.js?v=1.11.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.11.0';
+import { pasangCariProduk, infoProduk } from '../dokumen.js?v=1.11.0';
+import { halamanCrud } from '../crud.js?v=1.11.0';
+import { ambilKonfig } from './pengaturan.js?v=1.11.0';
+import { cetakStrukHtml, cetakLabelHtml, cetakKertasBiasa } from '../cetak.js?v=1.11.0';
 
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const awalBulan = () => hariIni().slice(0, 8) + '01';
