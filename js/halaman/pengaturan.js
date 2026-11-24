@@ -1,7 +1,7 @@
 // Pengaturan: Profil Bisnis (outlet aktif) & Konfigurasi.
-import { rute, sb, S, bisa } from '../inti.js?v=1.9.0';
-import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.9.0';
-import { bacaPrinter, simpanPrinter, statusAgen, cetakStrukHtml, cetakLabelHtml } from '../cetak.js?v=1.9.0';
+import { rute, sb, S, bisa, atauOffline, KONEKSI, HOOK } from '../inti.js?v=1.10.0';
+import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.10.0';
+import { bacaPrinter, simpanPrinter, statusAgen, cetakStrukHtml, cetakLabelHtml } from '../cetak.js?v=1.10.0';
 
 rute('pengaturan/profil', async el => {
   const boleh = bisa('pengaturan.profil');
@@ -90,7 +90,7 @@ export async function ambilKonfig() {
     konfigAkhir = sb.from('konfigurasi').select('*').neq('kunci', 'qris').then(r => { if (r.error) throw r.error; return r.data; });
     konfigAkhir.catch(() => { konfigAkhir = null; });
   }
-  const data = await konfigAkhir;
+  const data = await atauOffline(async () => { const j = konfigAkhir; if (KONEKSI.putus) throw new TypeError('Failed to fetch'); return j; }, () => HOOK.offline.konfigL());
   const k = structuredClone(KONFIG_BAWAAN);
   for (const r of data || []) k[r.kunci] = { ...(k[r.kunci] || {}), ...r.nilai };
   return k;
