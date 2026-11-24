@@ -1,13 +1,14 @@
 // Pelayanan Apotek: Penerimaan Resep (foto + ketik, skrining, R/ jadi & racikan), Penebusan (ke kasir),
 // Template Racikan, Swamedikasi, Home Pharmacy Care, PIO, MESO, Catatan Pengobatan, Konseling,
 // cetak etiket (printer label) & copy resep (thermal / A5).
-import { rute, sb, S, bisa, ambilRef } from '../inti.js?v=1.9.0';
-import { ikon } from '../menu.js?v=1.9.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.9.0';
-import { pasangCariProduk, infoProduk } from '../dokumen.js?v=1.9.0';
-import { halamanCrud } from '../crud.js?v=1.9.0';
-import { ambilKonfig } from './pengaturan.js?v=1.9.0';
-import { cetakStrukHtml, cetakLabelHtml, cetakKertasBiasa } from '../cetak.js?v=1.9.0';
+import { rute, sb, S, bisa, ambilRef, KONEKSI, atauOffline } from '../inti.js?v=1.10.0';
+import * as OFF from '../offline.js?v=1.10.0';
+import { ikon } from '../menu.js?v=1.10.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.10.0';
+import { pasangCariProduk, infoProduk } from '../dokumen.js?v=1.10.0';
+import { halamanCrud } from '../crud.js?v=1.10.0';
+import { ambilKonfig } from './pengaturan.js?v=1.10.0';
+import { cetakStrukHtml, cetakLabelHtml, cetakKertasBiasa } from '../cetak.js?v=1.10.0';
 
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const awalBulan = () => hariIni().slice(0, 8) + '01';
@@ -36,7 +37,7 @@ const namaItem = i => i.jenis === 'racikan' ? (i.nama_racikan || `Racikan ${i.be
 
 // ================= Cetak etiket & copy resep =================
 export async function cetakEtiket(r, itemIds) {
-  const { data: o } = await sb.from('outlet').select('nama,telp').eq('id', r.outlet_id).single();
+  const o = await atauOffline(async () => { const { data, error } = await sb.from('outlet').select('nama,telp').eq('id', r.outlet_id).single(); if (error) throw error; return data; }, OFF.outletL);
   const items = r.item.filter(i => !itemIds || itemIds.includes(i.id));
   if (!items.length) return toast('Tidak ada R/ yang dicetak etiketnya', 'galat');
   const labels = items.map(i => `<div class="kop"><span>${esc(o?.nama || 'Apotek')}</span><span>${esc(r.no)} · ${tanggal(r.tanggal)}</span></div>
@@ -64,7 +65,7 @@ function isiCopyResep(r, o) {
     <div class="c" style="margin-top:28px">( ${esc(o.apoteker || '........................')} )${o.sipa ? '<br>SIPA ' + esc(o.sipa) : ''}</div>`;
 }
 export async function cetakCopyResep(r, kertas = 'thermal') {
-  const [{ data: o }, k] = await Promise.all([sb.from('outlet').select('*').eq('id', r.outlet_id).single(), ambilKonfig()]);
+  const [o, k] = await Promise.all([atauOffline(async () => { const { data, error } = await sb.from('outlet').select('*').eq('id', r.outlet_id).single(); if (error) throw error; return data; }, OFF.outletL), ambilKonfig()]);
   const isi = isiCopyResep(r, o);
   if (kertas === 'thermal') return cetakStrukHtml(isi, 'Copy resep ' + r.no, k.struk.lebar);
   cetakKertasBiasa(isi, `.kertas{font:13px/1.5 Georgia,serif;width:128mm;margin:0 auto}.c{text-align:center}.b{font-weight:bold;letter-spacing:2px}.r{display:flex;justify-content:space-between}hr{border:0;border-top:1px solid #000;margin:6px 0}.n{margin-top:6px}`, 'Copy resep ' + r.no, 'A5');
@@ -150,7 +151,8 @@ async function editorResep(el, idParam) {
   };
   const bisaUbah = bisa('pelayanan.penerimaan_resep') && (baru || (r.status !== 'diserahkan' && r.status !== 'batal' && r.ditebus === 'belum'));
   const dokter = await ambilRef('dokter', 'id,nama,no_sip');
-  const { data: tpl } = await sb.from('template_racikan').select('*, item:template_racikan_item(*, produk:produk_id(nama,satuan:satuan_id(nama)))').eq('aktif', true).order('nama');
+  const tpl = await atauOffline(async () => { const { data, error } = await sb.from('template_racikan').select('*, item:template_racikan_item(*, produk:produk_id(nama,satuan:satuan_id(nama)))').eq('aktif', true).order('nama'); if (error) throw error; return data; }, OFF.templateL);
+  const uuid = crypto.randomUUID(), fotoLokal = [];      // foto yang diambil saat offline
   // isi info satuan untuk item jadi
   const info = await infoProduk(S_.items.filter(i => i.produk_id).map(i => i.produk_id));
   S_.items.forEach(i => { if (i.produk_id) i._opsi = info[i.produk_id]?.satuanOpsi || []; });
@@ -192,7 +194,7 @@ async function editorResep(el, idParam) {
   // pasien dari pelanggan terdaftar
   const ip = f.pasien_nama, hp = el.querySelector('[data-hasil-pas]'); let hasilP = [], jd;
   ip.addEventListener('input', () => { h.pelanggan_id = null; clearTimeout(jd); const q = ip.value.replace(/[,()%*]/g, ' ').trim(); if (q.length < 2) { hp.classList.add('sembunyi'); return; }
-    jd = setTimeout(async () => { const { data } = await sb.from('pelanggan').select('id,nama,telp,alamat,tgl_lahir,jenis_kelamin,alergi').ilike('nama', `%${q}%`).limit(8); hasilP = data || [];
+    jd = setTimeout(async () => { if (KONEKSI.putus) { hasilP = OFF.pelangganL(q); hp.innerHTML = hasilP.map((p, n) => `<a data-p="${n}"><b>${esc(p.nama)}</b> <small>${esc(p.telp || '')} · cek alergi ke pasien</small></a>`).join(''); hp.classList.toggle('sembunyi', !hasilP.length); return; } const { data } = await sb.from('pelanggan').select('id,nama,telp,alamat,tgl_lahir,jenis_kelamin,alergi').ilike('nama', `%${q}%`).limit(8); hasilP = data || [];
       hp.innerHTML = hasilP.map((p, n) => `<a data-p="${n}"><b>${esc(p.nama)}</b> <small>${esc(p.telp || '')}${p.alergi ? ' · alergi: ' + esc(p.alergi) : ''}</small></a>`).join(''); hp.classList.toggle('sembunyi', !hasilP.length); }, 250); });
   hp.addEventListener('mousedown', e => { const a = e.target.closest('[data-p]'); if (!a) return; e.preventDefault(); const p = hasilP[a.dataset.p]; h.pelanggan_id = p.id; ip.value = p.nama;
     if (p.telp) f.pasien_telp.value = p.telp; if (p.alamat) f.pasien_alamat.value = p.alamat; if (p.jenis_kelamin) f.pasien_jk.value = p.jenis_kelamin;
@@ -203,6 +205,7 @@ async function editorResep(el, idParam) {
   // ----- foto -----
   const wFoto = el.querySelector('[data-foto]');
   async function gambarFoto() {
+    if (fotoLokal.length) { wFoto.innerHTML = fotoLokal.map((b, n) => `<div class="foto"><img src="${URL.createObjectURL(b)}" alt="Foto resep ${n + 1}"></div>`).join('') + '<p style="color:var(--teks-2);margin:0">Diunggah saat online.</p>'; return; }
     if (!S_.foto.length) { wFoto.innerHTML = '<p style="color:var(--teks-2);margin:0">Belum ada foto.</p>'; return; }
     const { data } = await sb.storage.from('resep').createSignedUrls(S_.foto, 3600);
     wFoto.innerHTML = (data || []).map((u, n) => `<div class="foto"><a href="${u.signedUrl}" target="_blank"><img src="${u.signedUrl}" alt="Foto resep ${n + 1}"></a>${bisaUbah ? `<button class="ikon-aksi hapus" data-hapus-foto="${n}" title="Hapus foto">${ikon('tutup')}</button>` : ''}</div>`).join('');
@@ -211,6 +214,7 @@ async function editorResep(el, idParam) {
     for (const file of e.target.files) {
       try {
         const blob = await kecilkan(file, 1600);
+        if (baru && KONEKSI.putus && OFF.siap()) { fotoLokal.push(blob); continue; }
         const path = `${S.pengguna.outlet_id}/${hariIni().slice(0, 7)}/${crypto.randomUUID()}.jpg`;
         const { error } = await sb.storage.from('resep').upload(path, blob, { contentType: 'image/jpeg' });
         if (error) throw error;
@@ -300,11 +304,19 @@ async function editorResep(el, idParam) {
   const simpan = async () => {
     const p = muatan();
     if (S_.items.some(i => i.jenis === 'racikan' && (i.komponen || []).some(k => !(k.qty > 0)))) throw new Error('Isi jumlah setiap komponen racikan.');
-    const { data, error } = await sb.rpc('simpan_resep', { p }); if (error) throw error; return data;
+    const kirim = async () => { const { data, error } = await sb.rpc('simpan_resep_u', { p: { ...p, uuid: baru ? uuid : null } }); if (error) throw error; return data; };
+    if (!baru) return kirim();
+    if (fotoLokal.length) return OFF.resepL(uuid, p, fotoLokal);   // foto belum terunggah: kirim lewat antrean
+    return atauOffline(kirim, () => OFF.resepL(uuid, p, []));
   };
   const muatUlang = id => { if (String(id) === String(idParam)) window.dispatchEvent(new HashChangeEvent('hashchange')); else location.hash = '#/pelayanan/penerimaan_resep/' + id; };
   const status = async (s, konseling = null) => { const { error } = await sb.rpc('ubah_status_resep', { p_id: r.id, p_status: s, p_konseling: konseling }); if (error) throw error; toast('Status diperbarui', 'sukses'); muatUlang(r.id); };
-  if (bisaUbah) tombol('Simpan', '', async () => { const d = await simpan(); toast('Resep ' + d.no + ' tersimpan', 'sukses'); muatUlang(d.id); });
+  if (bisaUbah) tombol('Simpan', '', async () => { const d = await simpan();
+    if (!d.offline) { toast('Resep ' + d.no + ' tersimpan', 'sukses'); muatUlang(d.id); return; }
+    OFF.sinkron();
+    el.innerHTML = judulHalaman('Resep ' + d.no, 'Pelayanan Apotek / Resep offline') + `<div class="kartu"><p class="pesan info" style="margin-top:0">Resep tersimpan di perangkat dan dikirim otomatis saat online.</p><p><b>${esc(d.pasien_nama)}</b> · ${d.item.length} R/</p><div class="judul-halaman" style="margin:0"><button class="tombol" data-e>Cetak Etiket</button><button class="tombol kedua" data-c>Copy Resep</button><a class="tombol kedua" href="#/home">Selesai</a></div></div>`;
+    el.querySelector('[data-e]').onclick = () => cetakEtiket(d).catch(x => toast(pesanGalat(x), 'galat')); el.querySelector('[data-c]').onclick = () => cetakCopyResep(d).catch(x => toast(pesanGalat(x), 'galat'));
+  });
   if (!baru && r.status !== 'batal') {
     if (bisaUbah) tombol('Batalkan Resep', 'bahaya', async () => { if (await konfirmasi('Batalkan resep', `Batalkan resep <b>${esc(r.no)}</b>?`, 'Batalkan')) await status('batal'); });
     if (r.status === 'diterima' && bisa('pelayanan.penerimaan_resep')) tombol('Tandai Disiapkan', 'kedua', async () => { if (bisaUbah) await simpan(); await status('disiapkan'); });
