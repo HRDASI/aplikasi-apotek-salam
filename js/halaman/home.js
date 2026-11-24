@@ -1,10 +1,10 @@
 // Home: sapaan, ikon modul (HP), ringkasan, aktivitas terakhir, pembaruan aplikasi.
-import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.8.0';
-import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.8.0';
-import { esc, angka, waktu } from '../ui.js?v=1.8.0';
-import { hitungPeringatan, JENIS_PERINGATAN } from './persediaan.js?v=1.8.0';
+import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.9.0';
+import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.9.0';
+import { esc, angka, rupiah, waktu } from '../ui.js?v=1.9.0';
 
 export const PEMBARUAN = [
+  ['2026-11-24', 'Tampilan baru HP & laptop, beranda berisi ringkasan hari ini, aplikasi lebih cepat dibuka, dan tanggal mulai pembukuan bisa diatur.'],
   ['2026-11-24', 'Tahap 5: Keuangan (akun kas, buku kas, utang, piutang & batas kredit), Akuntansi (jurnal otomatis, buku besar, aktiva tetap, kunci periode), Dashboard, Laporan, dan Analisis.'],
   ['2026-11-24', 'Cetak label barcode/harga produk dari Persediaan → Daftar Produk, langsung ke printer label.'],
   ['2026-11-24', 'Tahap 4: Pelayanan Apotek — resep (foto + ketik, skrining, racikan), tebus di kasir (jasa racik + %), etiket & copy resep, swamedikasi, HPC, PIO, MESO, konseling, catatan pengobatan. Agen Cetak: struk & etiket langsung ke printer.'],
@@ -17,45 +17,47 @@ export const PEMBARUAN = [
   ['2026-11-22', 'Aplikasi bisa dibuka di PC, Android, dan iPhone, dan bisa dipasang ke layar utama HP.'],
 ];
 
+const JENIS = [['ed', 'Hampir / sudah ED', 'merah'], ['rugi', 'Berpotensi rugi', 'merah'], ['menipis', 'Stok menipis', 'oranye'], ['habis', 'Stok habis', 'oranye'], ['harga', 'Belum ada harga jual', 'oranye']];
+const salam = () => { const j = new Date().getHours(); return j < 11 ? 'Selamat pagi' : j < 15 ? 'Selamat siang' : j < 18 ? 'Selamat sore' : 'Selamat malam'; };
+const tglLokal = n => { const d = new Date(Date.now() - n * 864e5); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+const CEPAT = [['penjualan.kasir', 'kasir', 'Buka Kasir'], ['pelayanan.penerimaan_resep', 'pelayanan', 'Terima Resep'], ['pembelian.faktur', 'pembelian', 'Input Faktur'], ['persediaan.produk', 'produk', 'Cek Stok'], ['persediaan.defecta', 'persediaan', 'Defecta'], ['keuangan.buku_kas', 'keuangan', 'Buku Kas'], ['dashboard.penjualan', 'dashboard', 'Dashboard']];
+
 rute('home', async el => {
-  const nama = S.pengguna.nama.split(' ')[0];
   const modul = MODUL_HP.map(k => MENU.find(m => m.k === k)).filter(g => g && ITEM.some(i => i.url.startsWith(`#/${g.k}/`) && bisaSalahSatu(i.akses)));
-  const urlPertama = g => (ITEM.find(i => i.url.startsWith(`#/${g.k}/`) && bisaSalahSatu(i.akses)) || {}).url;
+  const lihatJual = bisaSalahSatu(['laporan.penjualan', 'dashboard.umum', 'dashboard.penjualan', 'keuangan.laba']), lihatStok = bisaSalahSatu(['persediaan.peringatan', 'persediaan.lihat']);
+  const cepat = CEPAT.map(([k, i, t]) => [ITEM.find(x => x.kunci === k), i, t]).filter(([x]) => x && bisaSalahSatu(x.akses)).slice(0, 6);
+  const baru = PEMBARUAN.map(([t, x]) => `<li><time>${t.split('-').reverse().join('-')}</time><span>${esc(x)}</span></li>`);
   el.innerHTML = `
     <div class="ikon-modul hanya-hp">${modul.map(g => `<a href="#/modul/${g.k}"><span class="kotak">${ikon(g.i)}</span>${esc(LABEL_HP[g.k] || g.t)}</a>`).join('')}</div>
-    <div class="grid-2 hanya-pc" style="margin-bottom:16px">
-      <div class="sapaan"><div><h2>Halo ${esc(S.pengguna.nama)} 👋</h2>
-        <p>Selamat datang di Aplikasi Apotek Salam. Semoga apotek kita makin berkah dan terus tumbuh.</p>
-        <a class="tombol" href="#/pengguna/log">Aktivitas Saya</a></div><img src="img/lamlam.png" alt="Si Lamlam menyapa"></div>
-      <div class="kartu"><div class="kepala-kartu teal">${ikon('info')} Ringkasan Data</div><div class="grid-2" data-ringkas>Memuat...</div></div>
-    </div>
-    ${bisaSalahSatu(['persediaan.peringatan', 'persediaan.lihat']) ? `<div class="kartu" style="margin-bottom:16px"><div class="kepala-kartu oranye">${ikon('lonceng')} Perlu Perhatian
-      <a href="#/persediaan/peringatan" style="margin-left:auto">${ikon('panah')}</a></div><div class="perhatian" data-perhatian>Memuat...</div></div>` : ''}
-    <div class="kartu hanya-hp" style="margin-bottom:16px"><div class="kepala-kartu teal">Ringkasan Data</div><div class="grid-2" data-ringkas2 style="grid-template-columns:1fr 1fr"></div></div>
-    <div class="grid-2">
-      <div class="kartu"><div class="kepala-kartu oranye">Aktivitas Terakhir Akun Anda <a href="#/pengguna/log" style="margin-left:auto">${ikon('panah')}</a></div>
-        <div class="bungkus-tabel"><table class="tabel"><thead><tr><th>No.</th><th>Waktu</th><th>Aktivitas</th></tr></thead><tbody data-akt><tr><td colspan="3" class="kosong">Memuat...</td></tr></tbody></table></div></div>
-      <div class="kartu"><div class="kepala-kartu teal">Update Aplikasi</div>
-        <ul class="daftar-update">${PEMBARUAN.map(([t, x]) => `<li><time>${t.split('-').reverse().join('-')}</time><span>${esc(x)}</span></li>`).join('')}</ul>
+    <div class="sapaan hanya-pc"><div><p class="kecil">${new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p><h2>${salam()}, ${esc(S.pengguna.nama)} 👋</h2>
+      <p>Mau mulai dari mana hari ini?</p><div class="aksi-cepat">${cepat.map(([x, i, t]) => `<a href="${x.url}">${ikon(i)} ${esc(t)}</a>`).join('')}</div></div><img src="img/lamlam.png" alt="Si Lamlam menyapa" width="190" height="190"></div>
+    ${lihatJual ? '<div class="kartu blok"><div class="kepala-blok"><h3>Penjualan hari ini</h3><a href="#/dashboard/penjualan">Lihat dashboard</a></div><div class="angka-utama" data-hari><div class="kerangka-muat"><i></i></div><div class="kerangka-muat"><i></i></div><div class="kerangka-muat"><i></i></div></div></div>' : ''}
+    ${lihatStok ? `<div class="kartu blok"><div class="kepala-blok"><h3>Perlu perhatian</h3><a href="#/persediaan/peringatan">Lihat semua</a></div><div class="perhatian" data-perhatian>${JENIS.map(() => '<div class="kerangka-muat"><i></i></div>').join('')}</div></div>` : ''}
+    <div class="grid-2 blok">
+      <div class="kartu"><div class="kepala-blok"><h3>Aktivitas terakhir Anda</h3><a href="#/pengguna/log">Semua</a></div><ul class="daftar-akt" data-akt><li class="kerangka-muat"><i></i></li><li class="kerangka-muat"><i></i></li></ul></div>
+      <div class="kartu" style="margin:0"><div class="kepala-blok"><h3>Data apotek</h3></div><div class="grid-data" data-ringkas><div class="kerangka-muat"><i></i></div></div>
+        <div class="kepala-blok" style="margin-top:18px"><h3>Yang baru</h3></div><ul class="daftar-update">${baru.slice(0, 2).join('')}</ul><details><summary>Pembaruan sebelumnya</summary><ul class="daftar-update">${baru.slice(2).join('')}</ul></details>
         <p style="color:var(--teks-2);font-size:12.5px;margin:12px 0 0">Berikutnya: Tahap 6 – ${esc(NAMA_TAHAP[6])}.</p></div>
     </div>`;
+  const isi = (s, f) => { const x = el.querySelector(s); if (x) f(x); };
 
-  const kotakPerhatian = el.querySelector('[data-perhatian]');
-  if (kotakPerhatian) hitungPeringatan().then(j => {
-    kotakPerhatian.innerHTML = JENIS_PERINGATAN.map(([k, l, w]) => `<a href="#/persediaan/peringatan/${k}" class="statistik">
-      <small>${esc(l)}</small><b style="color:${j[k] ? (w === 'merah' ? 'var(--merah)' : '#c27c00') : 'var(--hijau)'}">${angka(j[k])}</b></a>`).join('');
-  }).catch(() => { kotakPerhatian.textContent = 'Gagal memuat peringatan.'; });
-
-  const { data: akt } = await sb.from('log_aktivitas').select('waktu,keterangan,aksi').eq('pengguna_id', S.pengguna.id).order('waktu', { ascending: false }).limit(5);
-  el.querySelector('[data-akt]').innerHTML = (akt || []).length ? akt.map((r, i) => `<tr><td>${i + 1}</td><td style="white-space:nowrap">${waktu(r.waktu)}</td><td>${esc(r.keterangan || r.aksi)}</td></tr>`).join('')
-    : '<tr><td colspan="3" class="kosong">Belum ada aktivitas.</td></tr>';
-
-  const hitung = async t => (await sb.from(t).select('id', { count: 'exact', head: true })).count ?? 0;
-  const [produk, pelanggan, supplier, pengguna] = await Promise.all(['produk', 'pelanggan', 'supplier', 'pengguna'].map(hitung));
-  const kotak = (l, v, url) => `<a href="${url}" class="statistik" style="text-decoration:none;color:inherit"><small>${l}</small><b>${angka(v)}</b></a>`;
-  const html = kotak('Produk', produk, '#/persediaan/produk') + kotak('Pelanggan', pelanggan, '#/kontak/pelanggan') + kotak('Supplier', supplier, '#/kontak/supplier') + kotak('Pengguna', pengguna, '#/pengguna/daftar');
-  el.querySelector('[data-ringkas]').innerHTML = html;
-  el.querySelector('[data-ringkas2]').innerHTML = html;
+  // tiap blok dimuat sendiri-sendiri; yang lambat/gagal tidak menahan yang lain
+  if (lihatJual) (async () => {
+    const ambil = async t => { const { data, error } = await sb.rpc('lap_penjualan', { p_dari: t, p_sampai: t, p_kelompok: 'total', p_outlet: null }); if (error) throw error; return data[0] || { trx: 0, netto: 0, laba: 0 }; };
+    const [h, k] = await Promise.all([ambil(tglLokal(0)), ambil(tglLokal(1))]), beda = Number(h.netto) - Number(k.netto);
+    isi('[data-hari]', x => { x.innerHTML = `<div><small>Omzet bersih</small><b>${rupiah(h.netto)}</b><span class="${beda < 0 ? 'turun' : 'naik'}">${!beda && Number(k.netto) ? 'Sama dengan kemarin' : Number(k.netto) ? (beda < 0 ? '▼ ' : '▲ ') + rupiah(Math.abs(beda)) + ' dari kemarin' : 'Kemarin belum ada penjualan'}</span></div>
+      <div><small>Transaksi</small><b>${angka(h.trx)}</b><span>kemarin ${angka(k.trx)}</span></div>
+      ${bisa('keuangan.laba') ? `<div><small>Laba kotor</small><b>${rupiah(h.laba)}</b><span>kemarin ${rupiah(k.laba)}</span></div>` : `<div><small>Rata-rata per nota</small><b>${rupiah(Number(h.trx) ? h.netto / h.trx : 0)}</b><span>&nbsp;</span></div>`}`; });
+  })().catch(() => isi('[data-hari]', x => { x.innerHTML = '<p class="kosong">Ringkasan belum bisa dimuat.</p>'; }));
+  if (lihatStok) import('./persediaan.js?v=1.9.0').then(m => m.hitungPeringatan()).then(j => isi('[data-perhatian]', x => {
+    x.innerHTML = Object.values(j).some(Boolean) ? JENIS.map(([k, l, w]) => `<a href="#/persediaan/peringatan/${k}" class="statistik ${j[k] ? w : 'aman'}"><small>${esc(l)}</small><b>${j[k] ? angka(j[k]) : '✓'}</b></a>`).join('') : '<p class="aman-semua">✓ Semua stok aman, tidak ada yang perlu ditindaklanjuti.</p>';
+  })).catch(() => isi('[data-perhatian]', x => { x.textContent = 'Peringatan belum bisa dimuat.'; }));
+  sb.from('log_aktivitas').select('waktu,keterangan,aksi').eq('pengguna_id', S.pengguna.id).order('waktu', { ascending: false }).limit(5).then(({ data }) => isi('[data-akt]', x => {
+    x.innerHTML = (data || []).length ? data.map(r => `<li><span>${esc(r.keterangan || r.aksi)}</span><time>${waktu(r.waktu)}</time></li>`).join('') : '<li class="kosong">Belum ada aktivitas.</li>';
+  }));
+  Promise.all([['produk', 'Produk', '#/persediaan/produk'], ['pelanggan', 'Pelanggan', '#/kontak/pelanggan'], ['supplier', 'Supplier', '#/kontak/supplier'], ['pengguna', 'Pengguna', '#/pengguna/daftar']].map(async ([t, l, u]) => {
+    const { count } = await sb.from(t).select('id', { count: 'exact', head: true }); return `<a href="${u}" class="statistik"><small>${l}</small><b>${angka(count ?? 0)}</b></a>`;
+  })).then(h => isi('[data-ringkas]', x => { x.innerHTML = h.join(''); })).catch(() => {});
 });
 
 // Halaman daftar submenu satu modul (untuk HP)
@@ -74,6 +76,7 @@ rute('lainnya', async el => {
   el.innerHTML = `<div class="ikon-modul" style="margin-top:-14px">${grup.map(g => `<a href="#/modul/${g.k}"><span class="kotak">${ikon(g.i)}</span>${esc(LABEL_HP[g.k] || g.t)}</a>`).join('')}</div>
     <div class="kartu" style="padding:6px 0">
       <a href="#/akun" style="display:flex;gap:12px;padding:14px 18px;text-decoration:none;color:var(--teks);border-bottom:1px solid var(--garis)">${ikon('kunci')} Ganti Kata Sandi</a>
+      <a href="#/ganti-shift" style="display:flex;gap:12px;padding:14px 18px;text-decoration:none;color:var(--teks);border-bottom:1px solid var(--garis)">${ikon('muat')} Ganti Shift <small style="margin-left:auto;color:var(--teks-2)">${esc(S.shift?.nama || '')}</small></a>
       <a href="#/keluar" style="display:flex;gap:12px;padding:14px 18px;text-decoration:none;color:var(--merah)">${ikon('keluar')} Keluar</a></div>`;
   return 'Menu Lainnya';
 });
