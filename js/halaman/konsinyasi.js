@@ -1,8 +1,8 @@
 // Konsinyasi (barang titipan): Konsinyasi Masuk, Status, Retur, Stok.
-import { rute, sb, S, bisa } from '../inti.js?v=1.8.0';
-import { ikon } from '../menu.js?v=1.8.0';
-import { esc, angka, rupiah, tanggal, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.8.0';
-import { rutekanDokumen, barisTotal, chipStatus } from '../dokumen.js?v=1.8.0';
+import { rute, sb, S, bisa, ambilSemua } from '../inti.js?v=1.9.0';
+import { ikon } from '../menu.js?v=1.9.0';
+import { esc, angka, rupiah, tanggal, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.9.0';
+import { rutekanDokumen, barisTotal, chipStatus } from '../dokumen.js?v=1.9.0';
 
 const refPenitip = { f: 'supplier_id', label: 'Penitip / Supplier', tipe: 'ref', ref: 'supplier', wajib: true, ubahBatch: true };
 const sum = (it, fn) => it.reduce((a, r) => a + fn(r), 0);
@@ -94,9 +94,8 @@ rute('konsinyasi/stok', async el => {
   el.innerHTML = judulHalaman('Stok Konsinyasi', 'Konsinyasi / Stok Konsinyasi', `<button class="tombol kedua" data-csv>${ikon('unduh')} Unduh</button>`) +
     `<div class="kartu"><div class="alat-tabel"><select class="input" style="width:auto" data-penitip><option value="">Semua penitip</option></select><span style="color:var(--teks-2)" data-info></span></div>
     <div class="bungkus-tabel"><table class="tabel kartu-hp"><thead><tr><th>Produk</th><th>Penitip</th><th>Batch</th><th>ED</th><th class="angka">Sisa</th><th class="angka">Harga Titip</th><th class="angka">Nilai</th><th>Gudang</th></tr></thead><tbody data-isi></tbody></table></div></div>`;
-  const { data, error } = await sb.from('stok_batch').select('*, produk:produk_id(nama,satuan:satuan_id(nama)), supplier:supplier_id(id,nama), gudang:gudang_id(nama)')
-    .eq('outlet_id', S.pengguna.outlet_id).eq('konsinyasi', true).gt('qty', 0).order('ed').limit(3000);
-  if (error) return toast(pesanGalat(error), 'galat');
+  const data = await ambilSemua(() => sb.from('stok_batch').select('*, produk:produk_id(nama,satuan:satuan_id(nama)), supplier:supplier_id(id,nama), gudang:gudang_id(nama)')
+    .eq('outlet_id', S.pengguna.outlet_id).eq('konsinyasi', true).gt('qty', 0).order('ed').order('id'));
   const penitip = [...new Map(data.map(d => [d.supplier?.id, d.supplier?.nama])).entries()];
   el.querySelector('[data-penitip]').innerHTML += penitip.map(([id, n]) => `<option value="${id}">${esc(n)}</option>`).join('');
   let tampil = data;
