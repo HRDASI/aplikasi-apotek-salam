@@ -1,8 +1,8 @@
 // Keuangan: Akun Kas, Buku Kas, Utang Usaha, Piutang Usaha.
-import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.8.0';
-import { ikon } from '../menu.js?v=1.8.0';
-import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.8.0';
-import { rpc, hariIni, barPeriode, tabelHtml, unduhTabel, cetakHtml } from '../tabel.js?v=1.8.0';
+import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.9.0';
+import { ikon } from '../menu.js?v=1.9.0';
+import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.9.0';
+import { rpc, hariIni, barPeriode, tabelHtml, unduhTabel, cetakHtml } from '../tabel.js?v=1.9.0';
 
 const galat = (el, e) => { el.innerHTML = `<p class="pesan galat">${esc(pesanGalat(e))}</p>`; };
 export async function akunKas() {
@@ -91,7 +91,7 @@ function halamanTagihan(piutang) {
   const K = piutang ? { judul: 'Piutang Usaha', nm: 'pelanggan', tb: 'pelanggan', kunci: 'keuangan.piutang', jenis: 'piutang', aksi: 'Terima' } : { judul: 'Utang Usaha', nm: 'supplier', tb: 'supplier', kunci: 'keuangan.utang', jenis: 'utang', aksi: 'Bayar' };
   return async el => {
     const ks = await akunKas(); let d = [], kredit = [], kons = [];
-    const kol = [{ l: piutang ? 'Pelanggan' : 'Supplier', n: r => r[K.nm] || '-' }, { l: 'No.', n: r => r.no, h: r => `${esc(r.no)}${r.ref ? `<br><small style="color:var(--teks-2)">${esc(r.ref)}</small>` : ''}` }, { l: 'Tanggal', n: r => r.tanggal, t: 'tgl' }, { l: 'Jatuh Tempo', n: r => r.jatuh_tempo, t: 'tgl' },
+    const kol = [{ l: piutang ? 'Pelanggan' : 'Supplier', n: r => r[K.nm] || '-' }, { l: 'No.', n: r => r.no, h: r => `<span>${esc(r.no)}${r.ref ? `<br><small style="color:var(--teks-2)">${esc(r.ref)}</small>` : ''}</span>` }, { l: 'Tanggal', n: r => r.tanggal, t: 'tgl' }, { l: 'Jatuh Tempo', n: r => r.jatuh_tempo, t: 'tgl' },
       { l: 'Status', n: r => umur(r)[0], h: r => `<span class="chip ${umur(r)[1]}">${umur(r)[0]}</span>` }, { l: 'Total', n: r => r.total, t: 'uang', jml: true }, { l: 'Dibayar', n: r => r.dibayar, t: 'uang', jml: true }, { l: 'Sisa', n: r => r.sisa, t: 'uang', jml: true },
       { l: '', n: () => '', h: r => `<button class="tombol kecil" data-bayar="${r.sumber}:${r.id}">${K.aksi}</button>${r.sumber === 'awal' && Number(r.dibayar) === 0 ? `<button class="ikon-aksi hapus" data-hapus-awal="${r.id}" title="Batalkan saldo awal">${ikon('hapus')}</button>` : ''}` }];
     const form = (t, jenis) => {
@@ -121,7 +121,7 @@ function halamanTagihan(piutang) {
         if (error) throw error;
         const jml = f => d.filter(f).reduce((a, x) => a + Number(x.sisa), 0), h = hariIni(), st = (l, v, w) => `<div class="statistik"><small>${l}</small><b style="color:${w && v > 0 ? w : 'inherit'}">${rupiah(v)}</b></div>`;
         el.innerHTML = judulHalaman(K.judul, 'Keuangan / ' + K.judul, `<button class="tombol kedua" data-unduh>${ikon('unduh')} Unduh</button><button class="tombol kedua" data-awal>Saldo Awal</button>`) +
-          `<div class="grid-4" style="margin-bottom:14px">${st('Total sisa', jml(() => true))}${st('⚠ Lewat jatuh tempo', jml(x => x.jatuh_tempo && x.jatuh_tempo < h), 'var(--merah)')}${piutang ? '' : st('Kredit retur', kredit.reduce((a, x) => a + Number(x.sisa), 0)) + st('Utang konsinyasi', kons.reduce((a, x) => a + Number(x.sisa), 0))}</div>
+          `<div class="kartu" style="margin-bottom:16px"><div class="grid-4">${st('Total sisa', jml(() => true))}${st('⚠ Lewat jatuh tempo', jml(x => x.jatuh_tempo && x.jatuh_tempo < h), 'var(--merah)')}${piutang ? '' : st('Kredit retur', kredit.reduce((a, x) => a + Number(x.sisa), 0)) + st('Utang konsinyasi', kons.reduce((a, x) => a + Number(x.sisa), 0))}</div></div>
           <div class="kartu">${tabelHtml(kol, d, { kosong: 'Tidak ada tagihan yang belum lunas.' })}${piutang ? '<p style="color:var(--teks-2);font-size:13px">Batas kredit per pelanggan diatur di Kontak → Pelanggan. Tanpa batas kredit, pelanggan tidak bisa membeli secara kredit.</p>' : ''}</div>
           ${kons.length ? `<div class="kartu"><h3>Barang konsinyasi yang sudah laku</h3>${tabelHtml([{ l: 'Penitip', n: r => r.supplier }, { l: 'Harus dibayar', n: r => r.sisa, t: 'uang', jml: true }, { l: '', n: () => '', h: r => r.sisa > 0 ? `<button class="tombol kecil" data-kons="${r.supplier_id}">Bayar</button>` : '' }], kons)}</div>` : ''}
           <div class="kartu"><h3>Riwayat pembayaran (100 terakhir)</h3>${tabelHtml([{ l: 'Tanggal', n: r => r.tanggal, t: 'tgl' }, { l: 'No.', n: r => r.no }, { l: 'Nama', n: r => r.supplier?.nama || r.pelanggan?.nama || '-' }, { l: 'Lewat', n: r => r.kas?.nama || 'Kredit retur ' + (r.retur?.no || '') }, { l: 'Jumlah', n: r => r.jumlah, t: 'uang' }, { l: 'Keterangan', n: r => r.keterangan },
