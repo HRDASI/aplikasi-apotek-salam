@@ -1,9 +1,9 @@
 // Pembelian: Rencana Pembelian, Pesanan Pembelian (SP), Faktur Pembelian, Retur Pembelian.
-import { sb, S } from '../inti.js?v=1.7.0';
-import { esc, angka, rupiah, tanggal, toast, pesanGalat } from '../ui.js?v=1.7.0';
-import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.7.0';
-import { ambilKonfig, MODE_PPN } from './pengaturan.js?v=1.7.0';
-import { tampilCekHarga } from './persediaan.js?v=1.7.0';
+import { sb, S } from '../inti.js?v=1.8.0';
+import { esc, angka, rupiah, tanggal, toast, pesanGalat } from '../ui.js?v=1.8.0';
+import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.8.0';
+import { ambilKonfig, MODE_PPN } from './pengaturan.js?v=1.8.0';
+import { tampilCekHarga } from './persediaan.js?v=1.8.0';
 
 const refSupplier = (wajib = true) => ({ f: 'supplier_id', label: 'Supplier / PBF', tipe: 'ref', ref: 'supplier', wajib });
 const gudangOutlet = { f: 'gudang_id', label: 'Masuk ke Gudang', tipe: 'ref', ref: 'gudang', refKolom: 'id,nama,outlet_id', saring: o => o.outlet_id === S.pengguna.outlet_id, bantu: 'Kosongkan untuk gudang utama.' };
@@ -109,6 +109,7 @@ rutekanDokumen({
     { f: 'no_faktur', label: 'No. Faktur Supplier', wajib: true }, { f: 'tanggal', label: 'Tanggal Faktur', tipe: 'tanggal', wajib: true },
     refSupplier(), gudangOutlet,
     { f: 'cara_bayar', label: 'Pembayaran', tipe: 'pilih', opsi: [['tempo', 'Tempo (utang)'], ['tunai', 'Tunai/Lunas']] },
+    { f: 'akun_kas_id', label: 'Dibayar dari', tipe: 'ref', ref: 'akun_kas', refKolom: 'id,nama,jenis,outlet_id,aktif', tampilJika: h => h.cara_bayar === 'tunai', saring: o => o.aktif && o.jenis !== 'kasir' && (!o.outlet_id || o.outlet_id === S.pengguna.outlet_id), bantu: 'Kosong = Kas Besar.' },
     { f: 'jatuh_tempo', label: 'Jatuh Tempo', tipe: 'tanggal', bantu: 'Kosongkan: otomatis dari tempo supplier.', tampilJika: h => h.cara_bayar !== 'tunai' },
     { f: 'ppn_mode', label: 'PPN', tipe: 'pilih', opsi: MODE_PPN },
     { f: 'pajak_id', label: 'Tarif PPN', tipe: 'ref', ref: 'pajak', refKolom: 'id,nama,persen', refUrut: 'persen', saring: o => Number(o.persen) > 0,
