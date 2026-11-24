@@ -1,8 +1,8 @@
 // Master Data, Kontak, Multi Outlet, Metode Pembayaran: memakai halamanCrud.
-import { rute, sb, ambilRef } from '../inti.js?v=1.9.0';
-import { halamanCrud } from '../crud.js?v=1.9.0';
-import { esc, rupiah, angka, toast } from '../ui.js?v=1.9.0';
-import { bukaKartu } from './member.js?v=1.9.0';
+import { rute, sb, ambilRef } from '../inti.js?v=1.10.0';
+import { halamanCrud } from '../crud.js?v=1.10.0';
+import { esc, rupiah, angka, toast } from '../ui.js?v=1.10.0';
+import { bukaKartu } from './member.js?v=1.10.0';
 
 export const GOLONGAN = [
   ['bebas', 'Obat Bebas'], ['bebas_terbatas', 'Obat Bebas Terbatas'], ['keras', 'Obat Keras (K)'], ['okt', 'OKT'],
