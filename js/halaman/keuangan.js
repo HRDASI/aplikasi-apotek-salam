@@ -1,8 +1,8 @@
 // Keuangan: Akun Kas, Buku Kas, Utang Usaha, Piutang Usaha.
-import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.9.0';
-import { ikon } from '../menu.js?v=1.9.0';
-import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.9.0';
-import { rpc, hariIni, barPeriode, tabelHtml, unduhTabel, cetakHtml } from '../tabel.js?v=1.9.0';
+import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.10.0';
+import { ikon } from '../menu.js?v=1.10.0';
+import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.10.0';
+import { rpc, hariIni, barPeriode, tabelHtml, unduhTabel, cetakHtml } from '../tabel.js?v=1.10.0';
 
 const galat = (el, e) => { el.innerHTML = `<p class="pesan galat">${esc(pesanGalat(e))}</p>`; };
 export async function akunKas() {
