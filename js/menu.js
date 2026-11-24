@@ -39,6 +39,7 @@ const P = {
   kasir: '<rect x="3" y="10" width="18" height="10" rx="2"/><path d="M6 10V5h8v5M16 10V7h3v3M7 14h2M11 14h2M15 14h2M7 17h10"/>',
   lainnya: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
   bantuan: '<circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 1-1 1.7v.5M12 17h0"/>',
+  barcode: '<path d="M3 5v14M7 5v14M10 5v14M14 5v14M17 5v14M21 5v14"/>',
   info: '<circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7h0"/>',
 };
 export const ikon = (n, cls = '') => `<svg class="ik ${cls}" viewBox="0 0 24 24">${P[n] || P.info}</svg>`;
