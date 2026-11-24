@@ -280,3 +280,11 @@ table.tabel { width: 100%; border-collapse: collapse; background: #fff; }
   .sidebar, .topbar, .kepala-hp, .nav-bawah, .alat-tabel, .paging, .aksi { display: none !important; }
   .utama { margin: 0; }
 }
+
+/* ---------- Grafik laporan ---------- */
+.batang-grafik { display: grid; gap: 8px; margin: 4px 0 14px; }
+.batang-grafik .brs { display: grid; grid-template-columns: minmax(80px, 34%) 1fr auto; gap: 10px; align-items: center; font-size: 13px; }
+.batang-grafik .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.batang-grafik .jalur i { display: block; height: 14px; border-radius: 0 4px 4px 0; }
+.batang-grafik .brs:hover .jalur i { opacity: .8; }
+.tip-grafik { position: absolute; background: var(--teks); color: #fff; padding: 5px 9px; border-radius: 8px; font-size: 12px; pointer-events: none; white-space: nowrap; }
