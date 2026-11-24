@@ -1,8 +1,8 @@
 // Halaman dokumen transaksi (daftar + editor) yang dipakai ulang:
 // rencana pembelian, SP, faktur, retur, penyesuaian, opname, perpindahan, konsinyasi.
-import { sb, S, bisa, ambilRef, rute } from './inti.js?v=1.6.1';
-import { ikon } from './menu.js?v=1.6.1';
-import { esc, angka, rupiah, tanggal, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.6.1';
+import { sb, S, bisa, ambilRef, rute } from './inti.js?v=1.7.0';
+import { ikon } from './menu.js?v=1.7.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.7.0';
 
 export const STATUS = {
   draft: ['Draft', ''], posting: ['Diposting', 'hijau'], batal: ['Batal', 'merah'], diproses: ['Diproses', 'teal'],
@@ -67,7 +67,7 @@ export function pasangCariProduk(input, pilih) {
       e.preventDefault(); clearTimeout(jeda);
       if (wadah.classList.contains('sembunyi') || !hasil.length) await ambil();
       // barcode persis -> langsung pilih
-      const tepat = hasil.find(p => p.barcode && p.barcode === input.value.trim()) || hasil[aktif];
+      const tepat = hasil.find(p => p.barcode && p.barcode === input.value.trim()) || hasil.find(p => p.kode && p.kode.toLowerCase() === input.value.trim().toLowerCase()) || hasil[aktif];
       if (tepat) { pilih(tepat); input.value = ''; wadah.classList.add('sembunyi'); }
     }
     if (e.key === 'Escape') { wadah.classList.add('sembunyi'); }
