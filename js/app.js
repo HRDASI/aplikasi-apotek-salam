@@ -1,18 +1,19 @@
-import { sb, S, RUTE, rute, bisa, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.9.0';
-import { MENU, ITEM, ikon } from './menu.js?v=1.9.0';
-import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.9.0';
-import './halaman/home.js?v=1.9.0';
-import { muatSesi } from './inti.js?v=1.9.0';
-import { halamanSegera } from './halaman/home.js?v=1.9.0';
+import { sb, S, RUTE, rute, bisa, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.10.0';
+import { MENU, ITEM, ikon } from './menu.js?v=1.10.0';
+import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.10.0';
+import './halaman/home.js?v=1.10.0';
+import { muatSesi, KONEKSI, cekServer, putusJaringan } from './inti.js?v=1.10.0';
+import * as OFF from './offline.js?v=1.10.0';
+import { halamanSegera } from './halaman/home.js?v=1.10.0';
 
 // Kode tiap modul baru diunduh saat menunya dibuka, supaya aplikasi cepat terbuka.
-const muatMaster = () => import('./halaman/master.js?v=1.9.0'), muatJual = () => import('./halaman/penjualan.js?v=1.9.0'), muatLaporan = () => Promise.all([import('./halaman/laporan.js?v=1.9.0'), import('./halaman/akuntansi.js?v=1.9.0')]);
-const muatStok = () => import('./halaman/persediaan.js?v=1.9.0');
+const muatMaster = () => import('./halaman/master.js?v=1.10.0'), muatJual = () => import('./halaman/penjualan.js?v=1.10.0'), muatLaporan = () => Promise.all([import('./halaman/laporan.js?v=1.10.0'), import('./halaman/akuntansi.js?v=1.10.0')]);
+const muatStok = () => import('./halaman/persediaan.js?v=1.10.0');
 const MODUL = {
-  master: muatMaster, kontak: muatMaster, outlet: muatMaster, pengaturan: () => Promise.all([import('./halaman/pengaturan.js?v=1.9.0'), muatMaster()]),
-  pengguna: () => Promise.all([import('./halaman/pengguna.js?v=1.9.0'), muatJual()]), penjualan: muatJual, pelayanan: () => import('./halaman/pelayanan.js?v=1.9.0'), persediaan: muatStok,
-  pembelian: () => import('./halaman/pembelian.js?v=1.9.0'), konsinyasi: () => import('./halaman/konsinyasi.js?v=1.9.0'), promo: () => Promise.all([import('./halaman/promo.js?v=1.9.0'), import('./halaman/member.js?v=1.9.0')]),
-  keuangan: () => import('./halaman/keuangan.js?v=1.9.0'), akuntansi: () => import('./halaman/akuntansi.js?v=1.9.0'), laporan: muatLaporan, analisis: muatLaporan, dashboard: muatLaporan,
+  master: muatMaster, kontak: muatMaster, outlet: muatMaster, pengaturan: () => Promise.all([import('./halaman/pengaturan.js?v=1.10.0'), muatMaster(), import('./halaman/offline.js?v=1.10.0')]),
+  pengguna: () => Promise.all([import('./halaman/pengguna.js?v=1.10.0'), muatJual()]), penjualan: muatJual, pelayanan: () => import('./halaman/pelayanan.js?v=1.10.0'), persediaan: muatStok,
+  pembelian: () => import('./halaman/pembelian.js?v=1.10.0'), konsinyasi: () => import('./halaman/konsinyasi.js?v=1.10.0'), promo: () => Promise.all([import('./halaman/promo.js?v=1.10.0'), import('./halaman/member.js?v=1.10.0')]),
+  keuangan: () => import('./halaman/keuangan.js?v=1.10.0'), akuntansi: () => import('./halaman/akuntansi.js?v=1.10.0'), laporan: muatLaporan, analisis: muatLaporan, dashboard: muatLaporan,
 };
 
 const app = $('#app');
@@ -38,8 +39,19 @@ function layarMasuk(pesan = '') {
     const b = $('button', f); b.disabled = true; b.textContent = 'Memeriksa...';
     const salah = m => { $('[data-pesan]', f).innerHTML = `<div class="pesan galat">${esc(m)}</div>`; b.disabled = false; b.textContent = 'Masuk'; };
     const u = f.u.value.trim().toLowerCase();
+    const shiftPilih = () => f.s.value ? { id: Number(f.s.value), nama: f.s.selectedOptions[0].text.replace(/ \(.*/, '') } : { id: null, nama: 'Tanpa shift' };
+    const masukLokal = async () => {
+      try {
+        const p = await OFF.masukOffline(u, f.p.value);
+        if (!f.s.value && !(p.peran.akses.includes('*') || p.peran.akses.includes('akses.tanpa_shift'))) return salah('Pilih shift dulu.');
+        simpanShift(p.id, shiftPilih()); wajibMasuk(true); masukSebagai(p);
+      } catch (x) { salah(x.message); }
+    };
+    if (OFF.perangkatAktif() && (KONEKSI.putus || !await cekServer(3000))) return masukLokal();
     const { data: masuk, error } = await sb.auth.signInWithPassword({ email: u.includes('@') ? u : u + DOMAIN_AKUN, password: f.p.value });
-    if (error) return salah(pesanGalat(error));
+    if (error) return putusJaringan(error) && OFF.perangkatAktif() ? masukLokal() : salah(pesanGalat(error));
+    wajibMasuk(false);
+    sandiMasuk = f.p.value;
     const shiftId = f.s.value ? Number(f.s.value) : null;
     const { data: namaShift, error: e2 } = await sb.rpc('catat_masuk', { p_shift_id: shiftId });
     if (e2) { await sb.auth.signOut(); return salah(pesanGalat(e2)); }
@@ -48,10 +60,16 @@ function layarMasuk(pesan = '') {
   };
 }
 
+// Setelah masuk/keluar offline, sesi server yang tersimpan bisa milik orang lain: wajib login ulang saat online.
+let sandiMasuk = null;
+const wajibMasuk = v => { try { v ? localStorage.setItem('apotek-wajib-masuk', '1') : localStorage.removeItem('apotek-wajib-masuk'); } catch { /* */ } };
+const perluMasuk = () => { try { return !!localStorage.getItem('apotek-wajib-masuk'); } catch { return false; } };
+
 // ================= Shift =================
 let daftarShift = null;
 async function ambilShift() {
-  if (!daftarShift) { const { data, error } = await sb.rpc('daftar_shift'); if (error) throw error; daftarShift = data || []; }
+  if (KONEKSI.putus) return (await OFF.bacaSalinan())?.shift || [];
+  if (!daftarShift) { const { data, error } = await sb.rpc('daftar_shift'); if (error) { const l = (await OFF.bacaSalinan())?.shift; if (l) return l; throw error; } daftarShift = data || []; }
   return daftarShift;
 }
 // Shift yang sedang berjalan menurut jam sekarang (dipilih otomatis)
@@ -232,6 +250,8 @@ function gantiSandi() {
 }
 
 async function keluar() {
+  OFF.tandaiAktif(null);
+  if (KONEKSI.putus) { wajibMasuk(true); S.pengguna = null; location.hash = ''; return layarMasuk('Anda keluar saat offline.'); }
   await sb.auth.signOut();
   location.hash = '';
   layarMasuk();
@@ -273,6 +293,11 @@ async function tampilkan() {
     if (ini !== nav) return;
   }
   let fn = RUTE[hash], param = [];
+  if (KONEKSI.putus) {
+    const OFFLINE = ['home', 'lainnya', 'modul', 'penjualan/kasir', 'pelayanan/penerimaan_resep/baru', 'pengaturan/printer', 'pengaturan/offline'];
+    if (hash === 'home') fn = async el => (await import('./halaman/offline.js?v=1.10.0')).berandaOffline(el);
+    else if (!OFFLINE.some(x => hash === x || (x === 'modul' && hash.startsWith('modul/')))) fn = el => { el.innerHTML = `<div class="kartu segera"><h3>Menu ini perlu internet</h3><p>Saat offline yang bisa dipakai: Kasir, Resep Baru, cek harga & stok.</p><div class="aksi-cepat" style="justify-content:center;margin-top:14px"><a href="#/penjualan/kasir">Kasir</a><a href="#/pelayanan/penerimaan_resep/baru">Resep Baru</a><a href="#/home">Beranda offline</a></div></div>`; };
+  }
   for (let n = bagian.length - 1; !fn && n >= 1; n--) {
     const k = bagian.slice(0, n).join('/');
     if (RUTE[k]) { fn = RUTE[k]; param = bagian.slice(n); }
@@ -301,7 +326,8 @@ async function tampilkan() {
   document.body.classList.remove('memuat');
   document.title = (hash === 'home' ? '' : judul + ' | ') + 'Apotek Salam';
   kepalaHp(hash, judul);
-  perbaruiLonceng();
+  pilStatus();
+  if (!KONEKSI.putus) perbaruiLonceng();
 }
 
 // Angka di ikon lonceng = jumlah semua peringatan stok (diperbarui paling sering tiap 2 menit)
@@ -334,7 +360,15 @@ function kepalaHp(hash, judul) {
 async function mulai() {
   // Kartu member publik: dibuka member dari link WhatsApp, tanpa login
   const kartu = location.hash.match(/^#\/kartu\/([0-9a-f]{16,})/);
-  if (kartu) return (await import('./halaman/member.js?v=1.9.0')).tampilKartuPublik(app, kartu[1]);
+  if (kartu) return (await import('./halaman/member.js?v=1.10.0')).tampilKartuPublik(app, kartu[1]);
+  if (OFF.perangkat()) {
+    await OFF.bacaSalinan();
+    if (OFF.perangkatAktif() && !await cekServer(3500)) {
+      const p = await OFF.lanjutOffline();
+      return p ? masukSebagai(p) : layarMasuk();
+    }
+  }
+  if (perluMasuk()) { await sb.auth.signOut({ scope: 'local' }); wajibMasuk(false); }
   const { data: { session } } = await sb.auth.getSession();
   if (!session) {
     const { data: siap, error } = await sb.rpc('sudah_disiapkan');
@@ -342,14 +376,28 @@ async function mulai() {
     return siap ? layarMasuk() : layarSiapkan();
   }
   const { data: p, error } = await sb.from('pengguna').select('*, peran:peran_id(*), outlet:outlet_id(*)').eq('id', session.user.id).maybeSingle();
+  if (error && putusJaringan(error)) {
+    const l = await OFF.lanjutOffline();
+    if (l && l.id === session.user.id) return masukSebagai(l);
+    app.innerHTML = `<div class="layar-masuk"><div class="kotak-masuk"><div class="pesan galat">${esc(pesanGalat(error))}</div><button class="tombol penuh" onclick="location.reload()">Coba lagi</button></div></div>`;
+    return;
+  }
   if (error || !p) { await sb.auth.signOut(); return layarMasuk(error ? pesanGalat(error) : 'Akun tidak terdaftar sebagai pengguna apotek.'); }
   if (!p.aktif) { await sb.auth.signOut(); return layarMasuk('Akun Anda dinonaktifkan. Hubungi Pemilik.'); }
+  OFF.tandaiAktif(p.username);
+  await masukSebagai(p);
+  OFF.periksaPerangkat().then(() => OFF.simpanAkun(p, sandiMasuk)).catch(() => {}).finally(() => { sandiMasuk = null; });
+}
+
+async function masukSebagai(p) {
   S.pengguna = p; S.peran = p.peran; S.outlet = p.outlet; S.akses = p.peran.akses || [];
   S.shift = bacaShift(p.id);
   S.sesi = undefined;
   kerangka();
   muatSesi().catch(() => {});
   tampilkan();
+  OFF.mulaiOffline().catch(() => {});
+  pilStatus();
   if (!S.shift) {
     if (bisa('akses.tanpa_shift')) { S.shift = { id: null, nama: 'Tanpa shift' }; $$('[data-info-shift]').forEach(x => x.textContent = S.shift.nama); }
     else await mintaShift(true);
@@ -362,8 +410,26 @@ mulai();
 
 // ---------- Koneksi & versi baru ----------
 function pitaInfo(kelas, html) { $('.pita-info.' + kelas)?.remove(); if (html) document.body.insertAdjacentHTML('beforeend', `<div class="pita-info ${kelas}" role="status">${html}</div>`); }
-const cekSinyal = () => pitaInfo('putus', navigator.onLine ? '' : 'Tidak ada internet. Transaksi belum bisa disimpan sampai tersambung lagi.');
-addEventListener('online', () => { cekSinyal(); toast('Internet tersambung lagi', 'sukses'); });
+const cekSinyal = () => pitaInfo('putus', navigator.onLine || OFF.perangkatAktif() ? '' : 'Tidak ada internet. Transaksi belum bisa disimpan sampai tersambung lagi.');
+// Pil status di kepala halaman: offline / jumlah antre / sedang mengirim
+async function pilStatus() {
+  if (!S.pengguna) return;
+  const n = OFF.perangkat() ? (await OFF.daftarAntre()).length : 0, wajib = !KONEKSI.putus && perluMasuk();
+  const teks = KONEKSI.putus ? 'Offline' + (n ? ' · ' + n + ' antre' : '') : OFF.sinkronJalan() ? 'Mengirim…' : n ? n + ' belum terkirim' : '';
+  $$('.pil-status').forEach(x => x.remove());
+  if (teks) $$('.topbar .kanan, .kepala-hp .judul-hp, .kepala-hp .baris').forEach(k => k.insertAdjacentHTML(k.classList.contains('kanan') ? 'afterbegin' : 'beforeend', `<a class="pil-status ${KONEKSI.putus ? 'putus' : ''}" href="#/pengaturan/offline">${teks}</a>`));
+  pitaInfo('wajib', wajib ? 'Internet kembali. Masuk ulang untuk mengirim data offline. <button class="tombol kecil" onclick="location.reload()">Masuk</button>' : '');
+}
+OFF.saatBerubah(() => pilStatus());
+let putusLama = false;
+KONEKSI.saatBerubah.push(() => {
+  if (!S.pengguna || putusLama === KONEKSI.putus) return; putusLama = KONEKSI.putus;
+  toast(KONEKSI.putus ? 'Internet putus. Pindah ke mode offline.' : 'Internet tersambung lagi.', KONEKSI.putus ? '' : 'sukses');
+  muatSesi().catch(() => {});
+  // kasir & resep yang sedang diisi tidak diganggu
+  if (!/penjualan\/kasir|penerimaan_resep/.test(location.hash) && !$('.latar-modal')) tampilkan();
+});
+addEventListener('online', cekSinyal);
 addEventListener('offline', cekSinyal);
 cekSinyal();
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').then(r => {
