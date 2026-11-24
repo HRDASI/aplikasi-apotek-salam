@@ -1,7 +1,7 @@
 // Manajemen Pengguna: daftar pengguna, peran & hak akses, log aktivitas.
-import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.8.0';
-import { MENU, ikon } from '../menu.js?v=1.8.0';
-import { esc, waktu, toast, modal, konfirmasi, pesanGalat, bacaForm, judulHalaman, unduhCSV } from '../ui.js?v=1.8.0';
+import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.9.0';
+import { MENU, ikon } from '../menu.js?v=1.9.0';
+import { esc, waktu, toast, modal, konfirmasi, pesanGalat, bacaForm, judulHalaman, unduhCSV } from '../ui.js?v=1.9.0';
 
 // ---------- Daftar Pengguna ----------
 rute('pengguna/daftar', async el => {
@@ -179,7 +179,7 @@ rute('pengguna/log', async el => {
     if (error) return toast(pesanGalat(error), 'galat');
     data = d;
     el.querySelector('[data-isi]').innerHTML = d.length ? d.map(r => `<tr><td data-label="Waktu">${waktu(r.waktu)}</td><td data-label="Pengguna">${esc(r.pengguna_nama || '')}</td>
-      <td data-label="Aktivitas">${esc(r.keterangan || r.aksi)}</td><td data-label="Modul"><span class="chip">${esc(r.modul.replace(/_/g, ' '))}</span></td></tr>`).join('')
+      <td data-label="Aktivitas">${esc(r.keterangan || r.aksi)}</td><td data-label="Modul"><span class="chip">${esc((r.modul || '').replace(/_/g, ' '))}</span></td></tr>`).join('')
       : '<tr><td class="kosong" colspan="4">Tidak ada aktivitas pada rentang ini.</td></tr>';
   }
   el.addEventListener('change', muat);
