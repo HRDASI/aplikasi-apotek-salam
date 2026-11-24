@@ -1,7 +1,7 @@
 // Pengaturan: Profil Bisnis (outlet aktif) & Konfigurasi.
-import { rute, sb, S, bisa } from '../inti.js?v=1.8.0';
-import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.8.0';
-import { bacaPrinter, simpanPrinter, statusAgen, cetakStrukHtml, cetakLabelHtml } from '../cetak.js?v=1.8.0';
+import { rute, sb, S, bisa } from '../inti.js?v=1.9.0';
+import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.9.0';
+import { bacaPrinter, simpanPrinter, statusAgen, cetakStrukHtml, cetakLabelHtml } from '../cetak.js?v=1.9.0';
 
 rute('pengaturan/profil', async el => {
   const boleh = bisa('pengaturan.profil');
@@ -81,8 +81,16 @@ export const KONFIG_BAWAAN = {
   pembelian: { ppn_mode: 'tambah', pajak_id: null },
 };
 export const MODE_PPN = [['tambah', 'Belum termasuk PPN (PPN ditambahkan)'], ['termasuk', 'Sudah termasuk PPN'], ['tanpa', 'Tidak kena PPN']];
+let konfigAkhir = null, konfigWaktu = 0;
+export const lupakanKonfig = () => { konfigAkhir = null; };
 export async function ambilKonfig() {
-  const { data } = await sb.from('konfigurasi').select('*');
+  // gambar QRIS (besar) tidak ikut; halaman kasir mengambilnya sendiri saat perlu
+  if (!konfigAkhir || Date.now() - konfigWaktu > 30000) {
+    konfigWaktu = Date.now();
+    konfigAkhir = sb.from('konfigurasi').select('*').neq('kunci', 'qris').then(r => { if (r.error) throw r.error; return r.data; });
+    konfigAkhir.catch(() => { konfigAkhir = null; });
+  }
+  const data = await konfigAkhir;
   const k = structuredClone(KONFIG_BAWAAN);
   for (const r of data || []) k[r.kunci] = { ...(k[r.kunci] || {}), ...r.nilai };
   return k;
@@ -136,6 +144,7 @@ rute('pengaturan/konfigurasi', async el => {
     }
     e.target.disabled = true;
     const { error } = await sb.from('konfigurasi').upsert(Object.entries(baru).map(([kunci, nilai]) => ({ kunci, nilai, diubah: new Date().toISOString() })));
+    lupakanKonfig();
     e.target.disabled = false;
     if (error) return toast(pesanGalat(error), 'galat');
     toast('Konfigurasi disimpan', 'sukses');
