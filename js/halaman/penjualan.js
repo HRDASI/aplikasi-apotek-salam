@@ -1,12 +1,12 @@
 // Penjualan: Kasir (dengan sesi), Pesanan, Daftar, Retur, Tertolak, QRIS, Riwayat Sesi, cetak struk.
-import { rute, sb, S, bisa, ambilRef } from '../inti.js?v=1.7.0';
-import { ikon } from '../menu.js?v=1.7.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.7.0';
-import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.7.0';
-import { halamanCrud } from '../crud.js?v=1.7.0';
-import { ambilKonfig } from './pengaturan.js?v=1.7.0';
-import { cetakStrukHtml } from '../cetak.js?v=1.7.0';
-import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.7.0';
+import { rute, sb, S, bisa, ambilRef } from '../inti.js?v=1.8.0';
+import { ikon } from '../menu.js?v=1.8.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.8.0';
+import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.8.0';
+import { halamanCrud } from '../crud.js?v=1.8.0';
+import { ambilKonfig } from './pengaturan.js?v=1.8.0';
+import { cetakStrukHtml } from '../cetak.js?v=1.8.0';
+import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.8.0';
 
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const awalBulan = () => hariIni().slice(0, 8) + '01';
@@ -46,6 +46,7 @@ async function tampilRingkasanSesi(s, r) {
     ${per.map(([m, v]) => `<tr><td style="padding-left:24px">${esc(m)}</td><td class="angka">${rupiah(v)}</td></tr>`).join('')}
     <tr><td>Kas awal</td><td class="angka">${rupiah(r.kas_awal)}</td></tr><tr><td>Tunai masuk</td><td class="angka">${rupiah(r.tunai_masuk)}</td></tr>
     <tr><td>Kembalian</td><td class="angka">- ${rupiah(r.kembalian)}</td></tr><tr><td>Retur dibayar tunai</td><td class="angka">- ${rupiah(r.retur_tunai)}</td></tr>
+    ${Number(r.kas_lain) ? `<tr><td>Kas lain lewat laci (Buku Kas)</td><td class="angka">${rupiah(r.kas_lain)}</td></tr>` : ''}
     <tr><td><b>Uang seharusnya di laci</b></td><td class="angka"><b>${rupiah(r.kas_sistem)}</b></td></tr></tbody></table>`;
 }
 
@@ -74,7 +75,7 @@ async function cetakRekapSesi(s) {
   bukaJendelaCetak(`<div class="c"><b>REKAP SESI KASIR</b><br>${esc(s.kode)}</div><hr>
     ${baris('Kasir', s.pengguna_nama)}${s.shift_nama ? baris('Shift', s.shift_nama) : ''}${baris('Buka', waktu(s.dibuka))}${s.ditutup ? baris('Tutup', waktu(s.ditutup)) : ''}<hr>
     ${baris('Transaksi', r.transaksi)}${baris('Penjualan', rupiah(r.omzet))}${Object.entries(r.per_metode || {}).map(([k, v]) => baris('  ' + k, rupiah(v))).join('')}<hr>
-    ${baris('Kas awal', rupiah(r.kas_awal))}${baris('Tunai masuk', rupiah(r.tunai_masuk))}${baris('Kembalian', '-' + rupiah(r.kembalian))}${baris('Retur tunai', '-' + rupiah(r.retur_tunai))}
+    ${baris('Kas awal', rupiah(r.kas_awal))}${baris('Tunai masuk', rupiah(r.tunai_masuk))}${baris('Kembalian', '-' + rupiah(r.kembalian))}${baris('Retur tunai', '-' + rupiah(r.retur_tunai))}${Number(r.kas_lain) ? baris('Kas lain (laci)', rupiah(r.kas_lain)) : ''}
     ${baris('Kas sistem', rupiah(r.kas_sistem))}${s.kas_fisik !== null && s.kas_fisik !== undefined ? baris('Kas fisik', rupiah(s.kas_fisik)) + baris('Selisih', rupiah(s.selisih)) : ''}<hr>
     <div class="c">Ttd kasir<br><br><br>( ${esc(s.pengguna_nama)} )</div>`, lebar, 'Rekap ' + s.kode);
 }
