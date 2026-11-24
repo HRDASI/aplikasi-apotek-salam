@@ -1,12 +1,12 @@
 // Penjualan: Kasir (dengan sesi), Pesanan, Daftar, Retur, Tertolak, QRIS, Riwayat Sesi, cetak struk.
-import { rute, sb, S, bisa, ambilRef } from '../inti.js?v=1.6.1';
-import { ikon } from '../menu.js?v=1.6.1';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.6.1';
-import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.6.1';
-import { halamanCrud } from '../crud.js?v=1.6.1';
-import { ambilKonfig } from './pengaturan.js?v=1.6.1';
-import { cetakStrukHtml } from '../cetak.js?v=1.6.1';
-import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.6.1';
+import { rute, sb, S, bisa, ambilRef } from '../inti.js?v=1.7.0';
+import { ikon } from '../menu.js?v=1.7.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.7.0';
+import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.7.0';
+import { halamanCrud } from '../crud.js?v=1.7.0';
+import { ambilKonfig } from './pengaturan.js?v=1.7.0';
+import { cetakStrukHtml } from '../cetak.js?v=1.7.0';
+import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.7.0';
 
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const awalBulan = () => hariIni().slice(0, 8) + '01';
