@@ -1,7 +1,7 @@
 // Halaman daftar + form tambah/ubah/hapus yang dipakai ulang oleh semua master data.
-import { sb, S, bisa, ambilRef, hapusCache } from './inti.js?v=1.8.0';
-import { ikon } from './menu.js?v=1.8.0';
-import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, bacaForm, unduhCSV, judulHalaman } from './ui.js?v=1.8.0';
+import { sb, S, bisa, ambilRef, hapusCache, ambilSemua } from './inti.js?v=1.9.0';
+import { ikon } from './menu.js?v=1.9.0';
+import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, bacaForm, unduhCSV, judulHalaman } from './ui.js?v=1.9.0';
 
 /*
  cfg = {
@@ -16,8 +16,10 @@ import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, baca
    pilihSelect: 'string select tambahan'
  }
 */
+const KERANGKA = Array(6).fill('<tr class="kerangka-muat"><td colspan="99"><i></i></td></tr>').join('');
 export function halamanCrud(cfg) {
   return async el => {
+    let ke = 0;
     const bolehTulis = (cfg.kunciTulis || []).some(bisa);
     const st = { hal: 0, q: '', total: 0, filter: {} };
     const per = cfg.perHalaman || 25;
@@ -30,7 +32,7 @@ export function halamanCrud(cfg) {
       (bolehTulis ? `<button class="tombol" data-tambah>${ikon('tambah')} Tambah</button>` : '')) +
       `<div class="kartu">
         <div class="alat-tabel">
-          <div class="cari">${ikon('cari')}<input class="input" placeholder="Cari ${esc((cfg.cari || ['nama']).join(' / '))}..." data-q></div>
+          <div class="cari">${ikon('cari')}<input class="input" placeholder="Cari ${esc((cfg.cari || ['nama']).join(', ').replace(/nama_generik/g, 'zat aktif').replace(/_/g, ' '))}..." data-q></div>
           ${cfg.filterAktif ? `<select class="input" style="width:auto" data-aktif><option value="">Semua status</option><option value="1" selected>Aktif</option><option value="0">Nonaktif</option></select>` : ''}
           <span style="margin-left:auto;color:var(--teks-2)" data-info></span>
         </div>
@@ -59,7 +61,7 @@ export function halamanCrud(cfg) {
     }
 
     const tampilSel = (k, r) => {
-      if (k.tampil) return k.tampil(r);
+      if (k.tampil) { const h = k.tampil(r); return /<br/.test(h || '') ? `<span>${h}</span>` : h; }
       const v = r[k.f];
       switch (k.tipe) {
         case 'ref': return esc(r[k.f + '__ref']?.[k.refLabel || 'nama'] ?? '');
@@ -76,12 +78,15 @@ export function halamanCrud(cfg) {
 
     async function muat() {
       const isi = el.querySelector('[data-isi]');
-      isi.innerHTML = `<tr><td class="kosong" colspan="99">Memuat...</td></tr>`;
+      const ini = ++ke;
+      if (!st.data) isi.innerHTML = KERANGKA; else isi.classList.add('redup');
       const { data, error, count } = await kueri(sb.from(cfg.tabel).select(selectStr(), { count: 'exact' }))
         .range(st.hal * per, st.hal * per + per - 1);
+      if (ini !== ke) return;
+      isi.classList.remove('redup');
       if (error) { isi.innerHTML = `<tr><td class="kosong" colspan="99">${esc(pesanGalat(error))}</td></tr>`; return; }
       st.total = count || 0;
-      if (cfg.setelahMuat) await cfg.setelahMuat(data);
+      if (cfg.setelahMuat) { await cfg.setelahMuat(data); if (ini !== ke) return; }
       st.data = data;
       isi.innerHTML = data.length ? data.map((r, i) => `<tr>
           ${kolomDaftar.map(k => `<td data-label="${esc(k.label)}" class="${['angka', 'uang', 'persen'].includes(k.tipe) ? 'angka' : ''}">${tampilSel(k, r)}</td>`).join('')}
@@ -168,8 +173,8 @@ export function halamanCrud(cfg) {
         toast('Terhapus'); muat();
       } else if (t.dataset.hal) { st.hal += Number(t.dataset.hal); muat(); }
       else if (t.dataset.csv !== undefined) {
-        const { data, error } = await kueri(sb.from(cfg.tabel).select(selectStr())).limit(10000);
-        if (error) return toast(pesanGalat(error), 'galat');
+        let data; try { data = await ambilSemua(() => kueri(sb.from(cfg.tabel).select(selectStr())).order('id')); } catch (x) { return toast(pesanGalat(x), 'galat'); }
+        if (cfg.setelahMuat) for (let i = 0; i < data.length; i += 200) await cfg.setelahMuat(data.slice(i, i + 200));
         const kol = kolomDaftar.map(k => ({ label: k.label, nilai: r => k.tipe === 'ref' ? r[k.f + '__ref']?.[k.refLabel || 'nama'] : k.tipe === 'pilih' ? (k.opsi.find(o => o[0] === r[k.f]) || [, r[k.f]])[1] : k.tipe === 'bool' ? (r[k.f] ? 'Ya' : 'Tidak') : r[k.f] }));
         unduhCSV(cfg.judul.toLowerCase().replace(/\W+/g, '-'), kol, data);
       }
