@@ -1,9 +1,9 @@
 // Label barcode/harga produk. Digambar langsung pada titik printer (203 dpi) supaya garis barcode tetap tajam dan terbaca scanner.
-import { S } from './inti.js?v=1.8.0';
-import { ikon } from './menu.js?v=1.8.0';
-import { esc, rupiah, toast, modal, pesanGalat } from './ui.js?v=1.8.0';
-import { bacaPrinter, cetakLabelPng } from './cetak.js?v=1.8.0';
-import { pasangCariProduk } from './dokumen.js?v=1.8.0';
+import { S } from './inti.js?v=1.9.0';
+import { ikon } from './menu.js?v=1.9.0';
+import { esc, rupiah, toast, modal, pesanGalat } from './ui.js?v=1.9.0';
+import { bacaPrinter, cetakLabelPng } from './cetak.js?v=1.9.0';
+import { pasangCariProduk } from './dokumen.js?v=1.9.0';
 
 let janji;
 function muatJsBarcode() {
