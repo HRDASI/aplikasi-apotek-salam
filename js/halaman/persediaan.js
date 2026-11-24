@@ -1,12 +1,12 @@
 // Persediaan: Daftar Produk (dengan stok & kartu stok), Defecta, Stok Kedaluwarsa, Stok Opname, Penyesuaian, Perpindahan.
-import { rute, sb, S, bisa } from '../inti.js?v=1.8.0';
-import { ikon } from '../menu.js?v=1.8.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.8.0';
-import { halamanCrud } from '../crud.js?v=1.8.0';
-import { cfgProduk } from './master.js?v=1.8.0';
-import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.8.0';
-import { ambilKonfig } from './pengaturan.js?v=1.8.0';
-import { bukaCetakLabel } from '../label.js?v=1.8.0';
+import { rute, sb, S, bisa, ambilSemua } from '../inti.js?v=1.9.0';
+import { ikon } from '../menu.js?v=1.9.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.9.0';
+import { halamanCrud } from '../crud.js?v=1.9.0';
+import { cfgProduk } from './master.js?v=1.9.0';
+import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.9.0';
+import { ambilKonfig } from './pengaturan.js?v=1.9.0';
+import { bukaCetakLabel } from '../label.js?v=1.9.0';
 
 export const JENIS_MUTASI = {
   beli: 'Pembelian', retur_beli: 'Retur pembelian', penyesuaian: 'Penyesuaian', opname: 'Stok opname', pindah_keluar: 'Pindah keluar',
@@ -78,11 +78,10 @@ rute('persediaan/defecta', async el => {
       <span style="margin-left:auto;display:flex;gap:8px"><button class="tombol kedua" data-ke="rencana">Buat Rencana Pembelian</button><button class="tombol" data-ke="pesanan">Buat SP</button></span></div>
     <div class="bungkus-tabel"><table class="tabel kartu-hp"><thead><tr><th><input type="checkbox" data-semua></th><th>Produk</th><th class="angka">Stok</th><th class="angka">Min</th><th class="angka">Maks</th><th class="angka">Saran Pesan</th><th>Satuan</th></tr></thead>
     <tbody data-isi><tr><td class="kosong" colspan="7">Memuat...</td></tr></tbody></table></div></div>`;
-  const [{ data: p, error }, { data: st }] = await Promise.all([
-    sb.from('produk').select('id,kode,nama,stok_min,stok_maks,harga_beli,satuan_id,satuan:satuan_id(nama)').eq('aktif', true).order('nama').limit(10000),
-    sb.from('stok_produk').select('produk_id,qty').eq('outlet_id', S.pengguna.outlet_id).limit(10000),
+  const [p, st] = await Promise.all([
+    ambilSemua(() => sb.from('produk').select('id,kode,nama,stok_min,stok_maks,harga_beli,satuan_id,satuan:satuan_id(nama)').eq('aktif', true).order('nama').order('id')),
+    ambilSemua(() => sb.from('stok_produk').select('produk_id,qty').eq('outlet_id', S.pengguna.outlet_id).order('produk_id')),
   ]);
-  if (error) return toast(pesanGalat(error), 'galat');
   const stok = Object.fromEntries((st || []).map(s => [s.produk_id, Number(s.qty)]));
   let data = [];
   const gambar = () => {
@@ -126,10 +125,9 @@ rute('persediaan/kedaluwarsa', async el => {
   async function muat() {
     const hari = Number(el.querySelector('[data-batas]').value);
     const batas = new Date(new Date(hariIni()).getTime() + hari * 864e5).toISOString().slice(0, 10);
-    let q = sb.from('stok_batch').select('*, produk:produk_id(nama,kode,satuan:satuan_id(nama)), gudang:gudang_id(nama)').eq('outlet_id', S.pengguna.outlet_id).gt('qty', 0).not('ed', 'is', null).order('ed').limit(2000);
-    q = hari === 0 ? q.lt('ed', hariIni()) : q.lte('ed', batas);
-    const { data: d, error } = await q;
-    if (error) return toast(pesanGalat(error), 'galat');
+    let d;
+    try { d = await ambilSemua(() => { const q = sb.from('stok_batch').select('*, produk:produk_id(nama,kode,satuan:satuan_id(nama)), gudang:gudang_id(nama)').eq('outlet_id', S.pengguna.outlet_id).gt('qty', 0).not('ed', 'is', null).order('ed').order('id'); return hari === 0 ? q.lt('ed', hariIni()) : q.lte('ed', batas); }); }
+    catch (e) { return toast(pesanGalat(e), 'galat'); }
     data = d;
     el.querySelector('[data-info]').textContent = `${d.length} batch · nilai ${rupiah(d.reduce((a, x) => a + x.qty * x.hpp, 0))}`;
     el.querySelector('[data-isi]').innerHTML = d.length ? d.map((x, i) => { const h = selisihHari(x.ed); return `<tr><td><input type="checkbox" data-pilih="${i}"></td>
@@ -174,10 +172,18 @@ function kueriPeringatan(jenis, k, kepala = false) {
   if (jenis === 'harga') q = q.eq('tanpa_harga', true).order('nama');
   return q;
 }
-export async function hitungPeringatan() {
-  const k = await ambilKonfig();
-  const hasil = await Promise.all(JENIS_PERINGATAN.map(([j]) => kueriPeringatan(j, k, true)));
-  return Object.fromEntries(JENIS_PERINGATAN.map(([j], i) => [j, hasil[i].count || 0]));
+let peringatanAkhir = null, peringatanWaktu = 0, peringatanOutlet = null;
+export function hitungPeringatan() {          // dipakai bersama lonceng & beranda, disimpan 1 menit
+  if (peringatanAkhir && peringatanOutlet === S.pengguna.outlet_id && Date.now() - peringatanWaktu < 60000) return peringatanAkhir;
+  peringatanWaktu = Date.now(); peringatanOutlet = S.pengguna.outlet_id;
+  peringatanAkhir = (async () => {
+    const k = await ambilKonfig();
+    const hasil = await Promise.all(JENIS_PERINGATAN.map(([j]) => kueriPeringatan(j, k, true)));
+    const rusak = hasil.find(h => h.error); if (rusak) throw rusak.error;
+    return Object.fromEntries(JENIS_PERINGATAN.map(([j], i) => [j, hasil[i].count || 0]));
+  })();
+  peringatanAkhir.catch(() => { peringatanAkhir = null; });
+  return peringatanAkhir;
 }
 
 const bolehHarga = () => bisa('master.produk') || bisa('persediaan.produk');
@@ -222,8 +228,8 @@ rute('persediaan/peringatan', async (el, [tab]) => {
     harga: 'Produk aktif yang harga jualnya masih 0.',
   };
   el.querySelector('[data-ket]').textContent = ket[aktif];
-  const { data, error } = await kueriPeringatan(aktif, k).limit(2000);
-  if (error) return toast(pesanGalat(error), 'galat');
+  let data;
+  try { data = await ambilSemua(() => kueriPeringatan(aktif, k).order(aktif === 'ed' ? 'id' : 'produk_id')); } catch (e) { return toast(pesanGalat(e), 'galat'); }
   const t = el.querySelector('[data-tabel]');
   const boleh = bolehHarga();
   if (aktif === 'ed') {
@@ -275,9 +281,7 @@ rutekanDokumen({
   itemBaru: () => ({ qty_sistem: 0, qty_fisik: null }), fokus: 'qty_fisik', gabung: false,
   saatPilihBatch: (r, b) => { r.qty_sistem = Number(b?.qty || 0); r.no_batch = b ? null : r.no_batch; r.ed = b ? null : r.ed; },
   aksiItem: [{ teks: 'Muat semua stok gudang', fn: async st => {
-    let q = sb.from('stok_batch').select('id,produk_id,no_batch,ed,qty,hpp,gudang_id,konsinyasi,gudang:gudang_id(nama), produk:produk_id(nama)').eq('outlet_id', S.pengguna.outlet_id).gt('qty', 0).limit(5000);
-    if (st.header.gudang_id) q = q.eq('gudang_id', st.header.gudang_id);
-    const { data, error } = await q; if (error) throw error;
+    const data = await ambilSemua(() => { const q = sb.from('stok_batch').select('id,produk_id,no_batch,ed,qty,hpp,gudang_id,konsinyasi,gudang:gudang_id(nama), produk:produk_id(nama)').eq('outlet_id', S.pengguna.outlet_id).gt('qty', 0).order('id'); return st.header.gudang_id ? q.eq('gudang_id', st.header.gudang_id) : q; });
     const ada = new Set(st.items.map(r => r.batch_id));
     const baris = data.filter(b => !ada.has(b.id)).sort((a, b) => a.produk.nama.localeCompare(b.produk.nama)).map(b => ({ produk_id: b.produk_id, batch_id: b.id, qty_sistem: Number(b.qty), qty_fisik: null, _batch: [b] }));
     toast(`${baris.length} batch dimuat`); return baris;
