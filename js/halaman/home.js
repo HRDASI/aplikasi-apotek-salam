@@ -1,9 +1,10 @@
 // Home: sapaan, ikon modul (HP), ringkasan, aktivitas terakhir, pembaruan aplikasi.
-import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.10.0';
-import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.10.0';
-import { esc, angka, rupiah, waktu } from '../ui.js?v=1.10.0';
+import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.11.0';
+import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.11.0';
+import { esc, angka, rupiah, waktu } from '../ui.js?v=1.11.0';
 
 export const PEMBARUAN = [
+  ['2026-11-24', 'Impor Data dari Excel/CSV (produk, supplier, pelanggan, stok awal, utang, piutang) di Pengaturan → Impor Data.'],
   ['2026-11-24', 'Mode offline: kasir dan resep baru tetap jalan saat internet putus, lalu terkirim otomatis. Perangkat ditandai di Pengaturan → Mode Offline & Sinkron.'],
   ['2026-11-24', 'Tampilan baru HP & laptop, beranda berisi ringkasan hari ini, aplikasi lebih cepat dibuka, dan tanggal mulai pembukuan bisa diatur.'],
   ['2026-11-24', 'Tahap 5: Keuangan (akun kas, buku kas, utang, piutang & batas kredit), Akuntansi (jurnal otomatis, buku besar, aktiva tetap, kunci periode), Dashboard, Laporan, dan Analisis.'],
@@ -50,7 +51,7 @@ rute('home', async el => {
       <div><small>Transaksi</small><b>${angka(h.trx)}</b><span>kemarin ${angka(k.trx)}</span></div>
       ${bisa('keuangan.laba') ? `<div><small>Laba kotor</small><b>${rupiah(h.laba)}</b><span>kemarin ${rupiah(k.laba)}</span></div>` : `<div><small>Rata-rata per nota</small><b>${rupiah(Number(h.trx) ? h.netto / h.trx : 0)}</b><span>&nbsp;</span></div>`}`; });
   })().catch(() => isi('[data-hari]', x => { x.innerHTML = '<p class="kosong">Ringkasan belum bisa dimuat.</p>'; }));
-  if (lihatStok) import('./persediaan.js?v=1.10.0').then(m => m.hitungPeringatan()).then(j => isi('[data-perhatian]', x => {
+  if (lihatStok) import('./persediaan.js?v=1.11.0').then(m => m.hitungPeringatan()).then(j => isi('[data-perhatian]', x => {
     x.innerHTML = Object.values(j).some(Boolean) ? JENIS.map(([k, l, w]) => `<a href="#/persediaan/peringatan/${k}" class="statistik ${j[k] ? w : 'aman'}"><small>${esc(l)}</small><b>${j[k] ? angka(j[k]) : '✓'}</b></a>`).join('') : '<p class="aman-semua">✓ Semua stok aman, tidak ada yang perlu ditindaklanjuti.</p>';
   })).catch(() => isi('[data-perhatian]', x => { x.textContent = 'Peringatan belum bisa dimuat.'; }));
   sb.from('log_aktivitas').select('waktu,keterangan,aksi').eq('pengguna_id', S.pengguna.id).order('waktu', { ascending: false }).limit(5).then(({ data }) => isi('[data-akt]', x => {
