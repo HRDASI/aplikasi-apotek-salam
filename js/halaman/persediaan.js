@@ -1,11 +1,12 @@
 // Persediaan: Daftar Produk (dengan stok & kartu stok), Defecta, Stok Kedaluwarsa, Stok Opname, Penyesuaian, Perpindahan.
-import { rute, sb, S, bisa } from '../inti.js?v=1.6.1';
-import { ikon } from '../menu.js?v=1.6.1';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.6.1';
-import { halamanCrud } from '../crud.js?v=1.6.1';
-import { cfgProduk } from './master.js?v=1.6.1';
-import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.6.1';
-import { ambilKonfig } from './pengaturan.js?v=1.6.1';
+import { rute, sb, S, bisa } from '../inti.js?v=1.7.0';
+import { ikon } from '../menu.js?v=1.7.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.7.0';
+import { halamanCrud } from '../crud.js?v=1.7.0';
+import { cfgProduk } from './master.js?v=1.7.0';
+import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.7.0';
+import { ambilKonfig } from './pengaturan.js?v=1.7.0';
+import { bukaCetakLabel } from '../label.js?v=1.7.0';
 
 export const JENIS_MUTASI = {
   beli: 'Pembelian', retur_beli: 'Retur pembelian', penyesuaian: 'Penyesuaian', opname: 'Stok opname', pindah_keluar: 'Pindah keluar',
@@ -63,7 +64,8 @@ async function tempelStok(data) {
     return `<span class="${h < 0 ? 'chip merah' : h <= 90 ? 'chip oranye' : ''}">${tanggal(r._ed)}</span>`;
   } });
   cfg.setelahMuat = tempelStok;
-  cfg.aksiBaris = [{ ikon: 'laporan', judul: 'Kartu stok', fn: kartuStok }];
+  cfg.aksiBaris = [{ ikon: 'laporan', judul: 'Kartu stok', fn: kartuStok }, { ikon: 'barcode', judul: 'Cetak label', fn: p => bukaCetakLabel(p) }];
+  cfg.aksiAtas = [{ ikon: 'barcode', judul: 'Cetak Label', fn: () => bukaCetakLabel() }];
   cfg.kunciTulis = ['persediaan.produk', 'master.produk'];
   rute('persediaan/produk', halamanCrud(cfg));
 }
