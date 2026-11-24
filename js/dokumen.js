@@ -1,8 +1,9 @@
 // Halaman dokumen transaksi (daftar + editor) yang dipakai ulang:
 // rencana pembelian, SP, faktur, retur, penyesuaian, opname, perpindahan, konsinyasi.
-import { sb, S, bisa, ambilRef, rute } from './inti.js?v=1.9.0';
-import { ikon } from './menu.js?v=1.9.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.9.0';
+import { sb, S, bisa, ambilRef, rute, atauOffline } from './inti.js?v=1.10.0';
+import { cariProdukL, infoProdukL } from './offline.js?v=1.10.0';
+import { ikon } from './menu.js?v=1.10.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.10.0';
 
 export const STATUS = {
   draft: ['Draft', ''], posting: ['Diposting', 'hijau'], batal: ['Batal', 'merah'], diproses: ['Diproses', 'teal'],
@@ -17,11 +18,14 @@ const bulat = (v, d = 4) => Math.round(Number(v || 0) * 10 ** d) / 10 ** d;
 const cacheSatuan = {};
 export async function infoProduk(ids) {
   ids = [...new Set(ids.filter(Boolean))];
-  if (!ids.length) return {};
-  const [{ data: p }, { data: ps }] = await Promise.all([
+  return ids.length ? atauOffline(() => infoProdukServer(ids), () => infoProdukL(ids)) : {};
+}
+async function infoProdukServer(ids) {
+  const [{ data: p, error }, { data: ps, error: e2 }] = await Promise.all([
     sb.from('produk').select('id,kode,nama,golongan,satuan_id,harga_beli,harga_jual,satuan:satuan_id(nama)').in('id', ids),
     sb.from('produk_satuan').select('produk_id,satuan_id,isi,harga_jual,satuan:satuan_id(nama)').in('produk_id', ids).order('isi'),
   ]);
+  if (error || e2) throw error || e2;
   const hasil = {};
   for (const x of p || []) {
     const opsi = [{ satuan_id: x.satuan_id, nama: x.satuan?.nama || 'satuan', isi: 1 }];
@@ -32,7 +36,8 @@ export async function infoProduk(ids) {
   return hasil;
 }
 
-export async function cariProduk(q, batas = 15) {
+export async function cariProduk(q, batas = 15) { return atauOffline(() => cariProdukServer(q, batas), () => cariProdukL(q, batas)); }
+async function cariProdukServer(q, batas) {
   const c = q.replace(/[,()%*]/g, ' ').trim();
   if (!c) return [];
   const { data, error } = await sb.from('produk').select('id,kode,nama,barcode,nama_generik,harga_beli,harga_jual,satuan:satuan_id(nama)')
