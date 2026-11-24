@@ -1,9 +1,9 @@
 // Akuntansi: Daftar Akun, Buku Besar & Jurnal, Aktiva Tetap; Laporan Keuangan (laba rugi, neraca, arus kas).
-import { rute, sb, S, bisa } from '../inti.js?v=1.8.0';
-import { ikon } from '../menu.js?v=1.8.0';
-import { esc, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.8.0';
-import { rpc, hariIni, geserHari, barPeriode, tabelHtml, unduhTabel, cetakHtml } from '../tabel.js?v=1.8.0';
-import { akunKas, opsiKas } from './keuangan.js?v=1.8.0';
+import { rute, sb, S, bisa } from '../inti.js?v=1.9.0';
+import { ikon } from '../menu.js?v=1.9.0';
+import { esc, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.9.0';
+import { rpc, hariIni, geserHari, barPeriode, tabelHtml, unduhTabel, cetakHtml } from '../tabel.js?v=1.9.0';
+import { akunKas, opsiKas } from './keuangan.js?v=1.9.0';
 
 const TIPE = [['aset', 'Aset'], ['kewajiban', 'Kewajiban'], ['ekuitas', 'Ekuitas'], ['pendapatan', 'Pendapatan'], ['hpp', 'HPP'], ['beban', 'Beban']];
 const galat = (el, e) => { el.innerHTML = `<p class="pesan galat">${esc(pesanGalat(e))}</p>`; };
@@ -27,7 +27,7 @@ rute('akuntansi/akun', async el => {
 
 rute('akuntansi/buku_besar', async (el, [kodeAwal] = []) => {
   const bp = await barPeriode('bulan'), ak = await ambilAkun(); let mode = kodeAwal || 'jurnal', data = [], kol = [];
-  el.innerHTML = judulHalaman('Buku Besar', 'Akuntansi / Buku Besar', `<button class="tombol kedua" data-unduh>${ikon('unduh')} Unduh</button><button class="tombol kedua" data-cetak>Cetak</button>${bisa('akuntansi.kunci') ? '<button class="tombol kedua" data-kunci>Kunci Periode</button>' : ''}<button class="tombol" data-baru>${ikon('tambah')} Jurnal Umum</button>`) +
+  el.innerHTML = judulHalaman('Buku Besar', 'Akuntansi / Buku Besar', `<button class="tombol kedua" data-unduh>${ikon('unduh')} Unduh</button><button class="tombol kedua" data-cetak>Cetak</button>${bisa('akuntansi.kunci') ? '<button class="tombol kedua" data-kunci>Mulai & Kunci Buku</button>' : ''}<button class="tombol" data-baru>${ikon('tambah')} Jurnal Umum</button>`) +
     `<div class="kartu">${bp.html}<div class="alat-tabel"><select class="input" style="width:auto" data-mode><option value="jurnal">Jurnal (semua akun)</option><option value="saldo">Neraca saldo</option>${ak.map(a => `<option value="${a.kode}" ${a.kode === mode ? 'selected' : ''}>${a.kode} ${esc(a.nama)}</option>`).join('')}</select><span data-ket></span></div><div data-isi></div></div>`;
   const isi = el.querySelector('[data-isi]'), ket = el.querySelector('[data-ket]');
   const DK = [{ l: 'Debit', n: r => r.jml > 0 ? r.jml : 0, t: 'uang', jml: true }, { l: 'Kredit', n: r => r.jml < 0 ? -r.jml : 0, t: 'uang', jml: true }];
@@ -63,8 +63,8 @@ rute('akuntansi/buku_besar', async (el, [kodeAwal] = []) => {
   };
   const formKunci = async () => {
     const { data: k } = await sb.from('konfigurasi').select('nilai').eq('kunci', 'akuntansi').maybeSingle();
-    modal({ judul: 'Kunci Periode', ukuran: 'kecil', isi: `<p style="margin-top:0">Transaksi keuangan dan jurnal bertanggal sampai tanggal ini tidak bisa ditambah atau dibatalkan lagi. Kosongkan untuk membuka kunci.</p><form onsubmit="return false"><label class="isian"><span>Kunci sampai tanggal</span><input type="date" name="t" max="${geserHari(hariIni(), -1)}" value="${k?.nilai?.kunci_sampai || ''}"></label></form>`,
-      tombol: [{ teks: 'Batal', kelas: 'kedua' }, { teks: 'Simpan', aksi: async m => { await rpc('atur_kunci_buku', { p: m.querySelector('[name=t]').value || null }); toast('Tersimpan', 'sukses'); } }] });
+    modal({ judul: 'Mulai & Kunci Pembukuan', ukuran: 'kecil', isi: `<form onsubmit="return false"><label class="isian"><span>Mulai pembukuan</span><input type="date" name="m" max="${hariIni()}" value="${k?.nilai?.mulai || ''}"><small>Laba rugi dan kas dihitung mulai tanggal ini. Stok, utang, piutang, dan aktiva sebelumnya dibawa sebagai saldo awal. Kosongkan bila semua transaksi dihitung. Catat saldo awal kas lewat Kas Masuk ke Ekuitas Saldo Awal.</small></label><label class="isian"><span>Kunci sampai tanggal</span><input type="date" name="t" max="${geserHari(hariIni(), -1)}" value="${k?.nilai?.kunci_sampai || ''}"><small>Transaksi keuangan sampai tanggal ini tidak bisa ditambah atau dibatalkan. Kosongkan untuk membuka kunci.</small></label></form>`,
+      tombol: [{ teks: 'Batal', kelas: 'kedua' }, { teks: 'Simpan', aksi: async m => { if (!m.querySelector('form').reportValidity()) return false; await rpc('atur_buku', { p_mulai: m.querySelector('[name=m]').value || null, p_kunci: m.querySelector('[name=t]').value || null }); toast('Tersimpan', 'sukses'); muat(); } }] });
   };
   el.addEventListener('click', async e => {
     const q = s => e.target.closest(s), b = q('[data-batal]');
