@@ -1,23 +1,17 @@
 // Penjualan: Kasir (dengan sesi), Pesanan, Daftar, Retur, Tertolak, QRIS, Riwayat Sesi, cetak struk.
-import { rute, sb, S, bisa, ambilRef } from '../inti.js?v=1.8.0';
-import { ikon } from '../menu.js?v=1.8.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.8.0';
-import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.8.0';
-import { halamanCrud } from '../crud.js?v=1.8.0';
-import { ambilKonfig } from './pengaturan.js?v=1.8.0';
-import { cetakStrukHtml } from '../cetak.js?v=1.8.0';
-import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.8.0';
+import { rute, sb, S, bisa, ambilRef, ambilSemua, muatSesi } from '../inti.js?v=1.9.0';
+import { ikon } from '../menu.js?v=1.9.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.9.0';
+import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.9.0';
+import { halamanCrud } from '../crud.js?v=1.9.0';
+import { ambilKonfig } from './pengaturan.js?v=1.9.0';
+import { cetakStrukHtml } from '../cetak.js?v=1.9.0';
+import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.9.0';
 
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const awalBulan = () => hariIni().slice(0, 8) + '01';
 
 // ================= Sesi =================
-export async function muatSesi() {
-  const { data } = await sb.rpc('sesi_aktif');
-  S.sesi = data && data.id ? data : null;
-  document.querySelectorAll('[data-info-sesi]').forEach(x => x.textContent = S.sesi ? S.sesi.kode : '-');
-  return S.sesi;
-}
 
 function bukaSesiForm(el, selesai) {
   el.innerHTML = judulHalaman('Kasir', 'Penjualan / Kasir') + `<div class="kartu" style="max-width:460px;margin:20px auto">
@@ -484,20 +478,22 @@ rute('penjualan/daftar', async el => {
       <div class="bungkus-tabel"><table class="tabel kartu-hp"><thead><tr><th>No. Nota</th><th>Waktu</th><th>Kasir</th><th>Pelanggan</th><th>Bayar</th><th class="angka">Total</th><th>Status</th></tr></thead><tbody data-isi></tbody></table></div></div>`;
   const { data: kasir } = await sb.from('pengguna').select('id,nama').order('nama');
   el.querySelector('[data-kasir]').innerHTML += (kasir || []).map(k => `<option value="${k.id}">${esc(k.nama)}</option>`).join('');
-  let data = [];
+  let data = [], urutan = 0;
   async function muat() {
-    let q = sb.from('penjualan').select('*, pelanggan:pelanggan_id(nama), bayar:penjualan_bayar(jumlah, metode:metode_bayar_id(nama))').eq('outlet_id', S.pengguna.outlet_id).neq('status', 'pesanan')
-      .gte('tanggal', el.querySelector('[data-dari]').value).lte('tanggal', el.querySelector('[data-sampai]').value).order('waktu', { ascending: false }).limit(1000);
+    const buat = () => { let q = sb.from('penjualan').select('*, pelanggan:pelanggan_id(nama), bayar:penjualan_bayar(jumlah, metode:metode_bayar_id(nama))').eq('outlet_id', S.pengguna.outlet_id).neq('status', 'pesanan')
+      .gte('tanggal', el.querySelector('[data-dari]').value).lte('tanggal', el.querySelector('[data-sampai]').value).order('waktu', { ascending: false }).order('id', { ascending: false });
     const st = el.querySelector('[data-status]').value, ks = el.querySelector('[data-kasir]').value, qq = el.querySelector('[data-q]').value.replace(/[,()%*]/g, ' ').trim();
     if (st) q = q.eq('status', st);
     if (ks) q = q.eq('pengguna_id', ks);
     if (qq) q = q.or(`no.ilike.%${qq}%,no_resep.ilike.%${qq}%`);
-    const { data: d, error } = await q;
-    if (error) return toast(pesanGalat(error), 'galat');
+    return q; };
+    const ke = ++urutan; let d;
+    try { d = await ambilSemua(buat); } catch (e) { return toast(pesanGalat(e), 'galat'); }
+    if (ke !== urutan) return;
     data = d;
     const ok = d.filter(x => x.status === 'selesai');
     const omzet = ok.reduce((a, x) => a + Number(x.total), 0), laba = ok.reduce((a, x) => a + Number(x.total) - Number(x.hpp_total), 0);
-    el.querySelector('[data-ringkas]').innerHTML = [['Transaksi', angka(ok.length)], ['Penjualan', rupiah(omzet)], ['Rata-rata', rupiah(ok.length ? omzet / ok.length : 0)], ...(bisa('laporan') || bisa('dashboard') ? [['Laba kotor', rupiah(laba)]] : [])]
+    el.querySelector('[data-ringkas]').innerHTML = [['Transaksi', angka(ok.length)], ['Penjualan', rupiah(omzet)], ['Rata-rata', rupiah(ok.length ? omzet / ok.length : 0)], ...(bisa('keuangan.laba') ? [['Laba kotor', rupiah(laba)]] : [])]
       .map(([l, v]) => `<div class="statistik"><small>${l}</small><b>${v}</b></div>`).join('');
     el.querySelector('[data-isi]').innerHTML = d.length ? d.map(x => `<tr style="cursor:pointer" data-buka="${x.id}"><td data-label="No"><b>${esc(x.no)}</b></td><td data-label="Waktu">${waktu(x.waktu)}</td>
       <td data-label="Kasir">${esc(x.pengguna_nama || '')}</td><td data-label="Pelanggan">${esc(x.pelanggan?.nama || '-')}</td><td data-label="Bayar">${x.bayar.map(b => esc(b.metode?.nama || '')).join(', ')}</td>
