@@ -1,8 +1,8 @@
 // Bantuan laporan: periode, tabel + unduh + cetak, grafik satu warna dengan tooltip.
-import { sb, S, bisa, ambilRef } from './inti.js?v=1.8.0';
-import { ikon } from './menu.js?v=1.8.0';
-import { esc, angka, rupiah, tanggal, toast, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.8.0';
-import { cetakKertasBiasa } from './cetak.js?v=1.8.0';
+import { sb, S, bisa, ambilRef } from './inti.js?v=1.9.0';
+import { ikon } from './menu.js?v=1.9.0';
+import { esc, angka, rupiah, tanggal, toast, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.9.0';
+import { cetakKertasBiasa } from './cetak.js?v=1.9.0';
 
 export const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 export const geserHari = (t, n) => { const d = new Date(t + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
@@ -58,7 +58,7 @@ export function halamanLaporan({ judul, remah, periode = 'bulan', tab }) {
     el.innerHTML = judulHalaman(judul, remah, `<button class="tombol kedua" data-unduh>${ikon('unduh')} Unduh</button><button class="tombol kedua" data-cetak>Cetak</button>`) +
       `<div class="kartu">${bp.html}<div class="alat-tabel">${tab.length > 1 ? `<select class="input" style="width:auto" data-tab>${tab.map(t => `<option value="${t.k}" ${t === kini ? 'selected' : ''}>${esc(t.l)}</option>`).join('')}</select>` : ''}<span style="color:var(--teks-2)" data-ket></span></div><div data-grafik></div><div data-isi></div></div>`;
     const muat = async () => {
-      const ini = ++ke, isi = el.querySelector('[data-isi]'); isi.innerHTML = '<p class="kosong">Memuat...</p>'; el.querySelector('[data-grafik]').innerHTML = '';
+      const ini = ++ke, isi = el.querySelector('[data-isi]'); isi.innerHTML = '<div class="kerangka-muat"><i></i><i></i><i></i><i></i></div>'; el.querySelector('[data-grafik]').innerHTML = '';
       try {
         const d = await kini.muat(bp.nilai()); if (ini !== ke) return;
         data = d; kol = typeof kini.kolom === 'function' ? kini.kolom(d) : kini.kolom;
@@ -85,7 +85,7 @@ export function grafikBatang(el, data, fmt = rupiah, maks = 10) {
 }
 export function grafikGaris(el, data, fmt = rupiah) {
   if (data.length < 2) { el.innerHTML = data.length ? `<p class="kosong">${esc(data[0].label)}: <b>${esc(fmt(data[0].nilai))}</b></p>` : '<p class="kosong">Belum ada data.</p>'; return; }
-  const L = 640, T = 200, kiri = 56, bawah = 24, v = data.map(x => x.nilai), mx = Math.max(...v, 0) || 1, mn = Math.min(...v, 0), r = mx - mn;
+  const L = el.clientWidth && el.clientWidth < 500 ? 360 : 640, T = 200, kiri = 56, bawah = 24, v = data.map(x => x.nilai), mx = Math.max(...v, 0) || 1, mn = Math.min(...v, 0), r = mx - mn;
   const X = i => kiri + i * (L - kiri - 14) / (data.length - 1), Y = n => 10 + (mx - n) / r * (T - 10 - bawah);
   const garis = [0, .5, 1].map(f => mn + r * f), lbl = [0, Math.floor((data.length - 1) / 2), data.length - 1].filter((x, i, a) => a.indexOf(x) === i);
   el.innerHTML = `<svg viewBox="0 0 ${L} ${T}" style="width:100%;height:auto;display:block;touch-action:pan-y" role="img" aria-label="Grafik">
