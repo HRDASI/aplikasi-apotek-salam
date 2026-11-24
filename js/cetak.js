@@ -1,7 +1,7 @@
 // Cetak terpadu: lewat Agen Cetak (langsung ke printer, tanpa dialog) bila tersedia,
 // atau dialog cetak browser sebagai cadangan.
 // Pengaturan printer disimpan PER PERANGKAT (localStorage), karena tiap PC punya printer sendiri.
-import { toast } from './ui.js?v=1.6.1';
+import { toast } from './ui.js?v=1.7.0';
 
 export const AGEN = 'http://localhost:8766';
 const KUNCI = 'apotek-printer';
@@ -107,6 +107,24 @@ export async function cetakLabelHtml(labels, judul) {
   }
   const semua = labels.flatMap(l => Array(salinan).fill(`<div class="lbl" style="width:${lebar}mm;height:${tinggi}mm">${l}</div>`)).join('');
   dialogCetak(semua, CSS_LABEL, judul, `${lebar}mm ${tinggi}mm`);
+  return 'dialog';
+}
+
+// label produk: [{ png, salinan }] sudah berukuran stiker. Galat di tengah jalan tidak diulang agar tidak tercetak dobel.
+export async function cetakLabelPng(daftar, judul) {
+  const p = bacaPrinter(), { lebar, tinggi } = p.label;
+  if (p.mode !== 'dialog' && p.label.printer) {
+    if (await statusAgen()) {
+      for (const [i, d] of daftar.entries()) {
+        try { await kirimAgen(p.label.printer, d.png, lebar, tinggi, d.salinan); }
+        catch (e) { throw new Error(`Berhenti di produk ke-${i + 1} dari ${daftar.length}: ${e.message}`); }
+      }
+      return 'agen';
+    }
+    toast('Agen cetak tidak menyala. Memakai dialog cetak.', 'galat');
+  }
+  const html = daftar.flatMap(d => Array(d.salinan).fill(`<img src="${d.png}">`)).join('');
+  dialogCetak(html, `@page{margin:0}body{margin:0}img{display:block;width:${lebar}mm;height:${tinggi}mm;image-rendering:pixelated;break-after:page}img:last-child{break-after:auto}`, judul, `${lebar}mm ${tinggi}mm`);
   return 'dialog';
 }
 
