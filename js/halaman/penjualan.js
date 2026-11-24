@@ -1,12 +1,13 @@
 // Penjualan: Kasir (dengan sesi), Pesanan, Daftar, Retur, Tertolak, QRIS, Riwayat Sesi, cetak struk.
-import { rute, sb, S, bisa, ambilRef, ambilSemua, muatSesi } from '../inti.js?v=1.9.0';
-import { ikon } from '../menu.js?v=1.9.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.9.0';
-import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.9.0';
-import { halamanCrud } from '../crud.js?v=1.9.0';
-import { ambilKonfig } from './pengaturan.js?v=1.9.0';
-import { cetakStrukHtml } from '../cetak.js?v=1.9.0';
-import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.9.0';
+import { rute, sb, S, bisa, ambilRef, ambilSemua, muatSesi, KONEKSI, HOOK, atauOffline, putusJaringan } from '../inti.js?v=1.10.0';
+import * as OFF from '../offline.js?v=1.10.0';
+import { ikon } from '../menu.js?v=1.10.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.10.0';
+import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.10.0';
+import { halamanCrud } from '../crud.js?v=1.10.0';
+import { ambilKonfig } from './pengaturan.js?v=1.10.0';
+import { cetakStrukHtml } from '../cetak.js?v=1.10.0';
+import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.10.0';
 
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const awalBulan = () => hariIni().slice(0, 8) + '01';
@@ -23,10 +24,11 @@ function bukaSesiForm(el, selesai) {
   f.onsubmit = async e => {
     e.preventDefault();
     const b = f.querySelector('button'); b.disabled = true;
-    const { data, error } = await sb.rpc('buka_sesi', { p_kas_awal: Number(f.kas.value || 0), p_shift_id: S.shift?.id ?? null });
-    if (error) { b.disabled = false; return toast(pesanGalat(error), 'galat'); }
-    toast('Sesi ' + data.kode + ' dibuka', 'sukses');
-    await muatSesi(); selesai();
+    try {
+      const data = await atauOffline(async () => { const { data, error } = await sb.rpc('buka_sesi', { p_kas_awal: Number(f.kas.value || 0), p_shift_id: S.shift?.id ?? null }); if (error) throw error; return data; }, () => OFF.bukaSesiL(Number(f.kas.value || 0)));
+      toast('Sesi ' + data.kode + ' dibuka', 'sukses');
+      await muatSesi(); selesai();
+    } catch (x) { b.disabled = false; toast(pesanGalat(x), 'galat'); }
   };
   setTimeout(() => f.kas.select(), 50);
 }
@@ -45,8 +47,10 @@ async function tampilRingkasanSesi(s, r) {
 }
 
 async function tutupSesi(s, setelah) {
+  if (KONEKSI.putus || !s.id) return tutupSesiOffline(s, setelah);
+  if ((await OFF.daftarAntre()).length) { await OFF.sinkron(); if ((await OFF.daftarAntre()).some(a => a.jenis === 'jual' && a.data.sesi_id === s.id)) toast('Ada penjualan offline yang belum terkirim. Rekap sesi akan dihitung ulang setelah sinkron.', 'galat'); }
   const { data: r, error } = await sb.rpc('ringkasan_sesi', { p_id: s.id });
-  if (error) return toast(pesanGalat(error), 'galat');
+  if (error) return putusJaringan(error) && OFF.siap() ? tutupSesiOffline(s, setelah) : toast(pesanGalat(error), 'galat');
   modal({ judul: 'Tutup Sesi ' + s.kode, isi: await tampilRingkasanSesi(s, r) + `<form onsubmit="return false">
       <label class="isian"><span>Uang fisik di laci (hasil hitung) <i>*</i></span><input name="fisik" type="number" step="any" min="0" required></label>
       <p data-selisih style="font-weight:700;margin:-4px 0 10px"></p>
@@ -61,6 +65,14 @@ async function tutupSesi(s, setelah) {
       cetakRekapSesi(t);
       setelah?.();
     } }] });
+}
+
+async function tutupSesiOffline(s, setelah) {
+  const r = await OFF.ringkasanLokal(s);
+  modal({ judul: 'Tutup Sesi ' + s.kode, ukuran: 'kecil', isi: `<p class="pesan info" style="margin-top:0">Offline: selisih kas dihitung setelah data tersinkron.</p>
+    <div class="baris-total"><span>Penjualan offline di perangkat ini</span><span>${angka(r.transaksi)} nota</span></div><div class="baris-total"><span>Nilai</span><span>${rupiah(r.omzet)}</span></div>${Object.entries(r.per_metode).map(([k, v]) => `<div class="baris-total"><span>${esc(k)}</span><span>${rupiah(v)}</span></div>`).join('')}
+    <form onsubmit="return false" style="margin-top:12px"><label class="isian"><span>Uang fisik di laci <i>*</i></span><input name="fisik" type="number" step="any" min="0" required></label><label class="isian"><span>Catatan</span><textarea name="cat" rows="2"></textarea></label></form>`,
+    tombol: [{ teks: 'Batal', kelas: 'kedua' }, { teks: 'Tutup Sesi', kelas: 'bahaya', aksi: async m => { const f = m.querySelector('form'); if (!f.reportValidity()) return false; await OFF.tutupSesiL(s, Number(f.fisik.value), f.cat.value || null); toast('Sesi ditutup, menunggu sinkron', 'sukses'); OFF.sinkron(); setelah?.(); } }] });
 }
 
 async function cetakRekapSesi(s) {
@@ -85,6 +97,9 @@ export async function cetakStruk(id) {
     ambilKonfig(),
   ]);
   if (error) return toast(pesanGalat(error), 'galat');
+  return cetakNota(j, k);
+}
+export async function cetakNota(j, k) {
   const o = j.outlet, ks = k.struk;
   const logo = ks.tampil_logo ? `<img src="${location.href.split('#')[0].replace(/[^/]*$/, '')}img/logo-128.png" style="width:40px"><br>` : '';
   const items = j.item.sort((a, b) => a.id - b.id).map(i => `<div class="n">${esc(i.nama)}</div>${baris(`  ${angka(i.qty)} ${i.satuan_nama || ''} x ${angka(i.harga)}`, angka(i.qty * i.harga))}
@@ -96,7 +111,7 @@ export async function cetakStruk(id) {
     ${items}<hr>${baris('Subtotal', angka(j.subtotal))}${pot}${j.jasa_racik > 0 ? baris('Jasa racik', angka(j.jasa_racik)) : ''}${j.jasa_resep > 0 ? baris('Jasa resep', angka(j.jasa_resep)) : ''}${j.embalase > 0 ? baris('Embalase', angka(j.embalase)) : ''}${j.tuslah > 0 ? baris('Tuslah', angka(j.tuslah)) : ''}
     ${j.pembulatan !== 0 ? baris('Pembulatan', angka(j.pembulatan)) : ''}<div class="r" style="font-size:13px;font-weight:bold"><span>TOTAL</span><span>${angka(j.total)}</span></div>
     ${j.bayar.map(b => baris(b.metode?.nama || 'Bayar', angka(b.jumlah))).join('')}${baris('Kembali', angka(j.kembalian))}
-    ${j.stamp_didapat > 0 ? baris('Stamp member', `+${angka(j.stamp_didapat)} (total ${angka(j.pelanggan?.stamp)})`) : ''}${j.status === 'batal' ? '<div class="c"><b>*** DIBATALKAN ***</b></div>' : ''}<hr>
+    ${j.stamp_didapat > 0 ? baris('Stamp member', `+${angka(j.stamp_didapat)} (total ${angka(j.pelanggan?.stamp)})`) : ''}${j.status === 'batal' ? '<div class="c"><b>*** DIBATALKAN ***</b></div>' : ''}${j.no.startsWith('OFF-') ? '<div class="c">Nota sementara (offline)</div>' : ''}<hr>
     ${ks.tampil_apoteker && o.apoteker ? `<div class="c">Apoteker: ${esc(o.apoteker)}${o.sipa ? '<br>SIPA ' + esc(o.sipa) : ''}</div>` : ''}
     <div class="c">${esc(o.catatan_struk || '')}</div>`, await lebarStruk(), 'Struk ' + j.no);
 }
@@ -135,7 +150,7 @@ async function tampilKasir(induk) {
   induk = el.parentElement;
   const tampilKasir_ = () => tampilKasir(induk);
   const [jp, dokter, metode, k] = await Promise.all([ambilRef('jenis_pelayanan', 'id,nama,aktif'), ambilRef('dokter', 'id,nama'), ambilRef('metode_bayar', 'id,nama,jenis,aktif,urutan', 'urutan'), ambilKonfig()]);
-  const { data: bundel } = await sb.from('promo_bundel').select('id,nama,harga').eq('aktif', true).order('nama');
+  const bundel = await atauOffline(async () => { const { data, error } = await sb.from('promo_bundel').select('id,nama,harga').eq('aktif', true).order('nama'); if (error) throw error; return data; }, OFF.bundelL);
   if (!K.header.jenis_pelayanan_id) K.header.jenis_pelayanan_id = jp.find(x => x.nama === 'Umum')?.id || jp[0]?.id || null;
   el.innerHTML = `<div class="kasir">
     <div class="kartu kasir-kiri">
@@ -203,7 +218,8 @@ async function tampilKasir(induk) {
     const galat = el.querySelector('[data-galat]');
     if (!K.items.length) { K.hasil = null; galat.innerHTML = ''; gambarKeranjang(); gambarTotal(); return; }
     const n = ++urutHitung;
-    const { data, error } = await sb.rpc('hitung_penjualan', { p: muatanHitung() });
+    let data, error = null; const p = muatanHitung();
+    try { data = await atauOffline(async () => { const r = await sb.rpc('hitung_penjualan', { p }); if (r.error) throw r.error; return r.data; }, () => OFF.hitungL(p)); } catch (e) { error = e; }
     if (n !== urutHitung) return;
     if (error) { galat.innerHTML = `<div class="pesan galat">${esc(pesanGalat(error))}</div>`; K.hasil = null; }
     else { galat.innerHTML = data.perlu_resep && data.wajib_resep && !K.header.dokter_id && !K.header.no_resep ? '<div class="pesan peringatan">Ada obat keras: isi dokter atau nomor resep.</div>' : ''; K.hasil = data; }
@@ -263,8 +279,7 @@ async function tampilKasir(induk) {
     const q = ip.value.replace(/[,()%*]/g, ' ').trim();
     if (!q) { hp.classList.add('sembunyi'); return; }
     jedaP = setTimeout(async () => {
-      const { data } = await sb.from('pelanggan').select('id,nama,telp,kode,member,stamp,kategori:kategori_pelanggan_id(nama,diskon_persen)').eq('aktif', true).or(`nama.ilike.%${q}%,telp.ilike.%${q}%,kode.ilike.%${q}%`).limit(10);
-      hasilP = data || [];
+      hasilP = await atauOffline(async () => { const { data, error } = await sb.from('pelanggan').select('id,nama,telp,kode,member,stamp,kategori:kategori_pelanggan_id(nama,diskon_persen)').eq('aktif', true).or(`nama.ilike.%${q}%,telp.ilike.%${q}%,kode.ilike.%${q}%`).limit(10); if (error) throw error; return data; }, () => OFF.pelangganL(q)).catch(() => []);
       hp.innerHTML = hasilP.length ? hasilP.map((p, i) => `<a data-p="${i}"><b>${esc(p.nama)}</b> <small>${esc(p.kode || '')} ${esc(p.telp || '')}${p.member ? ' · member, stamp ' + angka(p.stamp) : ''}${p.kategori ? ' · ' + esc(p.kategori.nama) : ''}</small></a>`).join('') : '<a>Tidak ditemukan</a>';
       hp.classList.remove('sembunyi');
     }, 250);
@@ -278,13 +293,15 @@ async function tampilKasir(induk) {
     if (!K.hasil) return toast('Periksa pesan di kanan dulu', 'galat');
     const h = K.hasil;
     if (h.perlu_resep && h.wajib_resep && !K.header.dokter_id && !K.header.no_resep) return toast('Ada obat keras: isi dokter atau nomor resep.', 'galat');
-    const aktif = metode.filter(m => m.aktif !== false);
+    const uuid = crypto.randomUUID();       // kode unik: menekan Bayar dua kali / internet putus tidak membuat nota dobel
+    let pernahKirim = false;
+    const aktif = metode.filter(m => m.aktif !== false && (!KONEKSI.putus || OFF.METODE_OFFLINE.includes(m.jenis)));
     const tunaiId = aktif.find(m => m.jenis === 'tunai')?.id ?? aktif[0]?.id;
-    const qris = (await sb.from('konfigurasi').select('nilai').eq('kunci', 'qris').maybeSingle()).data?.nilai;
+    const qris = await atauOffline(async () => { const { data, error } = await sb.from('konfigurasi').select('nilai').eq('kunci', 'qris').maybeSingle(); if (error) throw error; return data?.nilai; }, () => OFF.konfigL('qris')).catch(() => null);
     const opsiMetode = v => aktif.map(m => `<option value="${m.id}" data-jenis="${m.jenis}" ${m.id === v ? 'selected' : ''}>${esc(m.nama)}</option>`).join('');
     const barisBayar = (v, j) => `<div class="baris-bayar"><select class="input" data-metode>${opsiMetode(v)}</select><input class="input" type="number" min="0" step="any" data-jumlah value="${j ?? ''}" placeholder="Jumlah"><input class="input" data-ref placeholder="No. ref (opsional)"><button class="ikon-aksi hapus" data-hapus-bayar>${ikon('tutup')}</button></div>`;
     const cepat = [h.total, ...[5000, 10000, 20000, 50000, 100000].filter(v => v > h.total)].slice(0, 5);
-    modal({ judul: 'Pembayaran', isi: `<div class="total-bayar"><small>Total bayar</small><b>${rupiah(h.total)}</b></div>
+    modal({ judul: KONEKSI.putus ? 'Pembayaran (offline)' : 'Pembayaran', isi: `<div class="total-bayar"><small>Total bayar</small><b>${rupiah(h.total)}</b></div>
       <div data-daftar-bayar>${barisBayar(tunaiId, '')}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">${cepat.map((v, i) => `<button class="tombol kedua kecil" data-cepat="${v}">${i ? rupiah(v) : 'Uang pas'}</button>`).join('')}
         <button class="tombol kedua kecil" data-tambah-bayar style="margin-left:auto">+ Metode lain</button></div>
@@ -318,8 +335,16 @@ async function tampilKasir(induk) {
       tombol: [{ teks: 'Batal', kelas: 'kedua' }, { teks: 'Bayar', aksi: async m => {
         const byr = [...m.querySelectorAll('.baris-bayar')].map(r => ({ metode_bayar_id: Number(r.querySelector('[data-metode]').value), jumlah: Number(r.querySelector('[data-jumlah]').value || 0), referensi: r.querySelector('[data-ref]').value || null })).filter(x => x.jumlah > 0);
         if (!byr.length) { toast('Isi jumlah pembayaran', 'galat'); return false; }
-        const { data, error } = await sb.rpc('bayar_penjualan', { p: { ...muatanHitung(), pesanan_id: K.pesanan_id, resep_tebus: K.resep?.resep_tebus || [], bayar: byr } });
-        if (error) throw error;
+        const p = { ...muatanHitung(), uuid, pesanan_id: K.pesanan_id, resep_tebus: K.resep?.resep_tebus || [], bayar: byr };
+        const data = await atauOffline(async () => { pernahKirim = true; const { data, error } = await sb.rpc('bayar_penjualan_u', { p }); if (error) throw error; return data; }, async () => {
+          const perluServer = p.resep_id || p.pesanan_id || p.voucher_kode || byr.some(b => !OFF.METODE_OFFLINE.includes(metode.find(m => m.id === b.metode_bayar_id)?.jenis));
+          if (perluServer) throw new Error(pernahKirim ? 'Internet putus saat membayar. Biarkan jendela ini terbuka, lalu tekan Bayar lagi setelah tersambung (tidak akan dobel).' : 'Voucher, piutang, pesanan, dan tebus resep terdaftar perlu internet.');
+          const nonTunai = byr.filter(b => metode.find(m => m.id === b.metode_bayar_id)?.jenis !== 'tunai');
+          if (nonTunai.length && !await konfirmasi('Pastikan uang masuk', `Anda sedang offline. Sudah dicek di HP/mutasi bank bahwa <b>${rupiah(nonTunai.reduce((a, b) => a + b.jumlah, 0))}</b> benar-benar masuk?`, 'Sudah masuk', '')) throw new Error('Pembayaran belum dikonfirmasi.');
+          const hl = pernahKirim ? h : OFF.hitungL(p);
+          return OFF.jualL(uuid, p, hl, byr, byr.reduce((a, b) => a + b.jumlah, 0) - hl.total);
+        });
+        if (!data.offline) OFF.sinkron();
         const resepTadi = K.resep;
         K = kosongkan();
         tampilKasir_();
@@ -328,12 +353,13 @@ async function tampilKasir(induk) {
   }
 
   function selesaiBayar(d, k, resep) {
-    if (k.struk.cetak_otomatis) cetakStruk(d.id);
+    const cetak = () => d.offline ? cetakNota(d.struk, k) : cetakStruk(d.id);
+    if (k.struk.cetak_otomatis) cetak();
     if (resep?.etiket) ambilResep(resep.resep_id).then(r => cetakEtiket(r, resep.etiket_item)).catch(e => toast(pesanGalat(e), 'galat'));
-    modal({ judul: 'Transaksi berhasil', ukuran: 'kecil', isi: `<div style="text-align:center"><div style="font-size:42px">✅</div><b>${esc(d.no)}</b>
+    modal({ judul: 'Transaksi berhasil', ukuran: 'kecil', isi: `<div style="text-align:center"><div style="font-size:42px">✅</div><b>${esc(d.no)}</b>${d.offline ? '<p class="pesan info" style="margin:10px 0 0">Tersimpan di perangkat, dikirim otomatis saat online.</p>' : ''}
       <div class="total-bayar" style="margin-top:12px"><small>Total</small><b>${rupiah(d.total)}</b><small>Kembalian</small><b style="color:var(--hijau);font-size:28px">${rupiah(d.kembalian)}</b></div>
       ${d.stamp_didapat > 0 ? `<p class="pesan info">Member mendapat <b>+${angka(d.stamp_didapat)} stamp</b> (total ${angka(d.stamp_total)})</p>` : ''}</div>`,
-      tombol: [{ teks: 'Cetak Struk', kelas: 'kedua', aksi: () => { cetakStruk(d.id); return false; } }, { teks: 'Transaksi Baru', aksi: () => setTimeout(() => document.querySelector('[data-cari]')?.focus(), 50) }] });
+      tombol: [{ teks: 'Cetak Struk', kelas: 'kedua', aksi: () => { cetak(); return false; } }, { teks: 'Transaksi Baru', aksi: () => setTimeout(() => document.querySelector('[data-cari]')?.focus(), 50) }] });
   }
 
   function tunda() {
