@@ -47,8 +47,8 @@ export const ikon = (n, cls = '') => `<svg class="ik ${cls}" viewBox="0 0 24 24"
 export const MENU = [
   { k: 'home', t: 'Home', i: 'home', url: '#/home', tahap: 1 },
   { k: 'dashboard', t: 'Dashboard', i: 'dashboard', anak: [
-    ['umum', 'Dashboard Umum', 5], ['penjualan', 'Dashboard Penjualan', 5], ['pembelian', 'Dashboard Pembelian', 5],
-    ['persediaan', 'Dashboard Persediaan', 5], ['keuangan', 'Dash. Keuangan', 5]] },
+    ['umum', 'Dashboard Umum', 1], ['penjualan', 'Dashboard Penjualan', 1], ['pembelian', 'Dashboard Pembelian', 1],
+    ['persediaan', 'Dashboard Persediaan', 1], ['keuangan', 'Dash. Keuangan', 1, null, ['keuangan.laba']]] },
   { k: 'penjualan', t: 'Penjualan', i: 'penjualan', anak: [
     ['kasir', 'Kasir', 1], ['pesanan', 'Pesanan Penjualan', 1], ['daftar', 'Daftar Penjualan', 1],
     ['retur', 'Retur Penjualan', 1], ['tertolak', 'Penjualan Tertolak', 1], ['qris', 'QRIS', 1]] },
@@ -66,16 +66,16 @@ export const MENU = [
   { k: 'promo', t: 'Program Promo', i: 'promo', anak: [
     ['bundel', 'Bundel/Paket Produk', 1], ['diskon', 'Diskon Produk', 1], ['voucher', 'Voucher Diskon', 1], ['member', 'Program Member', 1]] },
   { k: 'keuangan', t: 'Keuangan', i: 'keuangan', anak: [
-    ['akun_kas', 'Daftar Akun Kas', 5], ['buku_kas', 'Buku Kas', 5], ['utang', 'Utang Usaha', 5], ['piutang', 'Piutang Usaha', 5]] },
+    ['akun_kas', 'Daftar Akun Kas', 1], ['buku_kas', 'Buku Kas', 1], ['utang', 'Utang Usaha', 1], ['piutang', 'Piutang Usaha', 1]] },
   { k: 'akuntansi', t: 'Akuntansi', i: 'akuntansi', anak: [
-    ['akun', 'Daftar Akun', 5], ['buku_besar', 'Buku Besar', 5], ['aktiva', 'Aktiva Tetap', 5]] },
+    ['akun', 'Daftar Akun', 1], ['buku_besar', 'Buku Besar', 1], ['aktiva', 'Aktiva Tetap', 1]] },
   { k: 'kontak', t: 'Kontak', i: 'kontak', anak: [
     ['pelanggan', 'Pelanggan', 1], ['sales', 'Sales/Pelayan', 1], ['dokter', 'Dokter', 1], ['supplier', 'Supplier', 1]] },
   { k: 'laporan', t: 'Laporan', i: 'laporan', anak: [
-    ['penjualan', 'Laporan Penjualan', 5], ['pembelian', 'Laporan Pembelian', 5], ['persediaan', 'Laporan Persediaan', 5],
-    ['keuangan', 'Laporan Keuangan', 5], ['presensi', 'Laporan Presensi', 6]] },
+    ['penjualan', 'Laporan Penjualan', 1], ['pembelian', 'Laporan Pembelian', 1], ['persediaan', 'Laporan Persediaan', 1],
+    ['keuangan', 'Laporan Keuangan', 1, null, ['keuangan.laba']], ['presensi', 'Laporan Presensi', 6]] },
   { k: 'analisis', t: 'Analisis', i: 'analisis', anak: [
-    ['pareto', 'Analisis Pareto', 5], ['pembelian', 'Analisis Pembelian', 5], ['harga', 'Analisis Harga', 5]] },
+    ['pareto', 'Analisis Pareto', 1], ['pembelian', 'Analisis Pembelian', 1], ['harga', 'Analisis Harga', 1, null, ['keuangan.laba']]] },
   { k: 'pengguna', t: 'Manajemen Pengguna', i: 'pengguna', anak: [
     ['daftar', 'Daftar Pengguna', 1], ['peran', 'Peran & Hak Akses', 1], ['jadwal', 'Jadwal Kerja', 6],
     ['presensi', 'Riwayat Presensi', 6], ['sesi', 'Riwayat Shift/Sesi', 1, ['penjualan.kasir']], ['log', 'Log Aktivitas', 1, ['*semua']]] },
@@ -102,9 +102,10 @@ export const NAMA_TAHAP = {
 export const ITEM = [];
 for (const g of MENU) {
   if (!g.anak) { ITEM.push({ kunci: g.k, url: g.url, judul: g.t, grup: g.t, ikon: g.i, tahap: g.tahap, akses: [g.k] }); continue; }
-  for (const [k, t, tahap, alt] of g.anak) {
+  // khusus = kunci pengganti: menu berisi laba/HPP tidak ikut terbuka oleh akses grup biasa
+  for (const [k, t, tahap, alt, khusus] of g.anak) {
     const kunci = `${g.k}.${k}`;
-    ITEM.push({ kunci, url: `#/${g.k}/${k}`, judul: t, grup: g.t, ikon: g.i, tahap, akses: [kunci, ...(alt || [])] });
+    ITEM.push({ kunci, url: `#/${g.k}/${k}`, judul: t, grup: g.t, ikon: g.i, tahap, akses: khusus || [kunci, ...(alt || [])] });
   }
 }
 
