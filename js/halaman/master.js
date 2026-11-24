@@ -1,8 +1,8 @@
 // Master Data, Kontak, Multi Outlet, Metode Pembayaran: memakai halamanCrud.
-import { rute, sb, ambilRef } from '../inti.js?v=1.7.0';
-import { halamanCrud } from '../crud.js?v=1.7.0';
-import { esc, rupiah, angka, toast } from '../ui.js?v=1.7.0';
-import { bukaKartu } from './member.js?v=1.7.0';
+import { rute, sb, ambilRef } from '../inti.js?v=1.8.0';
+import { halamanCrud } from '../crud.js?v=1.8.0';
+import { esc, rupiah, angka, toast } from '../ui.js?v=1.8.0';
+import { bukaKartu } from './member.js?v=1.8.0';
 
 export const GOLONGAN = [
   ['bebas', 'Obat Bebas'], ['bebas_terbatas', 'Obat Bebas Terbatas'], ['keras', 'Obat Keras (K)'], ['okt', 'OKT'],
@@ -112,17 +112,21 @@ sederhana('shift', 'Master Shift', 'shift', [{ f: 'jam_mulai', label: 'Jam Mulai
 const kontak = (k, judul, tabel, kolom, ekstra = {}) =>
   rute('kontak/' + k, halamanCrud({ judul, remah: 'Kontak / ' + judul, tabel, kunciTulis: ['kontak.' + k], kolom, filterAktif: true, bawaan: { aktif: true }, ...ekstra }));
 
+
 kontak('pelanggan', 'Pelanggan', 'pelanggan', [
   { f: 'kode', label: 'Kode' }, { f: 'nama', label: 'Nama', wajib: true }, { f: 'telp', label: 'No. HP', tipe: 'telp' },
   { f: 'jenis_kelamin', label: 'Jenis Kelamin', tipe: 'pilih', opsi: [['L', 'Laki-laki'], ['P', 'Perempuan']], daftar: false },
   { f: 'tgl_lahir', label: 'Tanggal Lahir', tipe: 'tanggal', daftar: false },
   { f: 'kategori_pelanggan_id', label: 'Kategori', tipe: 'ref', ref: 'kategori_pelanggan' },
   { f: 'alamat', label: 'Alamat', tipe: 'area', daftar: false },
+  { f: 'batas_kredit', label: 'Batas Kredit', tipe: 'uang', min: 0, daftar: false, bantu: '0 = tidak boleh kredit. Hanya yang punya akses Piutang Usaha yang bisa mengubah.' },
+  { f: 'tempo_kredit', label: 'Tempo Kredit (hari)', tipe: 'angka', min: 0, daftar: false },
   { f: 'alergi', label: 'Riwayat Alergi Obat', tipe: 'area', daftar: false },
   { f: 'catatan', label: 'Catatan', tipe: 'area', daftar: false },
   { f: 'member', label: 'Member', tipe: 'bool', form: false, tampil: r => r.member ? `<span class="chip oranye">${esc(r.kode || 'Member')}</span>` : '' },
   { f: 'stamp', label: 'Stamp', tipe: 'angka', form: false },
-  { f: 'aktif', label: 'Aktif', tipe: 'bool', daftar: false }], { cari: ['nama', 'kode', 'telp'],
+  { f: 'aktif', label: 'Aktif', tipe: 'bool', daftar: false }], { cari: ['nama', 'kode', 'telp'], bawaan: { aktif: true, batas_kredit: 0, tempo_kredit: 30 },
+  sebelumSimpan: d => { d.batas_kredit ??= 0; d.tempo_kredit ??= 30; },
   aksiBaris: [{ ikon: 'kontak', judul: 'Kartu member', fn: p => p.member ? bukaKartu(p) : toast('Belum member. Daftarkan di Program Promo → Program Member.', 'galat') }] });
 kontak('sales', 'Sales/Pelayan', 'sales', [
   { f: 'nama', label: 'Nama', wajib: true }, { f: 'telp', label: 'No. HP', tipe: 'telp' }, { f: 'catatan', label: 'Catatan', tipe: 'area', daftar: false },
@@ -155,7 +159,8 @@ rute('pengaturan/metode_bayar', halamanCrud({
   judul: 'Metode Pembayaran', remah: 'Pengaturan / Metode Pembayaran', tabel: 'metode_bayar', kunciTulis: ['pengaturan.metode_bayar'],
   kolom: [
     { f: 'nama', label: 'Nama', wajib: true },
-    { f: 'jenis', label: 'Jenis', tipe: 'pilih', wajib: true, opsi: [['tunai', 'Tunai'], ['qris', 'QRIS'], ['transfer', 'Transfer Bank'], ['debit', 'Kartu Debit'], ['kredit', 'Kartu Kredit'], ['ewallet', 'E-Wallet'], ['lainnya', 'Lainnya']] },
+    { f: 'jenis', label: 'Jenis', tipe: 'pilih', wajib: true, opsi: [['tunai', 'Tunai'], ['qris', 'QRIS'], ['transfer', 'Transfer Bank'], ['debit', 'Kartu Debit'], ['kredit', 'Kartu Kredit'], ['ewallet', 'E-Wallet'], ['lainnya', 'Lainnya'], ['piutang', 'Piutang (kredit pelanggan)']] },
+    { f: 'akun_kas_id', label: 'Masuk ke Akun', tipe: 'ref', ref: 'akun_kas', bantu: 'Untuk non-tunai. Kosong = bank pertama. Tunai selalu ke Kas Kasir.' },
     { f: 'biaya_persen', label: 'Biaya Admin', tipe: 'persen', min: 0, bantu: 'Potongan (%) dari bank/penyedia, untuk laporan keuangan.' },
     { f: 'urutan', label: 'Urutan Tampil', tipe: 'angka' },
     { f: 'aktif', label: 'Aktif', tipe: 'bool' }],
