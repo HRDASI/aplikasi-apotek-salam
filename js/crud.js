@@ -1,7 +1,7 @@
 // Halaman daftar + form tambah/ubah/hapus yang dipakai ulang oleh semua master data.
-import { sb, S, bisa, ambilRef, hapusCache } from './inti.js?v=1.6.1';
-import { ikon } from './menu.js?v=1.6.1';
-import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, bacaForm, unduhCSV, judulHalaman } from './ui.js?v=1.6.1';
+import { sb, S, bisa, ambilRef, hapusCache } from './inti.js?v=1.7.0';
+import { ikon } from './menu.js?v=1.7.0';
+import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, bacaForm, unduhCSV, judulHalaman } from './ui.js?v=1.7.0';
 
 /*
  cfg = {
@@ -25,6 +25,7 @@ export function halamanCrud(cfg) {
     const refKolom = cfg.kolom.filter(k => k.tipe === 'ref');
 
     el.innerHTML = judulHalaman(cfg.judul, cfg.remah,
+      (cfg.aksiAtas || []).map((a, i) => `<button class="tombol kedua" data-aksi-atas="${i}">${ikon(a.ikon)} ${esc(a.judul)}</button>`).join('') +
       `<button class="tombol kedua" data-csv>${ikon('unduh')} Unduh</button>` +
       (bolehTulis ? `<button class="tombol" data-tambah>${ikon('tambah')} Tambah</button>` : '')) +
       `<div class="kartu">
@@ -38,6 +39,8 @@ export function halamanCrud(cfg) {
           ${cfg.outlet ? '<th>Outlet</th>' : ''}<th></th></tr></thead><tbody data-isi></tbody></table></div>
         <div class="paging" data-paging></div>
       </div>`;
+
+    el.querySelectorAll('[data-aksi-atas]').forEach(b => b.onclick = () => cfg.aksiAtas[b.dataset.aksiAtas].fn());
 
     const selectStr = () => {
       const s = ['*', ...refKolom.map(k => `${k.f}__ref:${k.ref}!${k.f}(${k.refLabel || 'nama'})`)];
