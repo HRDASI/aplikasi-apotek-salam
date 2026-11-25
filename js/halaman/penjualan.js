@@ -1,15 +1,15 @@
 // Penjualan: Kasir (dengan sesi), Pesanan, Daftar, Retur, Tertolak, QRIS, Riwayat Sesi, cetak struk.
-import { rute, sb, S, bisa, lihatNominal, ambilRef, ambilSemua, muatSesi, KONEKSI, HOOK, atauOffline, putusJaringan } from '../inti.js?v=1.18.1';
-import * as OFF from '../offline.js?v=1.18.1';
-import { ikon } from '../menu.js?v=1.18.1';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.18.1';
-import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.18.1';
-import { halamanCrud } from '../crud.js?v=1.18.1';
-import { ambilKonfig } from './pengaturan.js?v=1.18.1';
-import { cetakStrukHtml } from '../cetak.js?v=1.18.1';
-import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.18.1';
-import { bukaRetur, polaNota } from './retur.js?v=1.18.1';
-import { barcodeHtml } from '../label.js?v=1.18.1';
+import { rute, sb, S, bisa, lihatNominal, ambilRef, ambilSemua, muatSesi, KONEKSI, HOOK, atauOffline, putusJaringan } from '../inti.js?v=1.19.0';
+import * as OFF from '../offline.js?v=1.19.0';
+import { ikon } from '../menu.js?v=1.19.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.19.0';
+import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.19.0';
+import { halamanCrud } from '../crud.js?v=1.19.0';
+import { ambilKonfig } from './pengaturan.js?v=1.19.0';
+import { cetakStrukHtml } from '../cetak.js?v=1.19.0';
+import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.19.0';
+import { bukaRetur, polaNota } from './retur.js?v=1.19.0';
+import { barcodeHtml } from '../label.js?v=1.19.0';
 
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const awalBulan = () => hariIni().slice(0, 8) + '01';
@@ -157,13 +157,14 @@ async function tampilKasir(induk) {
   if (!K.header.jenis_pelayanan_id) K.header.jenis_pelayanan_id = jp.find(x => x.nama === 'Umum')?.id || jp[0]?.id || null;
   el.innerHTML = `<div class="kasir">
     <div class="kartu kasir-kiri">
-      <div class="kasir-atas"><b>Kasir</b><span class="chip teal">Sesi ${esc(S.sesi.kode)}</span>${S.sesi.shift_nama ? `<span class="chip">${esc(S.sesi.shift_nama)}</span>` : ''}
+      <div class="kasir-atas"><b>Kasir</b><span class="chip teal">Sesi ${esc(S.sesi.kode)}</span>${S.sesi.shift_nama ? `<span class="chip">${esc(S.sesi.shift_nama)}</span>` : ''}<span class="fokus-info"><span class="chip">${esc(S.pengguna.nama)}</span> <span class="chip hijau" data-net>Online</span></span>
         <span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
           <button class="tombol kedua kecil" data-pesanan>${ikon('penjualan')} Pesanan</button>
           ${bisa('penjualan.retur') ? '<button class="tombol kedua kecil" data-retur title="Retur penjualan (F4)">↩ Retur</button>' : ''}
           <button class="tombol kedua kecil" data-tertolak>Catat Tertolak</button>
           <button class="tombol kedua kecil" data-printer title="Ukuran printer perangkat ini">🖨</button>
-          <button class="tombol kedua kecil" data-tutup-sesi>Tutup Sesi</button></span></div>
+          <button class="tombol kedua kecil" data-tutup-sesi>Tutup Sesi</button>
+          <button class="tombol kedua kecil" data-fokus>⛶ Layar penuh</button></span></div>
       <div style="display:flex;gap:8px;margin:10px 0"><div style="flex:1"><input class="input input-besar" data-cari placeholder="Cari nama/kode obat atau scan barcode (F2)"></div>
         ${bundel?.length ? `<select class="input" style="width:auto" data-paket><option value="">+ Paket</option>${bundel.map(b => `<option value="${b.id}">${esc(b.nama)} · ${rupiah(b.harga)}</option>`).join('')}</select>` : ''}</div>
       ${K.resep ? `<p class="pesan info" style="margin:0 0 8px">Menebus resep <b>${esc(K.resep.no)}</b> a.n. ${esc(K.resep.pasien)}${K.resep.racikan_ditebus ? ` · ${K.resep.racikan_ditebus} racikan` : ''}${K.resep.etiket ? ' · etiket dicetak setelah bayar' : ''}. <a href="#" data-lepas-resep>Lepas</a></p>` : ''}
@@ -414,6 +415,7 @@ async function tampilKasir(induk) {
     if (e.key === 'F4' && bisa('penjualan.retur')) { e.preventDefault(); bukaRetur().catch(x => toast(pesanGalat(x), 'galat')); }
     if (e.key === 'F9') { e.preventDefault(); bayar(); }
   };
+  document.dispatchEvent(new Event('kasir-tampil'));
   hitung();
   setTimeout(() => el.querySelector('[data-cari]')?.focus(), 50);
 }
