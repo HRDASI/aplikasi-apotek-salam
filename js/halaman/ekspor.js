@@ -1,10 +1,10 @@
 // Pengaturan → Ekspor Data. Kolom data master sama dengan Impor Data, sehingga bisa diubah lalu diimpor lagi.
-import { rute, sb, S, bisa, ambilSemua, ambilRef } from '../inti.js?v=1.24.0';
-import { ikon } from '../menu.js?v=1.24.0';
-import { esc, angka, toast, pesanGalat, judulHalaman } from '../ui.js?v=1.24.0';
-import { rpc, hariIni, awalBulan } from '../tabel.js?v=1.24.0';
-import { buatExcel, buatCsv, simpanBlob, tglBerkas, catatUnduh } from '../unduh.js?v=1.24.0';
-import { KOLOM_IMPOR } from './impor.js?v=1.24.0';
+import { rute, sb, S, bisa, ambilSemua, ambilRef } from '../inti.js?v=1.25.0';
+import { ikon } from '../menu.js?v=1.25.0';
+import { esc, angka, toast, pesanGalat, judulHalaman } from '../ui.js?v=1.25.0';
+import { rpc, hariIni, awalBulan } from '../tabel.js?v=1.25.0';
+import { buatExcel, buatCsv, simpanBlob, tglBerkas, catatUnduh } from '../unduh.js?v=1.25.0';
+import { KOLOM_IMPOR } from './impor.js?v=1.25.0';
 
 const ya = v => v ? 'Ya' : 'Tidak', n = v => v === null || v === undefined || v === '' ? null : Number(v);
 // judul kolom = kata kunci pertama yang dikenali Impor Data
