@@ -1,8 +1,8 @@
 // Karyawan, Jadwal Kerja, Presensi (dari aplikasi Absensi), Izin/Sakit/Cuti, Laporan Presensi, Integrasi.
-import { rute, sb, S, bisa } from '../inti.js?v=1.18.0';
-import { ikon } from '../menu.js?v=1.18.0';
-import { esc, angka, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.18.0';
-import { rpc, hariIni, geserHari, tabelHtml, halamanLaporan, unduhTabel, cetakHtml } from '../tabel.js?v=1.18.0';
+import { rute, sb, S, bisa } from '../inti.js?v=1.18.1';
+import { ikon } from '../menu.js?v=1.18.1';
+import { esc, angka, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.18.1';
+import { rpc, hariIni, geserHari, tabelHtml, halamanLaporan, unduhTabel, cetakHtml } from '../tabel.js?v=1.18.1';
 
 const galat = (el, e) => { el.innerHTML = `<p class="pesan galat">${esc(pesanGalat(e))}</p>`; };
 const STATUS = { hadir: ['Hadir', 'hijau'], terlambat: ['Terlambat', 'oranye'], alpa: ['Tanpa keterangan', 'merah'], tanpa_masuk: ['Tanpa absen masuk', 'merah'], izin: ['Izin', 'teal'], sakit: ['Sakit', 'teal'], cuti: ['Cuti', 'teal'], libur: ['Libur', ''], terjadwal: ['Terjadwal', ''], kosong: ['-', ''] };
@@ -61,7 +61,7 @@ rute('pengguna/jadwal', async el => {
   const pilih = (kid, t) => modal({ judul: `${d.karyawan.find(k => k.id === kid).nama} · ${HARI[hariKe(t)]}, ${tanggal(t)}`, ukuran: 'kecil', isi: `<div class="aksi-cepat">${[...d.kode, { kode: '', nama: 'Kosongkan' }].map(c => `<button class="tombol kedua" data-k="${c.kode}">${c.kode ? `<b>${c.kode}</b> ` : ''}${esc(c.nama)}</button>`).join('')}</div>`,
     saatBuka: (m, tutup) => m.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; const kk = kunci(kid, t); if (b.dataset.k === (J.get(kk) || '')) ubah.delete(kk); else ubah.set(kk, b.dataset.k); const s = el.querySelector('.jadwal').scrollLeft; tutup(); gambar(); el.querySelector('.jadwal').scrollLeft = s; }) });
   const baca = async file => {
-    const { bacaJadwal } = await import('./jadwal-excel.js?v=1.18.0'); const h = await bacaJadwal(file); const peta = new Map(), tak = [];
+    const { bacaJadwal } = await import('./jadwal-excel.js?v=1.18.1'); const h = await bacaJadwal(file); const peta = new Map(), tak = [];
     for (const n of h.nama) { const x = n.toLowerCase(), c = d.karyawan.filter(k => (k.nama_jadwal || '').toLowerCase() === x); const c2 = c.length ? c : d.karyawan.filter(k => k.nama.toLowerCase() === x); if (c2.length === 1) peta.set(n, c2[0].id); else tak.push(n); }
     const kode = new Set(d.kode.map(c => c.kode)), salah = h.baris.filter(b => b.kode && !kode.has(b.kode));
     modal({ judul: `Impor jadwal ${BULAN[Number(h.bulan.slice(5)) - 1]} ${h.bulan.slice(0, 4)}`, isi: `<p style="margin-top:0"><b>${peta.size}</b> dari ${h.nama.length} nama cocok, <b>${h.baris.filter(b => peta.has(b.nama) && kode.has(b.kode)).length}</b> jadwal. Baris Actual dipakai bila terisi.</p>${tak.length ? `<p class="pesan peringatan">Nama belum dikenal: ${tak.map(esc).join(', ')}. Pilih karyawannya:</p><div class="form-grid">${tak.map((n, i) => `<label class="isian"><span>${esc(n)}</span><select data-n="${i}"><option value="">- lewati -</option>${d.karyawan.filter(k => ![...peta.values()].includes(k.id)).map(k => `<option value="${k.id}">${esc(k.nama)}</option>`).join('')}</select></label>`).join('')}</div>` : ''}${salah.length ? `<p class="pesan galat">Kode tidak dikenal dan dilewati: ${[...new Set(salah.map(b => b.kode))].map(esc).join(', ')}</p>` : ''}`,
