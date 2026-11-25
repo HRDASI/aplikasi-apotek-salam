@@ -1,9 +1,9 @@
 // Label barcode/harga produk. Digambar langsung pada titik printer (203 dpi) supaya garis barcode tetap tajam dan terbaca scanner.
-import { S } from './inti.js?v=1.12.0';
-import { ikon } from './menu.js?v=1.12.0';
-import { esc, rupiah, toast, modal, pesanGalat } from './ui.js?v=1.12.0';
-import { bacaPrinter, cetakLabelPng } from './cetak.js?v=1.12.0';
-import { pasangCariProduk } from './dokumen.js?v=1.12.0';
+import { S } from './inti.js?v=1.13.0';
+import { ikon } from './menu.js?v=1.13.0';
+import { esc, rupiah, toast, modal, pesanGalat } from './ui.js?v=1.13.0';
+import { bacaPrinter, cetakLabelPng } from './cetak.js?v=1.13.0';
+import { pasangCariProduk } from './dokumen.js?v=1.13.0';
 
 let janji;
 function muatJsBarcode() {
@@ -24,6 +24,17 @@ async function biner(kode) {
   const bit = (/^\d{13}$/.test(kode) && buat('EAN13')) || buat('CODE128');
   if (!bit) throw new Error(`Kode "${kode}" tidak bisa dijadikan barcode`);
   return bit;
+}
+
+// Barcode untuk struk: tiap garis tepat 2 titik printer (203 dpi) supaya terbaca scanner. Gagal = struk tetap tercetak tanpa barcode.
+export async function barcodeHtml(kode, lebarMm = 48) {
+  try {
+    const bit = await biner(String(kode).toUpperCase().replace(/[^A-Z0-9]/g, '')), muat = titik(lebarMm);
+    const md = bit.length * 2 <= muat - 8 ? 2 : 1, c = document.createElement('canvas'); c.width = bit.length * md; c.height = titik(9);
+    const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.fillStyle = '#000';
+    [...bit].forEach((b, i) => { if (b === '1') x.fillRect(i * md, 0, md, c.height); });
+    return `<div class="c" style="margin-top:4px"><img src="${c.toDataURL()}" style="width:${c.width / 203 * 25.4}mm;height:9mm;max-width:none;image-rendering:pixelated" alt=""></div>`;
+  } catch { return ''; }
 }
 
 function potongBaris(x, teks, maks, jml) {
