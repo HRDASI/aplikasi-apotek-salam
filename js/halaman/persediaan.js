@@ -1,12 +1,12 @@
 // Persediaan: Daftar Produk (dengan stok & kartu stok), Defecta, Stok Kedaluwarsa, Stok Opname, Penyesuaian, Perpindahan.
-import { rute, sb, S, bisa, ambilSemua } from '../inti.js?v=1.23.0';
-import { ikon } from '../menu.js?v=1.23.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.23.0';
-import { halamanCrud } from '../crud.js?v=1.23.0';
-import { cfgProduk } from './master.js?v=1.23.0';
-import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.23.0';
-import { ambilKonfig } from './pengaturan.js?v=1.23.0';
-import { bukaCetakLabel } from '../label.js?v=1.23.0';
+import { rute, sb, S, bisa, ambilSemua } from '../inti.js?v=1.24.0';
+import { ikon } from '../menu.js?v=1.24.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.24.0';
+import { halamanCrud } from '../crud.js?v=1.24.0';
+import { cfgProduk } from './master.js?v=1.24.0';
+import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.24.0';
+import { ambilKonfig } from './pengaturan.js?v=1.24.0';
+import { bukaCetakLabel } from '../label.js?v=1.24.0';
 
 export const JENIS_MUTASI = {
   beli: 'Pembelian', retur_beli: 'Retur pembelian', penyesuaian: 'Penyesuaian', opname: 'Stok opname', pindah_keluar: 'Pindah keluar',
@@ -15,6 +15,12 @@ export const JENIS_MUTASI = {
 const namaJenis = j => j.startsWith('batal_') ? 'Batal ' + (JENIS_MUTASI[j.slice(6)] || j.slice(6)).toLowerCase() : (JENIS_MUTASI[j] || j);
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const selisihHari = d => Math.round((new Date(d + 'T00:00:00') - new Date(hariIni() + 'T00:00:00')) / 864e5);
+// dari Dashboard: [{produk_id, qty}] dalam satuan dasar
+export async function kirimRencana(a) {
+  const { data, error } = await sb.from('produk').select('id,satuan_id,harga_beli').in('id', a.map(x => x.produk_id)); if (error) throw error;
+  const m = new Map(data.map(p => [p.id, p]));
+  kirimKe('rencana', 'pembelian/rencana', { header: {}, items: a.filter(x => m.has(x.produk_id)).map(x => ({ produk_id: x.produk_id, satuan_id: m.get(x.produk_id).satuan_id, isi: 1, qty: x.qty, harga: Math.round(m.get(x.produk_id).harga_beli || 0) })) });
+}
 const kirimKe = (jenis, ruteDok, data) => { sessionStorage.setItem('prefill:' + jenis, JSON.stringify(data)); location.hash = `#/${ruteDok}/baru`; };
 
 // ---------- Kartu stok ----------
