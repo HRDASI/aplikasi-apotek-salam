@@ -1,8 +1,8 @@
 // Konsinyasi (barang titipan): Konsinyasi Masuk, Status, Retur, Stok.
-import { rute, sb, S, bisa, ambilSemua } from '../inti.js?v=1.15.0';
-import { ikon } from '../menu.js?v=1.15.0';
-import { esc, angka, rupiah, tanggal, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.15.0';
-import { rutekanDokumen, barisTotal, chipStatus } from '../dokumen.js?v=1.15.0';
+import { rute, sb, S, bisa, ambilSemua } from '../inti.js?v=1.16.0';
+import { ikon } from '../menu.js?v=1.16.0';
+import { esc, angka, rupiah, tanggal, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.16.0';
+import { rutekanDokumen, barisTotal, chipStatus } from '../dokumen.js?v=1.16.0';
 
 const refPenitip = { f: 'supplier_id', label: 'Penitip / Supplier', tipe: 'ref', ref: 'supplier', wajib: true, ubahBatch: true };
 const sum = (it, fn) => it.reduce((a, r) => a + fn(r), 0);
