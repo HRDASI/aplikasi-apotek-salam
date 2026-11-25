@@ -1,15 +1,15 @@
 // Penjualan: Kasir (dengan sesi), Pesanan, Daftar, Retur, Tertolak, QRIS, Riwayat Sesi, cetak struk.
-import { rute, sb, S, bisa, lihatNominal, ambilRef, ambilSemua, muatSesi, KONEKSI, HOOK, atauOffline, putusJaringan } from '../inti.js?v=1.18.0';
-import * as OFF from '../offline.js?v=1.18.0';
-import { ikon } from '../menu.js?v=1.18.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.18.0';
-import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.18.0';
-import { halamanCrud } from '../crud.js?v=1.18.0';
-import { ambilKonfig } from './pengaturan.js?v=1.18.0';
-import { cetakStrukHtml } from '../cetak.js?v=1.18.0';
-import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.18.0';
-import { bukaRetur, polaNota } from './retur.js?v=1.18.0';
-import { barcodeHtml } from '../label.js?v=1.18.0';
+import { rute, sb, S, bisa, lihatNominal, ambilRef, ambilSemua, muatSesi, KONEKSI, HOOK, atauOffline, putusJaringan } from '../inti.js?v=1.18.1';
+import * as OFF from '../offline.js?v=1.18.1';
+import { ikon } from '../menu.js?v=1.18.1';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.18.1';
+import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.18.1';
+import { halamanCrud } from '../crud.js?v=1.18.1';
+import { ambilKonfig } from './pengaturan.js?v=1.18.1';
+import { cetakStrukHtml } from '../cetak.js?v=1.18.1';
+import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.18.1';
+import { bukaRetur, polaNota } from './retur.js?v=1.18.1';
+import { barcodeHtml } from '../label.js?v=1.18.1';
 
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const awalBulan = () => hariIni().slice(0, 8) + '01';
@@ -104,7 +104,7 @@ export async function cetakStruk(id) {
 }
 export async function cetakNota(j, k) {
   const o = j.outlet, ks = k.struk;
-  const logo = ks.tampil_logo ? `<img src="${location.href.split('#')[0].replace(/[^/]*$/, '')}img/logo-128.png" style="width:40px"><br>` : '';
+  const logo = ks.tampil_logo ? `<img src="${location.href.split('#')[0].replace(/[^/]*$/, '')}img/logo-b-256.png" style="width:40px"><br>` : '';
   const items = j.item.sort((a, b) => a.id - b.id).map(i => `<div class="n">${esc(i.nama)}</div>${baris(`  ${angka(i.qty)} ${i.satuan_nama || ''} x ${angka(i.harga)}`, angka(i.qty * i.harga))}
     ${i.diskon_promo > 0 ? baris('  Promo', '-' + angka(i.diskon_promo)) : ''}${i.diskon_manual > 0 ? baris(`  Diskon ${angka(i.diskon_persen)}%`, '-' + angka(i.diskon_manual)) : ''}`).join('');
   const pot = [['Diskon pelanggan', j.diskon_pelanggan], ['Diskon', j.diskon_nota], ['Voucher', j.potongan_voucher], [`Tukar ${angka(j.poin_dipakai)} poin`, j.potongan_poin]]
