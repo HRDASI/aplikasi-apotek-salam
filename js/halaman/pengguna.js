@@ -1,7 +1,7 @@
 // Manajemen Pengguna: daftar pengguna, peran & hak akses, log aktivitas.
-import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.20.0';
-import { MENU, ikon } from '../menu.js?v=1.20.0';
-import { esc, waktu, toast, modal, konfirmasi, pesanGalat, bacaForm, judulHalaman, unduhCSV } from '../ui.js?v=1.20.0';
+import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.21.0';
+import { MENU, ikon } from '../menu.js?v=1.21.0';
+import { esc, waktu, toast, modal, konfirmasi, pesanGalat, bacaForm, judulHalaman, unduhCSV } from '../ui.js?v=1.21.0';
 
 // ---------- Daftar Pengguna ----------
 rute('pengguna/daftar', async el => {
@@ -84,6 +84,8 @@ function pohonAkses(akses) {
       return `<div class="grup-akses"><label class="cek" style="margin:0"><input type="checkbox" value="${g.k}" data-grup ${grupPenuh ? 'checked' : ''}> ${esc(g.t)} <small style="color:var(--teks-2);font-weight:400">(semua submenu)</small></label>
         <div class="anak-akses">${g.anak.map(([k, t]) => `<label class="cek"><input type="checkbox" value="${g.k}.${k}" data-anak="${g.k}" ${grupPenuh || akses.includes(g.k + '.' + k) ? 'checked' : ''}> ${esc(t)}</label>`).join('')}</div></div>`;
     }).join('')}
+    <div class="grup-akses"><label class="cek" style="margin:0"><input type="checkbox" value="akses.program_ubah" ${cek('akses.program_ubah') ? 'checked' : ''}> Boleh menginput Program & MOU</label>
+      <label class="cek" style="margin:6px 0 0"><input type="checkbox" value="akses.program_nominal" ${cek('akses.program_nominal') ? 'checked' : ''}> Boleh melihat nominal insentif program</label></div>
     <div class="grup-akses"><label class="cek" style="margin:0"><input type="checkbox" value="persediaan.lihat" ${cek('persediaan.lihat') ? 'checked' : ''}> Lihat daftar produk saja (tanpa mengubah)</label></div>
     <div class="grup-akses"><label class="cek" style="margin:0"><input type="checkbox" value="penjualan.batal" ${cek('penjualan.batal') || cek('penjualan') ? 'checked' : ''}> Boleh membatalkan transaksi penjualan</label>
       <label class="cek" style="margin:6px 0 0"><input type="checkbox" value="penjualan.retur_setuju" ${cek('penjualan.retur_setuju') || cek('penjualan') ? 'checked' : ''}> Boleh menyetujui retur di luar batas kasir</label>
