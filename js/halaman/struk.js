@@ -1,10 +1,10 @@
 // Pengaturan → Struk Nota: model, font, ukuran, bagian yang tampil, dan pratinjau langsung.
-import { rute, sb, S, bisa } from '../inti.js?v=1.24.0';
-import { esc, toast, pesanGalat, judulHalaman, konfirmasi } from '../ui.js?v=1.24.0';
-import { bacaPrinter, cetakStrukHtml } from '../cetak.js?v=1.24.0';
-import { barcodeHtml } from '../label.js?v=1.24.0';
-import { MODEL, FONT, GARIS, STRUK_BAWAAN, rapikanStruk, cssStruk, isiNota, notaContoh } from '../struk.js?v=1.24.0';
-import { ambilKonfig, lupakanKonfig } from './pengaturan.js?v=1.24.0';
+import { rute, sb, S, bisa } from '../inti.js?v=1.25.0';
+import { esc, toast, pesanGalat, judulHalaman, konfirmasi } from '../ui.js?v=1.25.0';
+import { bacaPrinter, cetakStrukHtml } from '../cetak.js?v=1.25.0';
+import { barcodeHtml } from '../label.js?v=1.25.0';
+import { MODEL, FONT, GARIS, STRUK_BAWAAN, rapikanStruk, cssStruk, isiNota, notaContoh } from '../struk.js?v=1.25.0';
+import { ambilKonfig, lupakanKonfig } from './pengaturan.js?v=1.25.0';
 
 export async function cetakNotaContoh(gaya) {
   const { data: o } = await sb.from('outlet').select('*').eq('id', S.pengguna.outlet_id).single();
