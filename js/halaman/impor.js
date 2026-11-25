@@ -1,8 +1,8 @@
 // Impor data dari Excel/CSV: pilih berkas → cocokkan kolom → pratinjau → simpan (bisa dibatalkan).
-import { rute, sb, S, hapusCache } from '../inti.js?v=1.22.1';
-import { ikon } from '../menu.js?v=1.22.1';
-import { esc, angka, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.22.1';
-import { GOLONGAN } from './master.js?v=1.22.1';
+import { rute, sb, S, hapusCache } from '../inti.js?v=1.23.0';
+import { ikon } from '../menu.js?v=1.23.0';
+import { esc, angka, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.23.0';
+import { GOLONGAN } from './master.js?v=1.23.0';
 
 let janji;
 const muatXlsx = () => janji ||= new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'; s.onload = () => res(window.XLSX); s.onerror = () => { janji = null; rej(new Error('Gagal memuat pembaca Excel. Cek internet.')); }; document.head.append(s); });
@@ -18,6 +18,7 @@ const K = {
   utang: [['kode', 'Kode supplier', 't', 0, 'kodesupplier kode'], ['nama', 'Nama supplier', 't', 1, 'supplier namasupplier kreditur nama pbf'], ['no_faktur', 'No. faktur', 't', 0, 'nofaktur faktur nomorfaktur'], ['tanggal', 'Tanggal', 'd', 0, 'tanggalfaktur tglfaktur tanggal'], ['jatuh_tempo', 'Jatuh tempo', 'd', 0, 'jatuhtempo tgljatuhtempo tanggaljatuhtempo'], ['jumlah', 'Sisa utang', 'n', 1, 'nominalsisa sisa sisautang sisahutang jumlah utang hutang total']],
   piutang: [['kode', 'Kode pelanggan', 't', 0, 'kodepelanggan kode'], ['nama', 'Nama pelanggan', 't', 1, 'pelanggan namapelanggan debitur nama'], ['no_faktur', 'No. nota', 't', 0, 'nonota nota nofaktur'], ['tanggal', 'Tanggal', 'd', 0, 'tanggalfaktur tanggal tglnota'], ['jatuh_tempo', 'Jatuh tempo', 'd', 0, 'jatuhtempo tgljatuhtempo'], ['jumlah', 'Sisa piutang', 'n', 1, 'nominalsisa sisa sisapiutang jumlah piutang total']],
 };
+export const KOLOM_IMPOR = K;
 const JUDUL = { produk: 'Produk', supplier: 'Supplier', pelanggan: 'Pelanggan', stok: 'Stok awal', utang: 'Utang (saldo awal)', piutang: 'Piutang (saldo awal)' };
 const bersih = s => String(s ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
