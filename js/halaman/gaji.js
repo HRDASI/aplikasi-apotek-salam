@@ -1,10 +1,10 @@
 // Gaji Karyawan: setting, gaji pokok, tunjangan, potongan, kasbon, perhitungan, pembayaran, slip.
-import { rute, S, bisa } from '../inti.js?v=1.18.0';
-import { ikon } from '../menu.js?v=1.18.0';
-import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.18.0';
-import { rpc, hariIni, tabelHtml, unduhTabel, cetakHtml } from '../tabel.js?v=1.18.0';
-import { cetakKertasBiasa } from '../cetak.js?v=1.18.0';
-import { akunKas, opsiKas } from './keuangan.js?v=1.18.0';
+import { rute, S, bisa } from '../inti.js?v=1.18.1';
+import { ikon } from '../menu.js?v=1.18.1';
+import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.18.1';
+import { rpc, hariIni, tabelHtml, unduhTabel, cetakHtml } from '../tabel.js?v=1.18.1';
+import { cetakKertasBiasa } from '../cetak.js?v=1.18.1';
+import { akunKas, opsiKas } from './keuangan.js?v=1.18.1';
 
 const BLN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 const namaBulan = b => `${BLN[Number(b.slice(5)) - 1]} ${b.slice(0, 4)}`;
