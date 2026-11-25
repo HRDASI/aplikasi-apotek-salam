@@ -193,6 +193,18 @@ table.tabel { width: 100%; border-collapse: collapse; background: #fff; }
 @media (max-width: 900px) { .garis-waktu { grid-template-columns: 1fr; gap: 4px; } }
 
 /* ---------- Kasir ---------- */
+.total-layar { background: var(--teal-tua); color: #fff; border-radius: 12px; padding: 10px 16px; margin-bottom: 12px; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.total-layar small { font-weight: 700; letter-spacing: 1px; }
+.total-layar b { font-size: clamp(28px, 3vw, 40px); line-height: 1.15; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.kasir-kanan .total-layar { position: sticky; top: -18px; z-index: 6; }
+@media (min-width: 1101px) { .kasir-kanan { max-height: calc(100vh - 96px); overflow-y: auto; } body.fokus-kasir .kasir-kanan { max-height: calc(100vh - 24px); } }
+@media (max-width: 1100px) { .kasir-kanan .total-layar { position: static; } }
+.gabung { display: grid; grid-template-columns: minmax(0, 1fr) 64px; gap: 6px; }
+.biaya-kasir { border: 1.5px solid var(--garis); border-radius: 10px; padding: 8px 10px; margin-bottom: 10px; }
+.biaya-kasir summary { cursor: pointer; font-weight: 700; } .biaya-kasir summary b { float: right; color: var(--teal-gelap); }
+.biaya-kasir[open] summary { margin-bottom: 8px; }
+.pita-uji { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: #c62828; color: #fff; text-align: center; font-weight: 800; font-size: 12px; line-height: 18px; pointer-events: none; opacity: .92; }
+@media print { .pita-uji { display: none; } }
 .kasir { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; }
 .kasir .kartu + .kartu { margin-top: 0; }
 .kasir-kanan { position: sticky; top: 80px; }
