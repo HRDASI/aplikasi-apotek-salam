@@ -1,9 +1,9 @@
 // Halaman dokumen transaksi (daftar + editor) yang dipakai ulang:
 // rencana pembelian, SP, faktur, retur, penyesuaian, opname, perpindahan, konsinyasi.
-import { sb, S, bisa, ambilRef, rute, atauOffline } from './inti.js?v=1.24.0';
-import { cariProdukL, infoProdukL } from './offline.js?v=1.24.0';
-import { ikon } from './menu.js?v=1.24.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.24.0';
+import { sb, S, bisa, ambilRef, rute, atauOffline } from './inti.js?v=1.25.0';
+import { cariProdukL, infoProdukL } from './offline.js?v=1.25.0';
+import { ikon } from './menu.js?v=1.25.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.25.0';
 
 export const STATUS = {
   draft: ['Draft', ''], posting: ['Diposting', 'hijau'], batal: ['Batal', 'merah'], diproses: ['Diproses', 'teal'],
@@ -36,13 +36,18 @@ async function infoProdukServer(ids) {
   return hasil;
 }
 
-export async function cariProduk(q, batas = 15) { return atauOffline(() => cariProdukServer(q, batas), () => cariProdukL(q, batas)); }
-async function cariProdukServer(q, batas) {
+export async function cariProduk(q, batas = 15, indikasi = false) { return atauOffline(() => cariProdukServer(q, batas, indikasi), () => cariProdukL(q, batas, indikasi)); }
+async function cariProdukServer(q, batas, indikasi) {
   const c = q.replace(/[,()%*]/g, ' ').trim();
   if (!c) return [];
-  const { data, error } = await sb.from('produk').select('id,kode,nama,barcode,nama_generik,harga_beli,harga_jual,satuan:satuan_id(nama)')
-    .eq('aktif', true).or(`nama.ilike.%${c}%,kode.ilike.%${c}%,barcode.eq.${c},nama_generik.ilike.%${c}%`).order('nama').limit(batas);
+  const pilih = () => sb.from('produk').select(`id,kode,nama,barcode,nama_generik,${indikasi ? 'indikasi,' : ''}harga_beli,harga_jual,satuan:satuan_id(nama)`).eq('aktif', true);
+  const { data, error } = await pilih().or(`nama.ilike.%${c}%,kode.ilike.%${c}%,barcode.eq.${c},nama_generik.ilike.%${c}%`).order('nama').limit(batas);
   if (error) throw error;
+  // indikasi (mis. batuk, pegal) hanya menambah hasil setelah nama/kode/zat aktif
+  if (indikasi && data.length < batas && c.length > 2) {
+    const { data: d2 } = await pilih().ilike('indikasi', `%${c}%`).order('nama').limit(batas);
+    for (const x of d2 || []) if (data.length < batas && !data.some(y => y.id === x.id)) data.push(x);
+  }
   if (data.length) {
     const { data: st } = await sb.from('stok_produk').select('produk_id,qty').eq('outlet_id', S.pengguna.outlet_id).in('produk_id', data.map(d => d.id));
     for (const d of data) d.stok = Number(st?.find(s => s.produk_id === d.id)?.qty || 0);
@@ -51,7 +56,7 @@ async function cariProdukServer(q, batas) {
 }
 
 // Kotak cari produk dengan daftar pilihan. pilih(produk) dipanggil saat dipilih.
-export function pasangCariProduk(input, pilih) {
+export function pasangCariProduk(input, pilih, opsi = {}) {
   const wadah = document.createElement('div');
   wadah.className = 'hasil-cari sembunyi';
   wadah.style.cssText = 'left:0;right:0;top:44px';
@@ -60,10 +65,10 @@ export function pasangCariProduk(input, pilih) {
   let hasil = [], aktif = 0, jeda;
   const tampil = () => {
     wadah.innerHTML = hasil.length ? hasil.map((p, i) => `<a data-i="${i}" class="${i === aktif ? 'aktif' : ''}"><b>${esc(p.nama)}</b>
-      <small>${esc(p.kode || '')} · stok ${angka(p.stok)} ${esc(p.satuan?.nama || '')} · ${rupiah(p.harga_jual)}</small></a>`).join('') : '<a>Tidak ditemukan</a>';
+      <small>${esc(p.kode || '')} · stok ${angka(p.stok)} ${esc(p.satuan?.nama || '')} · ${rupiah(p.harga_jual)}${opsi.indikasi && p.indikasi ? `<br>${esc(String(p.indikasi).slice(0, 70))}` : ''}</small></a>`).join('') : '<a>Tidak ditemukan</a>';
     wadah.classList.remove('sembunyi');
   };
-  const ambil = async () => { try { hasil = await cariProduk(input.value); aktif = 0; tampil(); } catch (e) { toast(pesanGalat(e), 'galat'); } };
+  const ambil = async () => { try { hasil = await cariProduk(input.value, 15, opsi.indikasi); aktif = 0; tampil(); } catch (e) { toast(pesanGalat(e), 'galat'); } };
   input.addEventListener('input', () => { clearTimeout(jeda); if (!input.value.trim()) { wadah.classList.add('sembunyi'); return; } jeda = setTimeout(ambil, 250); });
   input.addEventListener('keydown', async e => {
     if (e.key === 'ArrowDown') { aktif = Math.min(aktif + 1, hasil.length - 1); tampil(); e.preventDefault(); }
