@@ -1,8 +1,8 @@
 // Master Data, Kontak, Multi Outlet, Metode Pembayaran: memakai halamanCrud.
-import { rute, sb, ambilRef } from '../inti.js?v=1.24.0';
-import { halamanCrud } from '../crud.js?v=1.24.0';
-import { esc, rupiah, angka, toast } from '../ui.js?v=1.24.0';
-import { bukaKartu } from './member.js?v=1.24.0';
+import { rute, sb, ambilRef } from '../inti.js?v=1.25.0';
+import { halamanCrud } from '../crud.js?v=1.25.0';
+import { esc, rupiah, angka, toast } from '../ui.js?v=1.25.0';
+import { bukaKartu } from './member.js?v=1.25.0';
 
 export const GOLONGAN = [
   ['bebas', 'Obat Bebas'], ['bebas_terbatas', 'Obat Bebas Terbatas'], ['keras', 'Obat Keras (K)'], ['okt', 'OKT'],
@@ -65,6 +65,7 @@ const kolomProduk = [
   { f: 'barcode', label: 'Barcode', daftar: false },
   { f: 'nama', label: 'Nama Produk', wajib: true, lebar: true, tampil: r => `<b>${esc(r.nama)}</b>${r.nama_generik ? `<br><small style="color:var(--teks-2)">${esc(r.nama_generik)}</small>` : ''}` },
   { f: 'nama_generik', label: 'Nama Generik / Zat Aktif', daftar: false },
+  { f: 'indikasi', label: 'Indikasi / Kegunaan', daftar: false, maks: 300, bantu: 'Kata kunci untuk pencarian kasir, mis. batuk berdahak, pegal linu. Diisi/diperiksa Apoteker.' },
   { f: 'pabrik', label: 'Pabrik', daftar: false },
   { f: 'golongan', label: 'Golongan', tipe: 'pilih', opsi: GOLONGAN, wajib: true, tampil: r => `<span><span class="gol ${r.golongan}"></span>${esc(namaGol(r.golongan))}</span>` },
   { f: 'kategori_id', label: 'Kategori', tipe: 'ref', ref: 'kategori' },
@@ -101,7 +102,7 @@ sederhana('kategori_pelanggan', 'Master Kategori Pelanggan', 'kategori_pelanggan
   { f: 'diskon_persen', label: 'Diskon Otomatis', tipe: 'persen', min: 0, bantu: 'Diskon (%) yang otomatis berlaku saat pelanggan kategori ini belanja.' },
   { f: 'keterangan', label: 'Keterangan', tipe: 'area' }]);
 sederhana('jenis_pelayanan', 'Jenis Pelayanan', 'jenis_pelayanan', [
-  { f: 'markup_persen', label: 'Tambahan Harga', tipe: 'persen', bantu: 'Kenaikan harga (%) dari harga jual biasa, mis. untuk penjualan online.' },
+  { f: 'markup_persen', label: 'Tambahan Harga', tipe: 'persen', bantu: 'Kenaikan harga (%) dari harga jual biasa, mis. 5 untuk online. Isi minus untuk lebih murah, mis. -3 untuk grosir.' },
   { f: 'embalase', label: 'Embalase', tipe: 'uang', min: 0 },
   { f: 'tuslah', label: 'Tuslah', tipe: 'uang', min: 0 },
   { f: 'aktif', label: 'Aktif', tipe: 'bool' }], { bawaan: { aktif: true } });
