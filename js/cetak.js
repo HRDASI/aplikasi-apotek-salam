@@ -1,8 +1,8 @@
 // Cetak terpadu: lewat Agen Cetak (langsung ke printer, tanpa dialog) bila tersedia,
 // atau dialog cetak browser sebagai cadangan.
 // Pengaturan printer disimpan PER PERANGKAT (localStorage), karena tiap PC punya printer sendiri.
-import { toast } from './ui.js?v=1.23.0';
-import { cssStruk } from './struk.js?v=1.23.0';
+import { toast } from './ui.js?v=1.24.0';
+import { cssStruk } from './struk.js?v=1.24.0';
 
 export const AGEN = 'http://localhost:8766';
 const KUNCI = 'apotek-printer';
