@@ -421,3 +421,4 @@ details summary { cursor: pointer; color: var(--teal-tua); font-weight: 700; pad
 .brs-retur .nm, .brs-ajuan .nm { flex: 1 1 220px; min-width: 0; } .brs-retur small, .brs-ajuan small { color: var(--teks-2); } .brs-retur select { width: auto; } .brs-retur .nl { min-width: 84px; text-align: right; font-variant-numeric: tabular-nums; }
 .kartu-sesi { border: 1px solid var(--garis); border-radius: 12px; padding: 12px; } .kartu-sesi small { color: var(--teks-2); }
 .pisah { border: 0; border-top: 1px solid var(--garis); margin: 4px 0 14px; }
+.bar-kpi { display: inline-block; width: 110px; height: 8px; border-radius: 4px; background: var(--garis); overflow: hidden; vertical-align: middle; } .bar-kpi i { display: block; height: 100%; background: var(--teal-tua); border-radius: 4px; }
