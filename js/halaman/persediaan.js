@@ -1,12 +1,12 @@
 // Persediaan: Daftar Produk (dengan stok & kartu stok), Defecta, Stok Kedaluwarsa, Stok Opname, Penyesuaian, Perpindahan.
-import { rute, sb, S, bisa, ambilSemua } from '../inti.js?v=1.18.0';
-import { ikon } from '../menu.js?v=1.18.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.18.0';
-import { halamanCrud } from '../crud.js?v=1.18.0';
-import { cfgProduk } from './master.js?v=1.18.0';
-import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.18.0';
-import { ambilKonfig } from './pengaturan.js?v=1.18.0';
-import { bukaCetakLabel } from '../label.js?v=1.18.0';
+import { rute, sb, S, bisa, ambilSemua } from '../inti.js?v=1.18.1';
+import { ikon } from '../menu.js?v=1.18.1';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.18.1';
+import { halamanCrud } from '../crud.js?v=1.18.1';
+import { cfgProduk } from './master.js?v=1.18.1';
+import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.18.1';
+import { ambilKonfig } from './pengaturan.js?v=1.18.1';
+import { bukaCetakLabel } from '../label.js?v=1.18.1';
 
 export const JENIS_MUTASI = {
   beli: 'Pembelian', retur_beli: 'Retur pembelian', penyesuaian: 'Penyesuaian', opname: 'Stok opname', pindah_keluar: 'Pindah keluar',
