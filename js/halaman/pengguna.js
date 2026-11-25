@@ -1,7 +1,7 @@
 // Manajemen Pengguna: daftar pengguna, peran & hak akses, log aktivitas.
-import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.19.0';
-import { MENU, ikon } from '../menu.js?v=1.19.0';
-import { esc, waktu, toast, modal, konfirmasi, pesanGalat, bacaForm, judulHalaman, unduhCSV } from '../ui.js?v=1.19.0';
+import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.20.0';
+import { MENU, ikon } from '../menu.js?v=1.20.0';
+import { esc, waktu, toast, modal, konfirmasi, pesanGalat, bacaForm, judulHalaman, unduhCSV } from '../ui.js?v=1.20.0';
 
 // ---------- Daftar Pengguna ----------
 rute('pengguna/daftar', async el => {
@@ -33,7 +33,7 @@ rute('pengguna/daftar', async el => {
         <label class="isian"><span>Nama Lengkap <i>*</i></span><input name="nama" required value="${esc(r?.nama || '')}"></label>
         <label class="isian"><span>Username <i>*</i></span><input name="username" required pattern="[a-z0-9._]{3,30}" value="${esc(r?.username || '')}" ${r ? 'disabled' : ''}>
           <small>Huruf kecil/angka/titik, 3-30 karakter. Dipakai untuk login.</small></label>
-        ${r ? '' : `<label class="isian"><span>Kata Sandi <i>*</i></span><input name="sandi" type="password" minlength="6" required autocomplete="new-password"><small>Minimal 6 karakter.</small></label>`}
+        ${r ? '' : `<label class="isian"><span>Kata Sandi <i>*</i></span><input name="sandi" type="password" minlength="6" required autocomplete="new-password"><small>Minimal 6 karakter.</small></label><label class="cek lihat-sandi"><input type="checkbox" data-lihat-sandi> Tampilkan kata sandi</label>`}
         <label class="isian"><span>No. HP</span><input name="telp" type="tel" value="${esc(r?.telp || '')}"></label>
         <label class="isian"><span>Peran <i>*</i></span><select name="peran_id" data-tipe="angka" required>${op(peran, r?.peran_id)}</select></label>
         <label class="isian"><span>Outlet <i>*</i></span><select name="outlet_id" data-tipe="angka" required>${op(outlet, r?.outlet_id ?? S.pengguna.outlet_id)}</select></label>
@@ -62,7 +62,7 @@ rute('pengguna/daftar', async el => {
       const r = data[t.dataset.sandi];
       modal({ judul: 'Atur Ulang Kata Sandi', ukuran: 'kecil',
         isi: `<p style="margin-top:0">Kata sandi baru untuk <b>${esc(r.nama)}</b> (${esc(r.username)}).</p>
-          <form onsubmit="return false"><label class="isian"><span>Kata sandi baru</span><input name="s" type="password" minlength="6" required autocomplete="new-password"></label></form>`,
+          <form onsubmit="return false"><label class="isian"><span>Kata sandi baru</span><input name="s" type="password" minlength="6" required autocomplete="new-password"></label><label class="cek lihat-sandi"><input type="checkbox" data-lihat-sandi> Tampilkan kata sandi</label></form>`,
         tombol: [{ teks: 'Batal', kelas: 'kedua' }, { teks: 'Simpan', aksi: async m => {
           const f = m.querySelector('form'); if (!f.reportValidity()) return false;
           const { error } = await sb.rpc('atur_sandi_pengguna', { p_id: r.id, p_sandi: f.s.value }); if (error) throw error;
@@ -78,7 +78,7 @@ function pohonAkses(akses) {
   const semua = akses.includes('*');
   const cek = k => semua || akses.includes(k);
   return `<label class="cek"><input type="checkbox" data-semua ${semua ? 'checked' : ''}> <b>Semua akses (Pemilik)</b></label>
-    <div class="pohon-akses" ${semua ? 'style="opacity:.5;pointer-events:none"' : ''}>${MENU.map(g => {
+    <div class="pohon-akses" ${semua ? 'style="opacity:.5;pointer-events:none"' : ''}>${MENU.filter(g => g.k !== 'panduan').map(g => {
       if (!g.anak) return `<div class="grup-akses"><label class="cek" style="margin:0"><input type="checkbox" value="${g.k}" ${cek(g.k) ? 'checked' : ''}> ${esc(g.t)}</label></div>`;
       const grupPenuh = cek(g.k);
       return `<div class="grup-akses"><label class="cek" style="margin:0"><input type="checkbox" value="${g.k}" data-grup ${grupPenuh ? 'checked' : ''}> ${esc(g.t)} <small style="color:var(--teks-2);font-weight:400">(semua submenu)</small></label>
