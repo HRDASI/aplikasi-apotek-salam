@@ -1,11 +1,11 @@
 // Dashboard: umum, penjualan, pembelian, persediaan, keuangan, karyawan.
-import { rute, S, bisa } from '../inti.js?v=1.24.0';
-import { ikon } from '../menu.js?v=1.24.0';
-import { esc, angka, rupiah, tanggal, toast, modal, pesanGalat, judulHalaman } from '../ui.js?v=1.24.0';
-import { rpc, hariIni, geserHari, barPeriode, tabelHtml, grafikBatang, grafikGaris, isiHari, unduhTabel } from '../tabel.js?v=1.24.0';
-import { GOLONGAN } from './master.js?v=1.24.0';
-import { labaRugi } from './akuntansi.js?v=1.24.0';
-import { ambilKonfig } from './pengaturan.js?v=1.24.0';
+import { rute, S, bisa } from '../inti.js?v=1.25.0';
+import { ikon } from '../menu.js?v=1.25.0';
+import { esc, angka, rupiah, tanggal, toast, modal, pesanGalat, judulHalaman } from '../ui.js?v=1.25.0';
+import { rpc, hariIni, geserHari, barPeriode, tabelHtml, grafikBatang, grafikGaris, isiHari, unduhTabel } from '../tabel.js?v=1.25.0';
+import { GOLONGAN } from './master.js?v=1.25.0';
+import { labaRugi } from './akuntansi.js?v=1.25.0';
+import { ambilKonfig } from './pengaturan.js?v=1.25.0';
 
 const laba = () => bisa('keuangan.laba'), jml = (a, f) => (a || []).reduce((x, r) => x + Number(r[f] || 0), 0), aman = p => p.catch(() => null);
 const namaGol = g => (GOLONGAN.find(x => x[0] === g) || [, g])[1], NAMA = { hari: 'Hari ini', pekan: 'Pekan ini', bulan: 'Bulan ini', tahun: 'Tahun ini' }, LALU = { hari: 'Kemarin', pekan: 'Pekan lalu', bulan: 'Bulan lalu', tahun: 'Tahun lalu' };
@@ -93,7 +93,7 @@ dashboard('persediaan', 'Dashboard Persediaan', async (p, { g }) => {
   if (e.target.closest('[data-rencana]')) {
     const id = new Set([...document.querySelectorAll('[data-pesan]:checked')].map(x => Number(x.dataset.pesan))), a = tipisAkhir.filter(r => id.has(r.produk_id));
     if (!a.length) return toast('Pilih produk dulu', 'galat');
-    import('./persediaan.js?v=1.24.0').then(m => m.kirimRencana(a.map(r => ({ produk_id: r.produk_id, qty: Number(r.saran) })))).catch(x => toast(pesanGalat(x), 'galat'));
+    import('./persediaan.js?v=1.25.0').then(m => m.kirimRencana(a.map(r => ({ produk_id: r.produk_id, qty: Number(r.saran) })))).catch(x => toast(pesanGalat(x), 'galat'));
   }
 } });
 
@@ -131,7 +131,7 @@ export async function dataLama(selesai) {
   modal({ judul: 'Total bulanan dari Apotek Digital', ukuran: 'besar', isi: `<p style="margin-top:0">Hanya untuk pembanding dashboard dan <b>tidak masuk pembukuan</b>. Dipakai untuk hari sebelum transaksi pertama di aplikasi ini${d.mulai <= hariIni() ? ` (${tanggal(d.mulai)})` : ''}. Bulan terpotong dibagi rata per hari dan ditandai perkiraan.</p><p class="dsb-ket">Bisa tempel dari Excel: urutan kolom Penjualan, Laba, Transaksi, Pembelian; mulai dari kotak yang dipilih. Kosongkan Penjualan untuk menghapus bulan.</p><div class="bungkus-tabel"><table class="tabel"><thead><tr><th>Bulan</th><th>Penjualan bersih</th><th>Laba kotor</th><th>Transaksi</th><th>Pembelian</th></tr></thead><tbody>${bulan.map(b => `<tr><td><b>${esc(bln(b))}</b></td>${['netto', 'laba', 'trx', 'beli'].map(f => `<td>${inp(b, f)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`,
     saatBuka: el => el.addEventListener('paste', e => { const t = e.target.closest('[data-b]'), x = e.clipboardData?.getData('text') || ''; if (!t || !/[\t\n]/.test(x.trim())) return; e.preventDefault(); const F = ['netto', 'laba', 'trx', 'beli'], b0 = bulan.indexOf(t.dataset.b), f0 = F.indexOf(t.dataset.f); x.trimEnd().split(/\r?\n/).forEach((r, i) => r.split('\t').forEach((v, j) => { const s = el.querySelector(`[data-b="${bulan[b0 + i]}"][data-f="${F[f0 + j]}"]`); if (s) s.value = v.trim(); })); }),
     tombol: [{ teks: 'Batal', kelas: 'kedua' }, { teks: 'Simpan', aksi: async el => {
-      const { bacaAngka } = await import('./impor.js?v=1.24.0'), hasil = []; for (const b of bulan) { const r = { bulan: b }; for (const f of ['netto', 'laba', 'trx', 'beli']) { const s = el.querySelector(`[data-b="${b}"][data-f="${f}"]`).value.trim(); if (!s) { r[f] = ''; continue; } const n = bacaAngka(s); if (Number.isNaN(n) || n === null || (n < 0 && f !== 'laba')) { toast(`Angka tidak valid pada ${bln(b)}: ${s}`, 'galat'); return false; } r[f] = n; } if (r.netto === '' && !m[b]) { if (r.laba !== '' || r.trx !== '' || r.beli !== '') { toast(`Isi Penjualan untuk ${bln(b)}`, 'galat'); return false; } continue; } hasil.push(r); }
+      const { bacaAngka } = await import('./impor.js?v=1.25.0'), hasil = []; for (const b of bulan) { const r = { bulan: b }; for (const f of ['netto', 'laba', 'trx', 'beli']) { const s = el.querySelector(`[data-b="${b}"][data-f="${f}"]`).value.trim(); if (!s) { r[f] = ''; continue; } const n = bacaAngka(s); if (Number.isNaN(n) || n === null || (n < 0 && f !== 'laba')) { toast(`Angka tidak valid pada ${bln(b)}: ${s}`, 'galat'); return false; } r[f] = n; } if (r.netto === '' && !m[b]) { if (r.laba !== '' || r.trx !== '' || r.beli !== '') { toast(`Isi Penjualan untuk ${bln(b)}`, 'galat'); return false; } continue; } hasil.push(r); }
       const n = await rpc('simpan_penjualan_lama', { p: hasil }); toast(`${n} bulan disimpan`, 'sukses'); selesai?.();
     } }] });
 }
