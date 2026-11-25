@@ -1,9 +1,10 @@
 // Home: sapaan, ikon modul (HP), ringkasan, aktivitas terakhir, pembaruan aplikasi.
-import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.22.1';
-import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.22.1';
-import { esc, angka, rupiah, waktu } from '../ui.js?v=1.22.1';
+import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.23.0';
+import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.23.0';
+import { esc, angka, rupiah, waktu } from '../ui.js?v=1.23.0';
 
 export const PEMBARUAN = [
+  ['2026-11-25', 'Struk Nota (model, font, ukuran, pratinjau), tes print nota/etiket/barcode, Ekspor Data, dan unduh laporan Excel/PDF.'],
   ['2026-11-25', 'Beranda baru: target pekan/bulan/tahun, rencana kerja, motivasi, serta visi, misi, dan budaya S.A.L.A.M.'],
   ['2026-11-25', 'Program & MOU, filter dan total utang yang ditandai, nilai barang titipan, serta penanda internet.'],
   ['2026-11-25', 'Menu Panduan, shift Admin, dan pilihan menampilkan kata sandi di layar masuk.'],
@@ -60,7 +61,7 @@ rute('home', async el => {
     if (k.length) isi('[data-program]', x => { x.innerHTML = `<div class="kartu blok"><div class="kepala-blok"><h3>Program & MOU (${angka(p.berjalan)} berjalan)</h3><a href="#/pembelian/program">Lihat</a></div><p style="margin:0;display:flex;gap:6px;flex-wrap:wrap">${k.map(y => `<span class="chip ${y[2]}">${angka(y[0])} ${y[1]}</span>`).join('')}</p></div>`; });
   });
   if (bisa('pengaturan.cadangan')) sb.rpc('status_cadangan').then(({ data }) => { if (data?.terlambat) isi('[data-cadangan]', x => { x.innerHTML = '<p class="pesan galat">Cadangan data belum berjalan lebih dari 14 jam. <a href="#/pengaturan/cadangan">Periksa</a></p>'; }); });
-  import('../beranda.js?v=1.22.1').then(m => { const w = el.querySelector('[data-beranda]'); if (w) m.pasangBeranda(w); }).catch(() => isi('[data-beranda]', w => { w.innerHTML = ''; }));
+  import('../beranda.js?v=1.23.0').then(m => { const w = el.querySelector('[data-beranda]'); if (w) m.pasangBeranda(w); }).catch(() => isi('[data-beranda]', w => { w.innerHTML = ''; }));
   // tiap blok dimuat sendiri-sendiri; yang lambat/gagal tidak menahan yang lain
   if (lihatJual) (async () => {
     const ambil = async t => { const { data, error } = await sb.rpc('lap_penjualan', { p_dari: t, p_sampai: t, p_kelompok: 'total', p_outlet: null }); if (error) throw error; return data[0] || { trx: 0, netto: 0, laba: 0 }; };
@@ -69,7 +70,7 @@ rute('home', async el => {
       <div><small>Transaksi</small><b>${angka(h.trx)}</b><span>kemarin ${angka(k.trx)}</span></div>
       ${bisa('keuangan.laba') ? `<div><small>Laba kotor</small><b>${rupiah(h.laba)}</b><span>kemarin ${rupiah(k.laba)}</span></div>` : `<div><small>Rata-rata per nota</small><b>${rupiah(Number(h.trx) ? h.netto / h.trx : 0)}</b><span>&nbsp;</span></div>`}`; });
   })().catch(() => isi('[data-hari]', x => { x.innerHTML = '<p class="kosong">Ringkasan belum bisa dimuat.</p>'; }));
-  if (lihatStok) import('./persediaan.js?v=1.22.1').then(m => m.hitungPeringatan()).then(j => isi('[data-perhatian]', x => {
+  if (lihatStok) import('./persediaan.js?v=1.23.0').then(m => m.hitungPeringatan()).then(j => isi('[data-perhatian]', x => {
     x.innerHTML = Object.values(j).some(Boolean) ? JENIS.map(([k, l, w]) => `<a href="#/persediaan/peringatan/${k}" class="statistik ${j[k] ? w : 'aman'}"><small>${esc(l)}</small><b>${j[k] ? angka(j[k]) : '✓'}</b></a>`).join('') : '<p class="aman-semua">✓ Semua stok aman, tidak ada yang perlu ditindaklanjuti.</p>';
   })).catch(() => isi('[data-perhatian]', x => { x.textContent = 'Peringatan belum bisa dimuat.'; }));
   sb.from('log_aktivitas').select('waktu,keterangan,aksi').eq('pengguna_id', S.pengguna.id).order('waktu', { ascending: false }).limit(5).then(({ data }) => isi('[data-akt]', x => {
