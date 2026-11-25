@@ -1,13 +1,15 @@
 // Penjualan: Kasir (dengan sesi), Pesanan, Daftar, Retur, Tertolak, QRIS, Riwayat Sesi, cetak struk.
-import { rute, sb, S, bisa, ambilRef, ambilSemua, muatSesi, KONEKSI, HOOK, atauOffline, putusJaringan } from '../inti.js?v=1.12.0';
-import * as OFF from '../offline.js?v=1.12.0';
-import { ikon } from '../menu.js?v=1.12.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.12.0';
-import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.12.0';
-import { halamanCrud } from '../crud.js?v=1.12.0';
-import { ambilKonfig } from './pengaturan.js?v=1.12.0';
-import { cetakStrukHtml } from '../cetak.js?v=1.12.0';
-import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.12.0';
+import { rute, sb, S, bisa, lihatNominal, ambilRef, ambilSemua, muatSesi, KONEKSI, HOOK, atauOffline, putusJaringan } from '../inti.js?v=1.13.0';
+import * as OFF from '../offline.js?v=1.13.0';
+import { ikon } from '../menu.js?v=1.13.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.13.0';
+import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.13.0';
+import { halamanCrud } from '../crud.js?v=1.13.0';
+import { ambilKonfig } from './pengaturan.js?v=1.13.0';
+import { cetakStrukHtml } from '../cetak.js?v=1.13.0';
+import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.13.0';
+import { bukaRetur, polaNota } from './retur.js?v=1.13.0';
+import { barcodeHtml } from '../label.js?v=1.13.0';
 
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const awalBulan = () => hariIni().slice(0, 8) + '01';
@@ -35,6 +37,7 @@ function bukaSesiForm(el, selesai) {
 
 async function tampilRingkasanSesi(s, r) {
   const per = Object.entries(r.per_metode || {});
+  if (r.tertutup || !lihatNominal()) return `<table class="tabel" style="margin-bottom:12px"><tbody><tr><td>Kode sesi</td><td class="angka"><b>${esc(s.kode)}</b></td></tr><tr><td>Kasir</td><td class="angka">${esc(s.pengguna_nama)}${s.shift_nama ? ' · ' + esc(s.shift_nama) : ''}</td></tr><tr><td>Dibuka</td><td class="angka">${waktu(s.dibuka)}</td></tr><tr><td>Jumlah transaksi</td><td class="angka">${r.transaksi}${r.batal ? ` (+${r.batal} batal)` : ''}</td></tr><tr><td>Retur</td><td class="angka">${angka(r.retur_jml)}</td></tr><tr><td>Kas awal</td><td class="angka">${rupiah(r.kas_awal)}</td></tr></tbody></table>`;
   return `<table class="tabel" style="margin-bottom:12px"><tbody>
     <tr><td>Kode sesi</td><td class="angka"><b>${esc(s.kode)}</b></td></tr><tr><td>Kasir</td><td class="angka">${esc(s.pengguna_nama)}${s.shift_nama ? ' · ' + esc(s.shift_nama) : ''}</td></tr>
     <tr><td>Dibuka</td><td class="angka">${waktu(s.dibuka)}</td></tr><tr><td>Jumlah transaksi</td><td class="angka">${r.transaksi}${r.batal ? ` (+${r.batal} batal)` : ''}</td></tr>
@@ -55,7 +58,7 @@ async function tutupSesi(s, setelah) {
       <label class="isian"><span>Uang fisik di laci (hasil hitung) <i>*</i></span><input name="fisik" type="number" step="any" min="0" required></label>
       <p data-selisih style="font-weight:700;margin:-4px 0 10px"></p>
       <label class="isian"><span>Catatan</span><textarea name="cat" rows="2"></textarea></label></form>`,
-    saatBuka: m => { const i = m.querySelector('[name=fisik]'); i.oninput = () => { const d = Number(i.value || 0) - r.kas_sistem; m.querySelector('[data-selisih]').innerHTML = i.value === '' ? '' : `Selisih: <span style="color:${d === 0 ? 'var(--hijau)' : 'var(--merah)'}">${d > 0 ? '+' : ''}${rupiah(d)}</span>`; }; },
+    saatBuka: m => { const i = m.querySelector('[name=fisik]'); if (lihatNominal()) i.oninput = () => { const d = Number(i.value || 0) - r.kas_sistem; m.querySelector('[data-selisih]').innerHTML = i.value === '' ? '' : `Selisih: <span style="color:${d === 0 ? 'var(--hijau)' : 'var(--merah)'}">${d > 0 ? '+' : ''}${rupiah(d)}</span>`; }; },
     tombol: [{ teks: 'Batal', kelas: 'kedua' }, { teks: 'Tutup Sesi', kelas: 'bahaya', aksi: async m => {
       const f = m.querySelector('form'); if (!f.reportValidity()) return false;
       const { data: t, error: e2 } = await sb.rpc('tutup_sesi', { p_id: s.id, p_kas_fisik: Number(f.fisik.value), p_catatan: f.cat.value || null });
@@ -70,7 +73,7 @@ async function tutupSesi(s, setelah) {
 async function tutupSesiOffline(s, setelah) {
   const r = await OFF.ringkasanLokal(s);
   modal({ judul: 'Tutup Sesi ' + s.kode, ukuran: 'kecil', isi: `<p class="pesan info" style="margin-top:0">Offline: selisih kas dihitung setelah data tersinkron.</p>
-    <div class="baris-total"><span>Penjualan offline di perangkat ini</span><span>${angka(r.transaksi)} nota</span></div><div class="baris-total"><span>Nilai</span><span>${rupiah(r.omzet)}</span></div>${Object.entries(r.per_metode).map(([k, v]) => `<div class="baris-total"><span>${esc(k)}</span><span>${rupiah(v)}</span></div>`).join('')}
+    <div class="baris-total"><span>Penjualan offline di perangkat ini</span><span>${angka(r.transaksi)} nota</span></div>${!lihatNominal() ? '' : `<div class="baris-total"><span>Nilai</span><span>${rupiah(r.omzet)}</span></div>`}${!lihatNominal() ? '' : Object.entries(r.per_metode).map(([k, v]) => `<div class="baris-total"><span>${esc(k)}</span><span>${rupiah(v)}</span></div>`).join('')}
     <form onsubmit="return false" style="margin-top:12px"><label class="isian"><span>Uang fisik di laci <i>*</i></span><input name="fisik" type="number" step="any" min="0" required></label><label class="isian"><span>Catatan</span><textarea name="cat" rows="2"></textarea></label></form>`,
     tombol: [{ teks: 'Batal', kelas: 'kedua' }, { teks: 'Tutup Sesi', kelas: 'bahaya', aksi: async m => { const f = m.querySelector('form'); if (!f.reportValidity()) return false; await OFF.tutupSesiL(s, Number(f.fisik.value), f.cat.value || null); toast('Sesi ditutup, menunggu sinkron', 'sukses'); OFF.sinkron(); setelah?.(); } }] });
 }
@@ -80,9 +83,9 @@ async function cetakRekapSesi(s) {
   const lebar = await lebarStruk();
   bukaJendelaCetak(`<div class="c"><b>REKAP SESI KASIR</b><br>${esc(s.kode)}</div><hr>
     ${baris('Kasir', s.pengguna_nama)}${s.shift_nama ? baris('Shift', s.shift_nama) : ''}${baris('Buka', waktu(s.dibuka))}${s.ditutup ? baris('Tutup', waktu(s.ditutup)) : ''}<hr>
-    ${baris('Transaksi', r.transaksi)}${baris('Penjualan', rupiah(r.omzet))}${Object.entries(r.per_metode || {}).map(([k, v]) => baris('  ' + k, rupiah(v))).join('')}<hr>
+    ${r.tertutup ? baris('Transaksi', r.transaksi) + baris('Retur', r.retur_jml ?? 0) + baris('Kas awal', rupiah(r.kas_awal)) + baris('Kas fisik', rupiah(s.kas_fisik)) : `${baris('Transaksi', r.transaksi)}${baris('Penjualan', rupiah(r.omzet))}${Object.entries(r.per_metode || {}).map(([k, v]) => baris('  ' + k, rupiah(v))).join('')}<hr>
     ${baris('Kas awal', rupiah(r.kas_awal))}${baris('Tunai masuk', rupiah(r.tunai_masuk))}${baris('Kembalian', '-' + rupiah(r.kembalian))}${baris('Retur tunai', '-' + rupiah(r.retur_tunai))}${Number(r.kas_lain) ? baris('Kas lain (laci)', rupiah(r.kas_lain)) : ''}
-    ${baris('Kas sistem', rupiah(r.kas_sistem))}${s.kas_fisik !== null && s.kas_fisik !== undefined ? baris('Kas fisik', rupiah(s.kas_fisik)) + baris('Selisih', rupiah(s.selisih)) : ''}<hr>
+    ${baris('Kas sistem', rupiah(r.kas_sistem))}${s.kas_fisik !== null && s.kas_fisik !== undefined ? baris('Kas fisik', rupiah(s.kas_fisik)) + baris('Selisih', rupiah(s.selisih)) : ''}`}<hr>
     <div class="c">Ttd kasir<br><br><br>( ${esc(s.pengguna_nama)} )</div>`, lebar, 'Rekap ' + s.kode);
 }
 
@@ -113,7 +116,7 @@ export async function cetakNota(j, k) {
     ${j.bayar.map(b => baris(b.metode?.nama || 'Bayar', angka(b.jumlah))).join('')}${baris('Kembali', angka(j.kembalian))}
     ${j.stamp_didapat > 0 ? baris('Stamp member', `+${angka(j.stamp_didapat)} (total ${angka(j.pelanggan?.stamp)})`) : ''}${j.status === 'batal' ? '<div class="c"><b>*** DIBATALKAN ***</b></div>' : ''}${j.no.startsWith('OFF-') ? '<div class="c">Nota sementara (offline)</div>' : ''}<hr>
     ${ks.tampil_apoteker && o.apoteker ? `<div class="c">Apoteker: ${esc(o.apoteker)}${o.sipa ? '<br>SIPA ' + esc(o.sipa) : ''}</div>` : ''}
-    <div class="c">${esc(o.catatan_struk || '')}</div>`, await lebarStruk(), 'Struk ' + j.no);
+    <div class="c">${esc(o.catatan_struk || '')}</div>${await barcodeHtml(j.no, Number(await lebarStruk()) === 58 ? 48 : 72)}<div class="c" style="font-size:9px">${esc(j.no)} · simpan struk untuk retur</div>`, await lebarStruk(), 'Struk ' + j.no);
 }
 
 // ================= Kasir =================
@@ -157,6 +160,7 @@ async function tampilKasir(induk) {
       <div class="kasir-atas"><b>Kasir</b><span class="chip teal">Sesi ${esc(S.sesi.kode)}</span>${S.sesi.shift_nama ? `<span class="chip">${esc(S.sesi.shift_nama)}</span>` : ''}
         <span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
           <button class="tombol kedua kecil" data-pesanan>${ikon('penjualan')} Pesanan</button>
+          ${bisa('penjualan.retur') ? '<button class="tombol kedua kecil" data-retur title="Retur penjualan (F4)">↩ Retur</button>' : ''}
           <button class="tombol kedua kecil" data-tertolak>Catat Tertolak</button>
           <button class="tombol kedua kecil" data-printer title="Ukuran printer perangkat ini">🖨</button>
           <button class="tombol kedua kecil" data-tutup-sesi>Tutup Sesi</button></span></div>
@@ -235,6 +239,11 @@ async function tampilKasir(induk) {
     if (p.stok <= 0) toast(`Stok ${p.nama} di sistem habis`, 'galat');
     await hitung();
   }
+  // scan barcode struk di kolom cari obat langsung membuka retur
+  el.querySelector('[data-cari]').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || !polaNota(e.target.value) || !bisa('penjualan.retur')) return;
+    e.preventDefault(); e.stopImmediatePropagation(); const no = e.target.value.trim(); e.target.value = ''; e.target.dispatchEvent(new Event('input', { bubbles: true })); bukaRetur(no).catch(x => toast(pesanGalat(x), 'galat'));
+  });
   pasangCariProduk(el.querySelector('[data-cari]'), p => tambah(p).catch(e => toast(pesanGalat(e), 'galat')));
   el.querySelector('[data-paket]')?.addEventListener('change', e => {
     const b = bundel.find(x => String(x.id) === e.target.value); e.target.value = '';
@@ -265,6 +274,7 @@ async function tampilKasir(induk) {
     if (b.hasAttribute('data-tutup-sesi')) tutupSesi(S.sesi, () => location.hash = '#/home');
     if (b.hasAttribute('data-pesanan')) daftarPesanan(el);
     if (b.hasAttribute('data-tertolak')) catatTertolak();
+    if (b.hasAttribute('data-retur')) bukaRetur().catch(x => toast(pesanGalat(x), 'galat'));
     if (b.hasAttribute('data-printer')) aturPrinter();
     if (b.hasAttribute('data-hapus-pelanggan')) { e.preventDefault(); K.pelanggan = null; K.header.poin_dipakai = 0; tampilKasir_(); }
     if (b.hasAttribute('data-lepas-resep')) { e.preventDefault(); K = kosongkan(); tampilKasir_(); }
@@ -401,6 +411,7 @@ async function tampilKasir(induk) {
     if (!location.hash.startsWith('#/penjualan/kasir')) { document.onkeydown = null; return; }
     if (document.querySelector('.latar-modal')) return;
     if (e.key === 'F2') { e.preventDefault(); el.querySelector('[data-cari]')?.focus(); }
+    if (e.key === 'F4' && bisa('penjualan.retur')) { e.preventDefault(); bukaRetur().catch(x => toast(pesanGalat(x), 'galat')); }
     if (e.key === 'F9') { e.preventDefault(); bayar(); }
   };
   hitung();
@@ -466,7 +477,7 @@ export async function detailPenjualan(id, setelah) {
   const { data: j, error } = await sb.from('penjualan').select('*, item:penjualan_item(*), bayar:penjualan_bayar(*, metode:metode_bayar_id(nama)), pelanggan:pelanggan_id(nama), dokter:dokter_id(nama), jp:jenis_pelayanan_id(nama), retur:retur_jual(no,total,status,waktu)').eq('id', id).single();
   if (error) return toast(pesanGalat(error), 'galat');
   const tombol = [{ teks: 'Cetak Struk', kelas: 'kedua', aksi: () => { cetakStruk(j.id); return false; } }];
-  if (j.status === 'selesai' && bisa('penjualan.retur')) tombol.push({ teks: 'Retur', kelas: 'kedua', aksi: () => { sessionStorage.setItem('retur-dari', j.no); location.hash = '#/penjualan/retur/baru'; } });
+  if (j.status === 'selesai' && bisa('penjualan.retur')) tombol.push({ teks: 'Retur', kelas: 'kedua', aksi: () => { bukaRetur({ id: j.id }, () => setelah?.()); } });
   if (j.status === 'selesai' && bisa('penjualan.batal')) tombol.push({ teks: 'Batalkan Transaksi', kelas: 'bahaya', aksi: async () => {
     const alasan = await mintaTeks('Batalkan ' + j.no, 'Alasan pembatalan (wajib). Stok akan dikembalikan.');
     if (!alasan) return false;
@@ -519,77 +530,22 @@ rute('penjualan/daftar', async el => {
     data = d;
     const ok = d.filter(x => x.status === 'selesai');
     const omzet = ok.reduce((a, x) => a + Number(x.total), 0), laba = ok.reduce((a, x) => a + Number(x.total) - Number(x.hpp_total), 0);
-    el.querySelector('[data-ringkas]').innerHTML = [['Transaksi', angka(ok.length)], ['Penjualan', rupiah(omzet)], ['Rata-rata', rupiah(ok.length ? omzet / ok.length : 0)], ...(bisa('keuangan.laba') ? [['Laba kotor', rupiah(laba)]] : [])]
+    const nm = lihatNominal();
+    el.querySelector('[data-ringkas]').innerHTML = (!nm ? [['Transaksi Anda', angka(ok.length)]] : [['Transaksi', angka(ok.length)], ['Penjualan', rupiah(omzet)], ['Rata-rata', rupiah(ok.length ? omzet / ok.length : 0)], ...(bisa('keuangan.laba') ? [['Laba kotor', rupiah(laba)]] : [])])
       .map(([l, v]) => `<div class="statistik"><small>${l}</small><b>${v}</b></div>`).join('');
     el.querySelector('[data-isi]').innerHTML = d.length ? d.map(x => `<tr style="cursor:pointer" data-buka="${x.id}"><td data-label="No"><b>${esc(x.no)}</b></td><td data-label="Waktu">${waktu(x.waktu)}</td>
       <td data-label="Kasir">${esc(x.pengguna_nama || '')}</td><td data-label="Pelanggan">${esc(x.pelanggan?.nama || '-')}</td><td data-label="Bayar">${x.bayar.map(b => esc(b.metode?.nama || '')).join(', ')}</td>
-      <td data-label="Total" class="angka">${rupiah(x.total)}</td><td data-label="Status">${chipStatus(x.status)}</td></tr>`).join('') : '<tr><td class="kosong" colspan="7">Belum ada penjualan pada rentang ini.</td></tr>';
+      <td data-label="Total" class="angka">${nm ? rupiah(x.total) : '-'}</td><td data-label="Status">${chipStatus(x.status)}</td></tr>`).join('') : `<tr><td class="kosong" colspan="7">Belum ada penjualan pada rentang ini.${nm ? '' : ' Kasir hanya melihat nota sendiri hari ini.'}</td></tr>`;
   }
   el.addEventListener('click', e => {
     const tr = e.target.closest('[data-buka]'); if (tr) detailPenjualan(Number(tr.dataset.buka), muat);
     if (e.target.closest('[data-csv]')) unduhCSV('penjualan', [{ label: 'No', nilai: x => x.no }, { label: 'Waktu', nilai: x => waktu(x.waktu) }, { label: 'Kasir', nilai: x => x.pengguna_nama },
-      { label: 'Pelanggan', nilai: x => x.pelanggan?.nama }, { label: 'Total', nilai: x => x.total }, { label: 'Status', nilai: x => x.status }], data);
+      { label: 'Pelanggan', nilai: x => x.pelanggan?.nama }, ...(lihatNominal() ? [{ label: 'Total', nilai: x => x.total }] : []), { label: 'Status', nilai: x => x.status }], data);
   });
   el.addEventListener('change', muat);
   let jeda; el.querySelector('[data-q]').addEventListener('input', () => { clearTimeout(jeda); jeda = setTimeout(muat, 300); });
   muat();
 });
-
-// ================= Retur Penjualan =================
-rute('penjualan/retur', async (el, [p]) => {
-  if (p === 'baru') return formRetur(el);
-  el.innerHTML = judulHalaman('Retur Penjualan', 'Penjualan / Retur Penjualan', bisa('penjualan.retur') ? `<a class="tombol" href="#/penjualan/retur/baru">${ikon('tambah')} Buat Retur</a>` : '') +
-    `<div class="kartu"><div class="alat-tabel"><label>Dari <input type="date" class="input" style="width:auto" data-dari value="${awalBulan()}"></label><label>Sampai <input type="date" class="input" style="width:auto" data-sampai value="${hariIni()}"></label></div>
-    <div class="bungkus-tabel"><table class="tabel kartu-hp"><thead><tr><th>No. Retur</th><th>Waktu</th><th>Dari Nota</th><th>Oleh</th><th>Alasan</th><th class="angka">Total</th></tr></thead><tbody data-isi></tbody></table></div></div>`;
-  const muat = async () => {
-    const { data, error } = await sb.from('retur_jual').select('*, jual:penjualan_id(id,no)').eq('outlet_id', S.pengguna.outlet_id)
-      .gte('tanggal', el.querySelector('[data-dari]').value).lte('tanggal', el.querySelector('[data-sampai]').value).order('waktu', { ascending: false });
-    if (error) return toast(pesanGalat(error), 'galat');
-    el.querySelector('[data-isi]').innerHTML = data.length ? data.map(r => `<tr style="cursor:pointer" data-buka="${r.jual?.id}"><td data-label="No"><b>${esc(r.no)}</b></td><td data-label="Waktu">${waktu(r.waktu)}</td>
-      <td data-label="Nota">${esc(r.jual?.no || '')}</td><td data-label="Oleh">${esc(r.pengguna_nama || '')}</td><td data-label="Alasan">${esc(r.alasan || '')}</td><td data-label="Total" class="angka">${rupiah(r.total)}</td></tr>`).join('')
-      : '<tr><td class="kosong" colspan="6">Belum ada retur.</td></tr>';
-  };
-  el.addEventListener('change', muat);
-  el.addEventListener('click', e => { const tr = e.target.closest('[data-buka]'); if (tr) detailPenjualan(Number(tr.dataset.buka)); });
-  muat();
-});
-
-async function formRetur(el) {
-  const metode = (await ambilRef('metode_bayar', 'id,nama,jenis,aktif,urutan', 'urutan')).filter(m => m.aktif !== false);
-  el.innerHTML = judulHalaman('Buat Retur Penjualan', 'Penjualan / Retur Penjualan', `<a class="tombol kedua" href="#/penjualan/retur">${ikon('kiri')} Daftar</a>`) +
-    `<div class="kartu"><form onsubmit="return false" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="isian" style="margin:0;flex:1;min-width:220px"><span>Nomor nota penjualan</span><input name="no" placeholder="mis. PJ-2611-0001" required></label>
-      <button class="tombol">Cari</button></form></div><div data-isi></div>`;
-  const f = el.querySelector('form'), isi = el.querySelector('[data-isi]');
-  const dari = sessionStorage.getItem('retur-dari'); if (dari) { sessionStorage.removeItem('retur-dari'); f.no.value = dari; setTimeout(() => f.requestSubmit(), 0); }
-  f.onsubmit = async e => {
-    e.preventDefault();
-    const { data: j, error } = await sb.from('penjualan').select('*, item:penjualan_item(*, retur:retur_jual_item(qty, r:retur_id(status)))').eq('no', f.no.value.trim().toUpperCase()).eq('outlet_id', S.pengguna.outlet_id).maybeSingle();
-    if (error) return toast(pesanGalat(error), 'galat');
-    if (!j) { isi.innerHTML = '<div class="kartu"><p class="pesan galat" style="margin:0">Nota tidak ditemukan di outlet ini.</p></div>'; return; }
-    if (j.status !== 'selesai') { isi.innerHTML = `<div class="kartu"><p class="pesan galat" style="margin:0">Nota berstatus ${esc(j.status)}, tidak bisa diretur.</p></div>`; return; }
-    const items = j.item.filter(i => !i.bundel_id).map(i => ({ ...i, sudah: (i.retur || []).filter(r => r.r?.status === 'posting').reduce((a, r) => a + Number(r.qty), 0) }));
-    isi.innerHTML = `<div class="kartu"><p style="margin-top:0"><b>${esc(j.no)}</b> · ${waktu(j.waktu)} · total ${rupiah(j.total)}</p>
-      <div class="bungkus-tabel"><table class="tabel"><thead><tr><th>Barang</th><th class="angka">Dibeli</th><th class="angka">Sudah diretur</th><th class="angka">Jumlah retur</th></tr></thead><tbody>
-      ${items.map((i, n) => `<tr><td>${esc(i.nama)}</td><td class="angka">${angka(i.qty)} ${esc(i.satuan_nama || '')}</td><td class="angka">${angka(i.sudah)}</td>
-        <td class="angka"><input type="number" class="input" style="width:90px;text-align:right" min="0" max="${i.qty - i.sudah}" step="any" data-retur="${n}" ${i.qty - i.sudah <= 0 ? 'disabled' : ''}></td></tr>`).join('')}</tbody></table></div>
-      ${j.item.some(i => i.bundel_id) ? '<p class="pesan info">Barang paket tidak bisa diretur sebagian. Untuk paket, batalkan transaksinya.</p>' : ''}
-      <div class="form-grid" style="margin-top:12px"><label class="isian"><span>Uang dikembalikan lewat</span><select name="metode">${metode.map(m => `<option value="${m.id}">${esc(m.nama)}</option>`).join('')}</select></label>
-      <label class="isian"><span>Alasan</span><input name="alasan" placeholder="mis. salah beli"></label></div>
-      <p class="pesan peringatan">Nilai uang kembali dihitung otomatis sesuai harga di nota (sudah termasuk potongan). Stok kembali ke batch asal.</p>
-      <button class="tombol" data-simpan>Simpan Retur</button></div>`;
-    isi.querySelector('[data-simpan]').onclick = async b => {
-      const brs = items.map((i, n) => ({ penjualan_item_id: i.id, qty: Number(isi.querySelector(`[data-retur="${n}"]`).value || 0) })).filter(x => x.qty > 0);
-      if (!brs.length) return toast('Isi jumlah barang yang diretur', 'galat');
-      b.target.disabled = true;
-      const { data, error: e2 } = await sb.rpc('retur_penjualan', { p: { penjualan_id: j.id, metode_bayar_id: Number(isi.querySelector('[name=metode]').value), alasan: isi.querySelector('[name=alasan]').value || null, items: brs } });
-      b.target.disabled = false;
-      if (e2) return toast(pesanGalat(e2), 'galat');
-      modal({ judul: 'Retur tersimpan', ukuran: 'kecil', isi: `<div style="text-align:center"><b>${esc(data.no)}</b><div class="total-bayar"><small>Uang dikembalikan</small><b>${rupiah(data.total)}</b></div></div>`,
-        tombol: [{ teks: 'Selesai', aksi: () => { location.hash = '#/penjualan/retur'; } }] });
-    };
-  };
-  return 'Buat Retur';
-}
 
 // ================= Penjualan Tertolak =================
 rute('penjualan/tertolak', halamanCrud({
