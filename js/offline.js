@@ -1,7 +1,7 @@
 // Mode offline: salinan data di perangkat (IndexedDB), antrean transaksi, masuk offline, dan sinkron otomatis.
 // Hanya aktif di perangkat yang sudah ditandai Pemilik. Antrean tidak pernah dihapus sebelum server menjawab "tercatat".
-import { sb, S, KONEKSI, cekServer, ambilSemua, HOOK } from './inti.js?v=1.16.0';
-import { toast } from './ui.js?v=1.16.0';
+import { sb, S, KONEKSI, cekServer, ambilSemua, HOOK } from './inti.js?v=1.17.0';
+import { toast } from './ui.js?v=1.17.0';
 
 const AGEN = 'http://localhost:8766';
 const MASA_LOGIN = 3 * 864e5;                 // masuk offline berlaku 3 hari sejak login online terakhir
@@ -128,7 +128,7 @@ export function hitungL(p) {
   const j = jp.get(Number(p.jenis_pelayanan_id)), pel = pelanggan.get(Number(p.pelanggan_id));
   if (p.voucher_kode) throw new Error('Voucher belum bisa dipakai saat offline');
   if (p.resep_id) throw new Error('Tebus resep terdaftar perlu internet. Isi nomor resep secara manual.');
-  let sub = 0, perlu = false; const keras = ['keras', 'okt', 'psikotropika', 'narkotika'], items = [];
+  let sub = 0, perlu = false; const keras = ['okt', 'psikotropika', 'narkotika', ...(kj.wajib_resep_obat_keras ? ['keras'] : [])], items = [];
   for (const it of p.items) {
     const qty = Number(it.qty || 0), dp = Number(it.diskon_persen || 0);
     if (!(qty > 0)) throw new Error('Jumlah barang harus lebih dari 0');
@@ -136,7 +136,7 @@ export function hitungL(p) {
     if (it.bundel_id) {
       const b = bundel.get(it.bundel_id); if (!b || !b.aktif || !berlaku(b)) throw new Error('Paket sudah tidak berlaku');
       nama = 'Paket ' + b.nama; harga = Number(b.harga); snama = 'paket';
-      if (D.promo_bundel_item.some(x => x.bundel_id === b.id && keras.includes(produk.get(x.produk_id)?.golongan))) perlu = true;
+      if (D.promo_bundel_item.some(x => x.bundel_id === b.id && (keras.includes(produk.get(x.produk_id)?.golongan) || produk.get(x.produk_id)?.wajib_resep))) perlu = true;
     } else {
       pr = produk.get(it.produk_id); if (!pr) throw new Error('Produk tidak ada di data perangkat');
       sid = it.satuan_id || pr.satuan_id; harga = Number(pr.harga_jual);
@@ -166,7 +166,7 @@ export function hitungL(p) {
   if (dNota > sub * maks / 100 && !bebas) throw new Error(`Diskon nota maksimal ${maks} persen dari subtotal`);
   dNota = Math.min(dNota, sisa); sisa -= dNota;
   const emb = Number(j?.embalase || 0), tus = Number(j?.tuslah || 0), dasar = Math.max(sisa + emb + tus, 0), k = Number(kj.pembulatan || 0), total = k > 0 ? Math.ceil(dasar / k) * k : rd(dasar);
-  return { items, subtotal: sub, diskon_pelanggan: dPel, diskon_nota: dNota, potongan_voucher: 0, potongan_poin: 0, embalase: emb, tuslah: tus, pembulatan: total - dasar, total, stamp_didapat: 0, jasa_racik: 0, jasa_resep: 0, perlu_resep: perlu, wajib_resep: kj.wajib_resep_obat_keras ?? true };
+  return { items, subtotal: sub, diskon_pelanggan: dPel, diskon_nota: dNota, potongan_voucher: 0, potongan_poin: 0, embalase: emb, tuslah: tus, pembulatan: total - dasar, total, stamp_didapat: 0, jasa_racik: 0, jasa_resep: 0, perlu_resep: perlu, wajib_resep: true };
 }
 
 // ---------- Antrean ----------
@@ -211,7 +211,7 @@ export async function jualL(uuid, muatan, hasil, bayar, kembalian) {
   const total = bayar.reduce((a, b) => a + b.jumlah, 0), tunai = bayar.filter(b => jenis[b.metode_bayar_id].jenis === 'tunai').reduce((a, b) => a + b.jumlah, 0);
   if (total < hasil.total) throw new Error('Pembayaran kurang');
   if (kembalian > tunai) throw new Error('Kembalian hanya bisa dari uang tunai');
-  if (hasil.perlu_resep && hasil.wajib_resep && !muatan.dokter_id && !muatan.no_resep) throw new Error('Ada obat keras: isi dokter atau nomor resep.');
+  if (hasil.perlu_resep && hasil.wajib_resep && !muatan.dokter_id && !muatan.no_resep) throw new Error('Ada obat wajib resep: isi dokter atau nomor resep.');
   const no = noOff('OFF'), w = new Date().toISOString(), { items, ...header } = muatan;
   await antrekan('jual', { no_offline: no, ...idSesi(S.sesi), waktu: w, header: { pelanggan_id: header.pelanggan_id, jenis_pelayanan_id: header.jenis_pelayanan_id, dokter_id: header.dokter_id, no_resep: header.no_resep, diskon_nota: header.diskon_nota }, items, hasil, bayar, kembalian }, uuid);
   kurangiStok(hasil.items);
