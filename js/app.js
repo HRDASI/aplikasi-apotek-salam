@@ -1,21 +1,21 @@
-import { sb, S, RUTE, rute, bisa, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.20.0';
-import { MENU, ITEM, ikon } from './menu.js?v=1.20.0';
-import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.20.0';
-import './halaman/home.js?v=1.20.0';
-import { muatSesi, KONEKSI, cekServer, putusJaringan } from './inti.js?v=1.20.0';
-import * as OFF from './offline.js?v=1.20.0';
-import * as FOKUS from './fokus.js?v=1.20.0';
-import { halamanSegera } from './halaman/home.js?v=1.20.0';
+import { sb, S, RUTE, rute, bisa, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.21.0';
+import { MENU, ITEM, ikon } from './menu.js?v=1.21.0';
+import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.21.0';
+import './halaman/home.js?v=1.21.0';
+import { muatSesi, KONEKSI, cekServer, putusJaringan } from './inti.js?v=1.21.0';
+import * as OFF from './offline.js?v=1.21.0';
+import * as FOKUS from './fokus.js?v=1.21.0';
+import { halamanSegera } from './halaman/home.js?v=1.21.0';
 
 // Kode tiap modul baru diunduh saat menunya dibuka, supaya aplikasi cepat terbuka.
-const muatMaster = () => import('./halaman/master.js?v=1.20.0'), muatJual = () => import('./halaman/penjualan.js?v=1.20.0'), muatLaporan = () => Promise.all([import('./halaman/laporan.js?v=1.20.0'), import('./halaman/akuntansi.js?v=1.20.0'), import('./halaman/presensi.js?v=1.20.0'), import('./halaman/shift.js?v=1.20.0')]);
-const muatPresensi = () => import('./halaman/presensi.js?v=1.20.0');
-const muatStok = () => import('./halaman/persediaan.js?v=1.20.0');
+const muatMaster = () => import('./halaman/master.js?v=1.21.0'), muatJual = () => import('./halaman/penjualan.js?v=1.21.0'), muatLaporan = () => Promise.all([import('./halaman/laporan.js?v=1.21.0'), import('./halaman/akuntansi.js?v=1.21.0'), import('./halaman/presensi.js?v=1.21.0'), import('./halaman/shift.js?v=1.21.0')]);
+const muatPresensi = () => import('./halaman/presensi.js?v=1.21.0');
+const muatStok = () => import('./halaman/persediaan.js?v=1.21.0');
 const MODUL = {
-  master: muatMaster, kontak: muatMaster, outlet: muatMaster, pengaturan: () => Promise.all([import('./halaman/pengaturan.js?v=1.20.0'), muatMaster(), import('./halaman/offline.js?v=1.20.0'), import('./halaman/impor.js?v=1.20.0'), import('./halaman/cadangan.js?v=1.20.0'), muatPresensi()]),
-  pengguna: () => Promise.all([import('./halaman/pengguna.js?v=1.20.0'), muatJual(), muatPresensi()]), penjualan: muatJual, pelayanan: () => import('./halaman/pelayanan.js?v=1.20.0'), persediaan: muatStok,
-  pembelian: () => import('./halaman/pembelian.js?v=1.20.0'), konsinyasi: () => import('./halaman/konsinyasi.js?v=1.20.0'), promo: () => Promise.all([import('./halaman/promo.js?v=1.20.0'), import('./halaman/member.js?v=1.20.0')]),
-  panduan: () => import('./halaman/panduan.js?v=1.20.0'), gaji: () => import('./halaman/gaji.js?v=1.20.0'), kpi: () => import('./halaman/kpi.js?v=1.20.0'), keuangan: () => import('./halaman/keuangan.js?v=1.20.0'), akuntansi: () => import('./halaman/akuntansi.js?v=1.20.0'), laporan: muatLaporan, analisis: muatLaporan, dashboard: muatLaporan,
+  master: muatMaster, kontak: muatMaster, outlet: muatMaster, pengaturan: () => Promise.all([import('./halaman/pengaturan.js?v=1.21.0'), muatMaster(), import('./halaman/offline.js?v=1.21.0'), import('./halaman/impor.js?v=1.21.0'), import('./halaman/cadangan.js?v=1.21.0'), muatPresensi()]),
+  pengguna: () => Promise.all([import('./halaman/pengguna.js?v=1.21.0'), muatJual(), muatPresensi()]), penjualan: muatJual, pelayanan: () => import('./halaman/pelayanan.js?v=1.21.0'), persediaan: muatStok,
+  pembelian: () => Promise.all([import('./halaman/pembelian.js?v=1.21.0'), import('./halaman/program.js?v=1.21.0')]), konsinyasi: () => import('./halaman/konsinyasi.js?v=1.21.0'), promo: () => Promise.all([import('./halaman/promo.js?v=1.21.0'), import('./halaman/member.js?v=1.21.0')]),
+  panduan: () => import('./halaman/panduan.js?v=1.21.0'), gaji: () => import('./halaman/gaji.js?v=1.21.0'), kpi: () => import('./halaman/kpi.js?v=1.21.0'), keuangan: () => import('./halaman/keuangan.js?v=1.21.0'), akuntansi: () => import('./halaman/akuntansi.js?v=1.21.0'), laporan: muatLaporan, analisis: muatLaporan, dashboard: muatLaporan,
 };
 
 const app = $('#app');
@@ -237,11 +237,13 @@ function menuAkun() {
   const m = document.createElement('div');
   m.className = 'menu-akun';
   m.innerHTML = `<div class="kepala"><b>${esc(S.pengguna.nama)}</b><br><small>${esc(S.pengguna.username)} · ${esc(S.peran.nama)}</small></div>
+    <button data-panduan>${ikon('info')} Panduan</button>
     <button data-ganti-shift>${ikon('muat')} Ganti Shift <small style="margin-left:auto;color:var(--teks-2)">${esc(S.shift?.nama || '')}</small></button>
     <button data-sandi>${ikon('kunci')} Ganti Kata Sandi</button><button data-keluar style="color:var(--merah)">${ikon('keluar')} Keluar</button>
     <div style="padding:6px 16px 10px;color:var(--teks-2);font-size:11px">Versi ${VERSI}</div>`;
   $('.topbar').append(m);
   m.onclick = e => {
+    if (e.target.closest('[data-panduan]')) { m.remove(); location.hash = '#/panduan'; }
     if (e.target.closest('[data-sandi]')) { m.remove(); gantiSandi(); }
     if (e.target.closest('[data-ganti-shift]')) { m.remove(); mintaShift(false); }
     if (e.target.closest('[data-keluar]')) keluar();
@@ -293,7 +295,7 @@ async function tampilkan() {
   $$('.nav-bawah a').forEach(n => n.classList.toggle('aktif', hash === n.dataset.nav || hash.startsWith(n.dataset.nav + '/')));
 
   // tandai menu & judul dulu supaya sentuhan langsung terasa, baru muat isinya
-  kepalaHp(hash, hash.startsWith('modul/') ? (MENU.find(m => m.k === bagian[1])?.t || '') : item?.judul || (hash === 'lainnya' ? 'Menu Lainnya' : 'Home'));
+  kepalaHp(hash, hash.startsWith('modul/') ? (MENU.find(m => m.k === bagian[1])?.t || '') : item?.judul || ({ lainnya: 'Menu Lainnya', panduan: 'Panduan' }[hash] || 'Home'));
   document.body.classList.add('memuat');
   if (MODUL[bagian[0]]) {
     try { await MODUL[bagian[0]](); }
@@ -309,7 +311,7 @@ async function tampilkan() {
   let fn = RUTE[hash], param = [];
   if (KONEKSI.putus) {
     const OFFLINE = ['home', 'lainnya', 'modul', 'penjualan/kasir', 'pelayanan/penerimaan_resep/baru', 'pengaturan/printer', 'pengaturan/offline', 'panduan'];
-    if (hash === 'home') fn = async el => (await import('./halaman/offline.js?v=1.20.0')).berandaOffline(el);
+    if (hash === 'home') fn = async el => (await import('./halaman/offline.js?v=1.21.0')).berandaOffline(el);
     else if (!OFFLINE.some(x => hash === x || (x === 'modul' && hash.startsWith('modul/')))) fn = el => { el.innerHTML = `<div class="kartu segera"><h3>Menu ini perlu internet</h3><p>Saat offline yang bisa dipakai: Kasir, Resep Baru, cek harga & stok.</p><div class="aksi-cepat" style="justify-content:center;margin-top:14px"><a href="#/penjualan/kasir">Kasir</a><a href="#/pelayanan/penerimaan_resep/baru">Resep Baru</a><a href="#/home">Beranda offline</a></div></div>`; };
   }
   for (let n = bagian.length - 1; !fn && n >= 1; n--) {
@@ -375,7 +377,7 @@ function kepalaHp(hash, judul) {
 async function mulai() {
   // Kartu member publik: dibuka member dari link WhatsApp, tanpa login
   const kartu = location.hash.match(/^#\/kartu\/([0-9a-f]{16,})/);
-  if (kartu) return (await import('./halaman/member.js?v=1.20.0')).tampilKartuPublik(app, kartu[1]);
+  if (kartu) return (await import('./halaman/member.js?v=1.21.0')).tampilKartuPublik(app, kartu[1]);
   if (OFF.perangkat()) {
     await OFF.bacaSalinan();
     if (OFF.perangkatAktif() && !await cekServer(3500)) {
