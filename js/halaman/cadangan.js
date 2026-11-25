@@ -1,13 +1,15 @@
 // Cadangan Data: status cadangan otomatis ke Google Drive, kunci, dan permintaan manual.
-import { rute } from '../inti.js?v=1.18.0';
-import { esc, angka, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.18.0';
-import { rpc, tabelHtml } from '../tabel.js?v=1.18.0';
+import { rute } from '../inti.js?v=1.18.1';
+import { esc, angka, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.18.1';
+import { rpc, tabelHtml } from '../tabel.js?v=1.18.1';
 
 const galat = (el, e) => { el.innerHTML = `<div class="kartu"><p class="pesan galat">${esc(pesanGalat(e))}</p></div>`; };
 const ukuran = b => !b ? '' : b > 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : angka(Math.round(b / 1024)) + ' KB';
-const ST = { selesai: ['Tersimpan', 'hijau'], siap: ['Menunggu diambil', 'oranye'], diminta: ['Disiapkan', 'oranye'], gagal: ['Gagal', 'merah'] };
+const ST = { selesai: ['Tersimpan', 'hijau'], siap: ['Siap, menunggu Google', 'oranye'], diminta: ['Disiapkan', 'oranye'], gagal: ['Gagal', 'merah'] };
 rute('pengaturan/cadangan', async el => {
+  let tunda;
   const muat = async () => {
+    clearTimeout(tunda);
     let s; try { s = await rpc('status_cadangan'); } catch (e) { return galat(el, e); }
     const pesan = !s.kunci ? ['peringatan', 'Cadangan belum aktif. Buat kunci di bawah, lalu pasang di Google Sheet <b>Cadangan Apotek Salam</b>: menu <b>Cadangan → Pasang kunci &amp; mulai</b>.']
       : s.terlambat ? ['galat', 'Belum ada cadangan baru lebih dari 14 jam. Cek Google Sheet <b>Cadangan Apotek Salam</b> → menu Cadangan → Lihat status.']
@@ -23,6 +25,7 @@ rute('pengaturan/cadangan', async el => {
       modal({ judul: 'Kunci cadangan', ukuran: 'kecil', isi: `<p style="margin-top:0">Tempel di Google Sheet <b>Cadangan Apotek Salam</b> → Cadangan → Pasang kunci &amp; mulai. Jangan dikirim lewat chat atau WA.</p><input class="input" readonly value="${esc(k)}" onfocus="this.select()">`, tombol: [{ teks: 'Salin', aksi: async () => { try { await navigator.clipboard.writeText(k); toast('Kunci disalin', 'sukses'); } catch { toast('Pilih lalu salin manual', 'galat'); } return false; } }, { teks: 'Selesai', kelas: 'kedua' }] });
       muat();
     });
+    if (s.riwayat.some(r => ['diminta', 'siap'].includes(r.status))) tunda = setTimeout(() => { if (el.isConnected && location.hash.startsWith('#/pengaturan/cadangan') && !document.querySelector('.latar-modal')) muat(); }, 15000);      // status berubah sendiri
     el.querySelector('[data-muat]').onclick = muat;
     el.querySelector('[data-minta]')?.addEventListener('click', async e => { e.target.disabled = true; try { await rpc('minta_cadangan'); toast('Disiapkan. Masuk ke Drive dalam ±15 menit.', 'sukses'); } catch (x) { toast(pesanGalat(x), 'galat'); } muat(); });
   };
