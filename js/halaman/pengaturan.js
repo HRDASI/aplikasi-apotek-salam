@@ -1,7 +1,8 @@
 // Pengaturan: Profil Bisnis (outlet aktif) & Konfigurasi.
-import { rute, sb, S, bisa, atauOffline, KONEKSI, HOOK } from '../inti.js?v=1.22.1';
-import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.22.1';
-import { bacaPrinter, simpanPrinter, statusAgen, cetakStrukHtml, cetakLabelHtml } from '../cetak.js?v=1.22.1';
+import { rute, sb, S, bisa, atauOffline, KONEKSI, HOOK } from '../inti.js?v=1.23.0';
+import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.23.0';
+import { bacaPrinter, simpanPrinter, statusAgen, cetakLabelHtml, cetakLabelPng, GAYA } from '../cetak.js?v=1.23.0';
+import { STRUK_BAWAAN } from '../struk.js?v=1.23.0';
 
 rute('pengaturan/profil', async el => {
   const boleh = bisa('pengaturan.profil');
@@ -41,14 +42,14 @@ rute('pengaturan/printer', async el => {
     <div class="kartu"><h3>Struk, rekap sesi & copy resep (thermal)</h3><div class="form-grid">
       <label class="isian"><span>Printer</span><select name="struk_printer" data-daftar></select></label>
       <label class="isian"><span>Lebar kertas</span><select name="struk_lebar"><option value="">Ikuti Konfigurasi</option><option value="58" ${p.struk.lebar === '58' ? 'selected' : ''}>58 mm</option><option value="80" ${p.struk.lebar === '80' ? 'selected' : ''}>80 mm</option></select></label></div>
-      <button type="button" class="tombol kedua kecil" data-tes="struk">Tes cetak struk</button></div>
+      <button type="button" class="tombol kedua kecil" data-tes="struk">Tes print nota</button> <a class="tombol kedua kecil" href="#/pengaturan/struk">Atur tampilan struk</a></div>
     <div class="kartu"><h3>Etiket & label (printer label)</h3><div class="form-grid">
       <label class="isian"><span>Printer</span><select name="label_printer" data-daftar></select></label>
       <label class="isian"><span>Salinan per etiket</span><input type="number" min="1" max="5" name="salinan" value="${p.salinanEtiket}"></label>
       <label class="isian"><span>Lebar stiker (mm)</span><input type="number" min="20" max="110" name="label_lebar" value="${p.label.lebar}"></label>
       <label class="isian"><span>Tinggi stiker (mm)</span><input type="number" min="15" max="150" name="label_tinggi" value="${p.label.tinggi}"></label></div>
       <p style="color:var(--teks-2);font-size:13px;margin-top:0">Atur ukuran yang sama di driver printer label (Printing Preferences → ukuran kertas) agar tidak bergeser.</p>
-      <button type="button" class="tombol kedua kecil" data-tes="label">Tes cetak etiket</button></div>
+      <button type="button" class="tombol kedua kecil" data-tes="label">Tes print etiket</button> <button type="button" class="tombol kedua kecil" data-tes="barcode">Tes print barcode</button><p data-hasil-tes style="margin:10px 0 0"></p></div>
     <button class="tombol" data-simpan>Simpan untuk perangkat ini</button></form></div>`;
   const s = await statusAgen();
   el.querySelector('[data-agen]').innerHTML = s
@@ -65,16 +66,21 @@ rute('pengaturan/printer', async el => {
   el.querySelector('[data-simpan]').onclick = () => { simpanPrinter(baca()); toast('Pengaturan printer disimpan untuk perangkat ini', 'sukses'); };
   el.querySelectorAll('[data-tes]').forEach(b => b.onclick = async () => {
     simpanPrinter(baca());
-    const k = await ambilKonfig();
-    if (b.dataset.tes === 'struk') await cetakStrukHtml(`<div class="c"><b>${esc(S.outlet?.nama || 'Apotek Salam')}</b><br>TES CETAK STRUK</div><hr><div class="r"><span>Tanggal</span><span>${new Date().toLocaleString('id-ID')}</span></div><div class="r"><span>Printer</span><span>${esc(baca().struk.printer || 'dialog')}</span></div><hr><div class="c">Jika tulisan ini rapi, printer siap.</div>`, 'Tes struk', k.struk.lebar);
-    else await cetakLabelHtml([`<div class="kop"><span>${esc(S.outlet?.nama || 'Apotek Salam')}</span><span>No. 001</span></div><div class="nm">TES ETIKET</div><div class="signa">3 x sehari 1 tablet</div><div class="kecil">Sesudah makan · ${new Date().toLocaleDateString('id-ID')}</div><div class="jenis">OBAT DALAM</div>`], 'Tes etiket');
-    toast('Perintah cetak dikirim');
+    const w = el.querySelector('[data-hasil-tes]'), j = b.dataset.tes, p = baca(), printer = j === 'struk' ? p.struk.printer : p.label.printer; b.disabled = true; w.textContent = 'Mengirim…';
+    try {
+      let r;
+      if (j === 'struk') { const k = await ambilKonfig(); r = await (await import('./struk.js?v=1.23.0')).cetakNotaContoh(k.struk); }
+      else if (j === 'label') r = await cetakLabelHtml([`<div class="kop"><span>${esc(S.outlet?.nama || 'Apotek Salam')}</span><span>No. 001</span></div><div class="nm">CONTOH ETIKET</div><div class="signa">3 x sehari 1 tablet</div><div class="kecil">Sesudah makan · ${new Date().toLocaleDateString('id-ID')}</div><div class="jenis">OBAT DALAM</div>`], 'Tes etiket');
+      else { const l = await (await import('../label.js?v=1.23.0')).gambarLabel({ nama: 'CONTOH BARCODE', kode: 'CONTOH123', harga_jual: 15000 }, { lebar: p.label.lebar, tinggi: p.label.tinggi }); r = await cetakLabelPng([{ png: l.png, salinan: 1 }], 'Tes barcode'); }
+      w.innerHTML = `<span class="chip ${r === 'agen' ? 'hijau' : 'oranye'}">${r === 'agen' ? 'Terkirim ke ' + esc(printer) : 'Dibuka lewat dialog cetak' + (printer ? ' (agen tidak menyala)' : ' (printer belum dipilih)')}</span>`;
+    } catch (x) { w.innerHTML = `<span class="chip merah">Gagal: ${esc(pesanGalat(x))}</span>`; }
+    b.disabled = false;
   });
 });
 
 // Konfigurasi disimpan di tabel konfigurasi (kunci -> jsonb)
 export const KONFIG_BAWAAN = {
-  struk: { lebar: '58', cetak_otomatis: false, tampil_logo: true, tampil_apoteker: true },
+  struk: { ...STRUK_BAWAAN },
   penjualan: { stok_minus: false, pembulatan: 0, wajib_resep_obat_keras: false, diskon_maks_persen: 20 },
   persediaan: { peringatan_ed_hari: 90, metode_keluar: 'FEFO', batas_margin_persen: 5, margin_saran_persen: 20 },
   pelayanan: { tarif_racik: 5000, persen_resep: 0, cetak_etiket: true },
@@ -94,6 +100,7 @@ export async function ambilKonfig() {
   const data = await atauOffline(async () => { const j = konfigAkhir; if (KONEKSI.putus) throw new TypeError('Failed to fetch'); return j; }, () => HOOK.offline.konfigL());
   const k = structuredClone(KONFIG_BAWAAN);
   for (const r of data || []) k[r.kunci] = { ...(k[r.kunci] || {}), ...r.nilai };
+  GAYA.struk = k.struk;
   return k;
 }
 
@@ -104,11 +111,7 @@ rute('pengaturan/konfigurasi', async el => {
   if (!k.pembelian.pajak_id) k.pembelian.pajak_id = (pajak || []).find(p => Number(p.persen) === 11)?.id ?? null;
   const cek =(g, f, label) => `<label class="cek"><input type="checkbox" name="${g}.${f}" ${k[g][f] ? 'checked' : ''}> ${label}</label>`;
   el.innerHTML = judulHalaman('Konfigurasi', 'Pengaturan / Konfigurasi') + `<form onsubmit="return false" style="max-width:820px">
-    <div class="kartu"><h3>Struk</h3>
-      <label class="isian"><span>Lebar kertas</span><select name="struk.lebar"><option value="58" ${k.struk.lebar === '58' ? 'selected' : ''}>58 mm</option><option value="80" ${k.struk.lebar === '80' ? 'selected' : ''}>80 mm</option></select></label>
-      ${cek('struk', 'cetak_otomatis', 'Cetak struk otomatis setiap transaksi')}
-      ${cek('struk', 'tampil_logo', 'Tampilkan logo di struk')}
-      ${cek('struk', 'tampil_apoteker', 'Tampilkan nama apoteker & SIPA di struk')}</div>
+    <div class="kartu"><h3>Struk</h3><p style="margin:0">Model, font, ukuran, logo, dan cetak otomatis diatur di <a href="#/pengaturan/struk">Pengaturan → Struk Nota</a>.</p></div>
     <div class="kartu"><h3>Penjualan</h3>
       ${cek('penjualan', 'wajib_resep_obat_keras', 'Obat keras wajib dicatat resepnya saat dijual (OKT, psikotropika, narkotika, dan produk bertanda wajib resep selalu wajib)')}
       ${cek('penjualan', 'stok_minus', 'Izinkan menjual walau stok di sistem habis')}
@@ -147,7 +150,7 @@ rute('pengaturan/konfigurasi', async el => {
       baru[g][n] = i.type === 'checkbox' ? i.checked : i.type === 'number' || ['pembulatan', 'pajak_id'].includes(n) ? Number(i.value) : i.value;
     }
     e.target.disabled = true;
-    const { error } = await sb.from('konfigurasi').upsert(Object.entries(baru).map(([kunci, nilai]) => ({ kunci, nilai, diubah: new Date().toISOString() })));
+    const { error } = await sb.from('konfigurasi').upsert(Object.entries(baru).filter(([kunci]) => kunci !== 'struk').map(([kunci, nilai]) => ({ kunci, nilai, diubah: new Date().toISOString() })));
     lupakanKonfig();
     e.target.disabled = false;
     if (error) return toast(pesanGalat(error), 'galat');
