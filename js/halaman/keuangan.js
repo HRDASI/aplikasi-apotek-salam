@@ -1,8 +1,8 @@
 // Keuangan: Akun Kas, Buku Kas, Utang Usaha, Piutang Usaha.
-import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.20.0';
-import { ikon } from '../menu.js?v=1.20.0';
-import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.20.0';
-import { rpc, hariIni, barPeriode, tabelHtml, unduhTabel, cetakHtml } from '../tabel.js?v=1.20.0';
+import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.21.0';
+import { ikon } from '../menu.js?v=1.21.0';
+import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.21.0';
+import { rpc, hariIni, geserHari, barPeriode, tabelHtml, unduhTabel, cetakHtml } from '../tabel.js?v=1.21.0';
 
 const galat = (el, e) => { el.innerHTML = `<p class="pesan galat">${esc(pesanGalat(e))}</p>`; };
 export async function akunKas() {
@@ -91,7 +91,9 @@ function halamanTagihan(piutang) {
   const K = piutang ? { judul: 'Piutang Usaha', nm: 'pelanggan', tb: 'pelanggan', kunci: 'keuangan.piutang', jenis: 'piutang', aksi: 'Terima' } : { judul: 'Utang Usaha', nm: 'supplier', tb: 'supplier', kunci: 'keuangan.utang', jenis: 'utang', aksi: 'Bayar' };
   return async el => {
     const ks = await akunKas(); let d = [], kredit = [], kons = [];
-    const kol = [{ l: piutang ? 'Pelanggan' : 'Supplier', n: r => r[K.nm] || '-' }, { l: 'No.', n: r => r.no, h: r => `<span>${esc(r.no)}${r.ref ? `<br><small style="color:var(--teks-2)">${esc(r.ref)}</small>` : ''}</span>` }, { l: 'Tanggal', n: r => r.tanggal, t: 'tgl' }, { l: 'Jatuh Tempo', n: r => r.jatuh_tempo, t: 'tgl' },
+    const pilih = new Set(), F = { s: '', tgl: 'jatuh_tempo', dari: '', sampai: '', st: '', q: '' }, kunciT = r => r.sumber + ':' + r.id;
+    const saring = () => piutang ? d : d.filter(r => (!F.s || String(r.supplier_id) === F.s) && (!F.dari || (r[F.tgl] && r[F.tgl] >= F.dari)) && (!F.sampai || (r[F.tgl] && r[F.tgl] <= F.sampai)) && (!F.st || (F.st === 'lewat' ? r.jatuh_tempo && r.jatuh_tempo < hariIni() : F.st === '7' ? r.jatuh_tempo && r.jatuh_tempo >= hariIni() && r.jatuh_tempo <= geserHari(hariIni(), 7) : !r.jatuh_tempo)) && (!F.q || `${r.no} ${r.ref || ''} ${r.supplier || ''}`.toLowerCase().includes(F.q)));
+    const kol = [...(piutang ? [] : [{ l: '', n: () => '', h: r => `<input type="checkbox" data-pilih="${kunciT(r)}" ${pilih.has(kunciT(r)) ? 'checked' : ''} aria-label="Tandai ${esc(r.no)}">` }]), { l: piutang ? 'Pelanggan' : 'Supplier', n: r => r[K.nm] || '-' }, { l: 'No.', n: r => r.no, h: r => `<span>${esc(r.no)}${r.ref ? `<br><small style="color:var(--teks-2)">${esc(r.ref)}</small>` : ''}</span>` }, { l: 'Tanggal', n: r => r.tanggal, t: 'tgl' }, { l: 'Jatuh Tempo', n: r => r.jatuh_tempo, t: 'tgl' },
       { l: 'Status', n: r => umur(r)[0], h: r => `<span class="chip ${umur(r)[1]}">${umur(r)[0]}</span>` }, { l: 'Total', n: r => r.total, t: 'uang', jml: true }, { l: 'Dibayar', n: r => r.dibayar, t: 'uang', jml: true }, { l: 'Sisa', n: r => r.sisa, t: 'uang', jml: true },
       { l: '', n: () => '', h: r => `<button class="tombol kecil" data-bayar="${r.sumber}:${r.id}">${K.aksi}</button>${r.sumber === 'awal' && Number(r.dibayar) === 0 ? `<button class="ikon-aksi hapus" data-hapus-awal="${r.id}" title="Batalkan saldo awal">${ikon('hapus')}</button>` : ''}` }];
     const form = (t, jenis) => {
@@ -121,19 +123,43 @@ function halamanTagihan(piutang) {
         if (error) throw error;
         const jml = f => d.filter(f).reduce((a, x) => a + Number(x.sisa), 0), h = hariIni(), st = (l, v, w) => `<div class="statistik"><small>${l}</small><b style="color:${w && v > 0 ? w : 'inherit'}">${rupiah(v)}</b></div>`;
         el.innerHTML = judulHalaman(K.judul, 'Keuangan / ' + K.judul, `<button class="tombol kedua" data-unduh>${ikon('unduh')} Unduh</button><button class="tombol kedua" data-awal>Saldo Awal</button>`) +
-          `<div class="kartu" style="margin-bottom:16px"><div class="grid-4">${st('Total sisa', jml(() => true))}${st('⚠ Lewat jatuh tempo', jml(x => x.jatuh_tempo && x.jatuh_tempo < h), 'var(--merah)')}${piutang ? '' : st('Kredit retur', kredit.reduce((a, x) => a + Number(x.sisa), 0)) + st('Utang konsinyasi', kons.reduce((a, x) => a + Number(x.sisa), 0))}</div></div>
-          <div class="kartu">${tabelHtml(kol, d, { kosong: 'Tidak ada tagihan yang belum lunas.' })}${piutang ? '<p style="color:var(--teks-2);font-size:13px">Batas kredit per pelanggan diatur di Kontak → Pelanggan. Tanpa batas kredit, pelanggan tidak bisa membeli secara kredit.</p>' : ''}</div>
+          `<div class="kartu" style="margin-bottom:16px"><div class="grid-4">${st('Total sisa', jml(() => true))}${st('⚠ Lewat jatuh tempo', jml(x => x.jatuh_tempo && x.jatuh_tempo < h), 'var(--merah)')}${piutang ? '' : st('Kredit retur', kredit.reduce((a, x) => a + Number(x.sisa), 0)) + st('Utang konsinyasi (sudah laku)', kons.reduce((a, x) => a + Number(x.sisa), 0))}</div></div>
+          <div class="kartu">${piutang ? '' : barUtang()}<div data-tagihan>${tabelHtml(kol, saring(), { kosong: 'Tidak ada tagihan yang belum lunas.' })}</div>${piutang ? '' : '<div data-ditandai></div>'}${piutang ? '<p style="color:var(--teks-2);font-size:13px">Batas kredit per pelanggan diatur di Kontak → Pelanggan. Tanpa batas kredit, pelanggan tidak bisa membeli secara kredit.</p>' : ''}</div>
           ${kons.length ? `<div class="kartu"><h3>Barang konsinyasi yang sudah laku</h3>${tabelHtml([{ l: 'Penitip', n: r => r.supplier }, { l: 'Harus dibayar', n: r => r.sisa, t: 'uang', jml: true }, { l: '', n: () => '', h: r => r.sisa > 0 ? `<button class="tombol kecil" data-kons="${r.supplier_id}">Bayar</button>` : '' }], kons)}</div>` : ''}
           <div class="kartu"><h3>Riwayat pembayaran (100 terakhir)</h3>${tabelHtml([{ l: 'Tanggal', n: r => r.tanggal, t: 'tgl' }, { l: 'No.', n: r => r.no }, { l: 'Nama', n: r => r.supplier?.nama || r.pelanggan?.nama || '-' }, { l: 'Lewat', n: r => r.kas?.nama || 'Kredit retur ' + (r.retur?.no || '') }, { l: 'Jumlah', n: r => r.jumlah, t: 'uang' }, { l: 'Keterangan', n: r => r.keterangan },
             { l: '', n: () => '', h: r => r.status === 'batal' ? '<span class="chip merah">Batal</span>' : `<button class="ikon-aksi hapus" data-batal="${r.id}" title="Batalkan">${ikon('hapus')}</button>` }], riw, { kosong: 'Belum ada pembayaran.' })}</div>`;
+        for (const k of [...pilih]) if (!d.some(r => kunciT(r) === k)) pilih.delete(k);
+        ringkasPilih();
       } catch (e) { galat(el, e); }
     };
+    const barUtang = () => { const sp = [...new Map(d.map(r => [String(r.supplier_id), r.supplier || '-'])).entries()].sort((a, b) => a[1].localeCompare(b[1])), o = (v, l, k) => `<option value="${v}" ${F[k] === v ? 'selected' : ''}>${esc(l)}</option>`;
+      return `<div class="alat-tabel" data-filter><select class="input" style="width:auto;max-width:240px" data-f="s" aria-label="PBF">${o('', 'Semua PBF', 's')}${sp.map(([i, n]) => o(i, n, 's')).join('')}</select><select class="input" style="width:auto" data-f="st" aria-label="Status">${o('', 'Semua status', 'st')}${o('lewat', 'Lewat jatuh tempo', 'st')}${o('7', 'Jatuh tempo 7 hari', 'st')}${o('tanpa', 'Tanpa tempo', 'st')}</select>
+        <select class="input" style="width:auto" data-f="tgl" aria-label="Jenis tanggal">${o('jatuh_tempo', 'Jatuh tempo', 'tgl')}${o('tanggal', 'Tanggal faktur', 'tgl')}</select><input type="date" class="input" style="width:auto" data-f="dari" value="${F.dari}" aria-label="Dari"><input type="date" class="input" style="width:auto" data-f="sampai" value="${F.sampai}" aria-label="Sampai"><input class="input" style="width:auto" data-f="q" value="${esc(F.q)}" placeholder="Cari no. faktur"><button class="tombol kedua kecil" data-reset>Reset</button></div>
+        <div class="alat-tabel"><label class="cek" style="margin:0"><input type="checkbox" data-semua> Tandai semua yang tampil</label><span data-info-tampil style="margin-left:auto;color:var(--teks-2)"></span></div>`; };
+    const gambarTagihan = () => { el.querySelector('[data-tagihan]').innerHTML = tabelHtml(kol, saring(), { kosong: 'Tidak ada tagihan yang cocok.', maks: 2000 }); ringkasPilih(); };
+    const ringkasPilih = () => {
+      const w = el.querySelector('[data-ditandai]'); if (!w) return;
+      const t = saring(), p = d.filter(r => pilih.has(kunciT(r))), jm = a => a.reduce((x, r) => x + Number(r.sisa), 0), g = {}; for (const r of p) (g[r.supplier || '-'] ||= []).push(r);
+      el.querySelector('[data-info-tampil]').textContent = `${angka(t.length)} tagihan tampil · ${rupiah(jm(t))}`;
+      const s = el.querySelector('[data-semua]'), n = t.filter(r => pilih.has(kunciT(r))).length; s.checked = n > 0 && n === t.length; s.indeterminate = n > 0 && n < t.length;
+      const luar = p.length - n, lewat = p.filter(r => r.jatuh_tempo && r.jatuh_tempo < hariIni());
+      w.className = p.length ? 'bar-ditandai' : ''; w.innerHTML = p.length ? `<div class="atas"><span>${angka(p.length)} tagihan ditandai${luar ? ` (${luar} di luar filter)` : ''}${lewat.length ? ` · lewat tempo ${rupiah(jm(lewat))}` : ''}</span><b>${rupiah(jm(p))}</b></div><div class="rinci">${Object.entries(g).sort((a, b) => jm(b[1]) - jm(a[1])).map(([k, v]) => `<span class="chip">${esc(k)}: ${angka(v.length)} tagihan · <b>${rupiah(jm(v))}</b></span>`).join(' ')}</div><div class="alat"><button class="tombol kedua kecil" data-cetak-pilih>Cetak daftar</button><button class="tombol kedua kecil" data-kosong-pilih>Hapus tanda</button></div>` : '';
+    };
+    el.addEventListener('input', e => { if (e.target.matches('[data-f=q]')) { F.q = e.target.value.trim().toLowerCase(); gambarTagihan(); } });
+    el.addEventListener('change', e => {
+      const f = e.target.dataset.f; if (f && f !== 'q') { F[f] = e.target.value; gambarTagihan(); }
+      if (e.target.dataset.pilih) { e.target.checked ? pilih.add(e.target.dataset.pilih) : pilih.delete(e.target.dataset.pilih); ringkasPilih(); }
+      if (e.target.matches('[data-semua]')) { const ya = e.target.checked; for (const r of saring()) ya ? pilih.add(kunciT(r)) : pilih.delete(kunciT(r)); gambarTagihan(); }
+    });
     el.addEventListener('click', async e => {
+      if (e.target.closest('[data-reset]')) { Object.assign(F, { s: '', tgl: 'jatuh_tempo', dari: '', sampai: '', st: '', q: '' }); muat(); }
+      if (e.target.closest('[data-kosong-pilih]')) { pilih.clear(); gambarTagihan(); }
+      if (e.target.closest('[data-cetak-pilih]')) { const p = d.filter(r => pilih.has(kunciT(r))).sort((a, b) => (a.supplier || '').localeCompare(b.supplier || '') || (a.jatuh_tempo || '9').localeCompare(b.jatuh_tempo || '9')); cetakHtml('Rencana Pembayaran Utang', tanggal(hariIni()), tabelHtml(kol.slice(1, -1), p, { maks: 5000 })); }
       const q = s => e.target.closest(s), b = q('[data-bayar]'), k = q('[data-kons]'), x = q('[data-batal]'), a = q('[data-hapus-awal]');
       if (b) { const [s, id] = b.dataset.bayar.split(':'); form(d.find(t => t.sumber === s && t.id === Number(id)), K.jenis); }
       if (k) form(kons.find(t => t.supplier_id === Number(k.dataset.kons)), 'konsinyasi');
       if (q('[data-awal]')) formAwal().catch(z => toast(pesanGalat(z), 'galat'));
-      if (q('[data-unduh]')) unduhTabel(K.judul.toLowerCase().replace(' ', '-'), kol, d);
+      if (q('[data-unduh]')) unduhTabel(K.judul.toLowerCase().replace(' ', '-'), kol, saring());
       if ((x || a) && await konfirmasi('Batalkan', x ? 'Batalkan pembayaran ini? Sisa tagihan akan kembali bertambah.' : 'Batalkan saldo awal ini?', 'Batalkan')) try { await rpc('batal_keuangan', { p_tabel: x ? 'pembayaran_usaha' : 'saldo_awal', p_id: Number(x ? x.dataset.batal : a.dataset.hapusAwal) }); toast('Dibatalkan'); muat(); } catch (z) { toast(pesanGalat(z), 'galat'); }
     });
     await muat();
@@ -141,3 +167,23 @@ function halamanTagihan(piutang) {
 }
 rute('keuangan/utang', halamanTagihan(false));
 rute('keuangan/piutang', halamanTagihan(true));
+
+// ---------- Barang titipan (konsinyasi) ----------
+rute('keuangan/konsinyasi', async el => {
+  const bp = await barPeriode('bulan', false); let d, sp = '';
+  const kolB = [{ l: 'Penitip', n: r => r.penitip }, { l: 'Produk', n: r => r.produk }, { l: 'Batch', n: r => r.no_batch }, { l: 'ED', n: r => r.ed, t: 'tgl' }, { l: 'Outlet', n: r => r.outlet }, { l: 'Sisa', n: r => r.qty, t: 'angka', h: r => `${angka(r.qty)} ${esc(r.satuan || '')}` }, { l: 'Harga titip', n: r => r.hpp, t: 'uang' }, { l: 'Nilai', n: r => r.nilai, t: 'uang', jml: true }];
+  const barang = () => sp ? d.barang.filter(b => String(b.supplier_id) === sp) : d.barang;
+  el.innerHTML = judulHalaman('Barang Titipan', 'Keuangan / Barang Titipan', `<button class="tombol kedua" data-unduh>${ikon('unduh')} Unduh</button><button class="tombol kedua" data-cetak>Cetak</button>`) + `<div class="kartu">${bp.html}<p style="color:var(--teks-2);margin:0">Nilai titipan = sisa barang konsinyasi × harga titip, milik penitip dan bukan aset apotek. Yang sudah laku menjadi utang ke penitip.</p></div><div data-isi></div>`;
+  const gambar = () => {
+    const jm = k => d.penitip.reduce((a, x) => a + Number(x[k]), 0), st = (l, v, w) => `<div class="statistik"><small>${l}</small><b style="color:${w && v > 0 ? w : 'inherit'}">${rupiah(v)}</b></div>`;
+    el.querySelector('[data-isi]').innerHTML = `<div class="kartu" style="margin-bottom:16px"><div class="grid-4">${st('Total nilai barang titipan', jm('nilai'))}${st('Sudah laku, belum dibayar', jm('terutang'), 'var(--merah)')}${st('ED ≤ 90 hari / lewat', jm('ed'), 'var(--merah)')}<div class="statistik"><small>Penitip dengan stok</small><b>${angka(d.penitip.filter(x => x.nilai > 0).length)}</b></div></div></div>
+      ${d.outlet.length > 1 ? `<div class="kartu"><h3 style="margin-top:0">Per outlet</h3>${tabelHtml([{ l: 'Outlet', n: r => r.nama }, { l: 'Jenis barang', n: r => r.produk, t: 'angka' }, { l: 'Nilai titipan', n: r => r.nilai, t: 'uang', jml: true }], d.outlet)}</div>` : ''}
+      <div class="kartu"><h3 style="margin-top:0">Per penitip</h3>${tabelHtml([{ l: 'Penitip', n: r => r.penitip }, { l: 'Jenis barang', n: r => r.produk, t: 'angka' }, { l: 'Nilai titipan', n: r => r.nilai, t: 'uang', jml: true }, { l: 'ED ≤ 90 hari', n: r => r.ed, t: 'uang', jml: true }, { l: 'Laku belum dibayar', n: r => r.terutang, t: 'uang', jml: true }], d.penitip, { kosong: 'Tidak ada barang titipan.' })}${bisa('keuangan.utang') ? '<p style="margin-bottom:0"><a href="#/keuangan/utang">Bayar penitip di Utang Usaha</a></p>' : ''}</div>
+      <div class="kartu"><div class="kepala-blok"><h3 style="margin:0">Rincian barang</h3><select class="input" style="width:auto" data-sp><option value="">Semua penitip</option>${d.penitip.filter(x => x.nilai > 0).map(x => `<option value="${x.supplier_id}" ${String(x.supplier_id) === sp ? 'selected' : ''}>${esc(x.penitip)}</option>`).join('')}</select></div><div data-barang style="margin-top:10px">${tabelHtml(kolB, barang(), { kosong: 'Tidak ada barang titipan.' })}</div></div>`;
+  };
+  const muat = async () => { try { d = await rpc('ringkas_konsinyasi', { p_outlet: bp.nilai().p_outlet }); if (sp && !d.penitip.some(x => String(x.supplier_id) === sp)) sp = ''; gambar(); } catch (e) { galat(el.querySelector('[data-isi]'), e); } };
+  bp.pasang(el, muat);
+  el.addEventListener('change', e => { if (e.target.matches('[data-sp]')) { sp = e.target.value; el.querySelector('[data-barang]').innerHTML = tabelHtml(kolB, barang()); } });
+  el.addEventListener('click', e => { if (!d) return; if (e.target.closest('[data-unduh]')) unduhTabel('barang-titipan', kolB, barang()); if (e.target.closest('[data-cetak]')) cetakHtml('Barang Titipan (Konsinyasi)', tanggal(hariIni()), tabelHtml(kolB, barang(), { maks: 5000 })); });
+  await muat();
+});
