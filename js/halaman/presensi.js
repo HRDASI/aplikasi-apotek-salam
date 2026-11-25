@@ -1,8 +1,8 @@
 // Karyawan, Jadwal Kerja, Presensi (dari aplikasi Absensi), Izin/Sakit/Cuti, Laporan Presensi, Integrasi.
-import { rute, sb, S, bisa } from '../inti.js?v=1.15.0';
-import { ikon } from '../menu.js?v=1.15.0';
-import { esc, angka, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.15.0';
-import { rpc, hariIni, geserHari, tabelHtml, halamanLaporan, unduhTabel, cetakHtml } from '../tabel.js?v=1.15.0';
+import { rute, sb, S, bisa } from '../inti.js?v=1.16.0';
+import { ikon } from '../menu.js?v=1.16.0';
+import { esc, angka, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.16.0';
+import { rpc, hariIni, geserHari, tabelHtml, halamanLaporan, unduhTabel, cetakHtml } from '../tabel.js?v=1.16.0';
 
 const galat = (el, e) => { el.innerHTML = `<p class="pesan galat">${esc(pesanGalat(e))}</p>`; };
 const STATUS = { hadir: ['Hadir', 'hijau'], terlambat: ['Terlambat', 'oranye'], alpa: ['Tanpa keterangan', 'merah'], tanpa_masuk: ['Tanpa absen masuk', 'merah'], izin: ['Izin', 'teal'], sakit: ['Sakit', 'teal'], cuti: ['Cuti', 'teal'], libur: ['Libur', ''], terjadwal: ['Terjadwal', ''], kosong: ['-', ''] };
@@ -61,7 +61,7 @@ rute('pengguna/jadwal', async el => {
   const pilih = (kid, t) => modal({ judul: `${d.karyawan.find(k => k.id === kid).nama} · ${HARI[hariKe(t)]}, ${tanggal(t)}`, ukuran: 'kecil', isi: `<div class="aksi-cepat">${[...d.kode, { kode: '', nama: 'Kosongkan' }].map(c => `<button class="tombol kedua" data-k="${c.kode}">${c.kode ? `<b>${c.kode}</b> ` : ''}${esc(c.nama)}</button>`).join('')}</div>`,
     saatBuka: (m, tutup) => m.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; const kk = kunci(kid, t); if (b.dataset.k === (J.get(kk) || '')) ubah.delete(kk); else ubah.set(kk, b.dataset.k); const s = el.querySelector('.jadwal').scrollLeft; tutup(); gambar(); el.querySelector('.jadwal').scrollLeft = s; }) });
   const baca = async file => {
-    const { bacaJadwal } = await import('./jadwal-excel.js?v=1.15.0'); const h = await bacaJadwal(file); const peta = new Map(), tak = [];
+    const { bacaJadwal } = await import('./jadwal-excel.js?v=1.16.0'); const h = await bacaJadwal(file); const peta = new Map(), tak = [];
     for (const n of h.nama) { const x = n.toLowerCase(), c = d.karyawan.filter(k => (k.nama_jadwal || '').toLowerCase() === x); const c2 = c.length ? c : d.karyawan.filter(k => k.nama.toLowerCase() === x); if (c2.length === 1) peta.set(n, c2[0].id); else tak.push(n); }
     const kode = new Set(d.kode.map(c => c.kode)), salah = h.baris.filter(b => b.kode && !kode.has(b.kode));
     modal({ judul: `Impor jadwal ${BULAN[Number(h.bulan.slice(5)) - 1]} ${h.bulan.slice(0, 4)}`, isi: `<p style="margin-top:0"><b>${peta.size}</b> dari ${h.nama.length} nama cocok, <b>${h.baris.filter(b => peta.has(b.nama) && kode.has(b.kode)).length}</b> jadwal. Baris Actual dipakai bila terisi.</p>${tak.length ? `<p class="pesan peringatan">Nama belum dikenal: ${tak.map(esc).join(', ')}. Pilih karyawannya:</p><div class="form-grid">${tak.map((n, i) => `<label class="isian"><span>${esc(n)}</span><select data-n="${i}"><option value="">- lewati -</option>${d.karyawan.filter(k => ![...peta.values()].includes(k.id)).map(k => `<option value="${k.id}">${esc(k.nama)}</option>`).join('')}</select></label>`).join('')}</div>` : ''}${salah.length ? `<p class="pesan galat">Kode tidak dikenal dan dilewati: ${[...new Set(salah.map(b => b.kode))].map(esc).join(', ')}</p>` : ''}`,
@@ -107,10 +107,10 @@ rute('pengguna/presensi', async el => {
   el.querySelector('[data-tarik]')?.addEventListener('click', async e => { const b = e.currentTarget; b.disabled = true; try { const n = await tarik(el.querySelector('[data-dari]').value, el.querySelector('[data-sampai]').value); toast(`${n} data presensi ditarik`, 'sukses'); muat(); } catch (x) { toast(pesanGalat(x), 'galat'); } b.disabled = false; });
   await muat();
 });
-async function tarik(dari, sampai) {
-  const id = await rpc('tarik_presensi', { p_dari: dari, p_sampai: sampai });
+const tarik = async (dari, sampai) => tunggu(await rpc('tarik_presensi', { p_dari: dari, p_sampai: sampai }));
+async function tunggu(id) {
   for (let i = 0; i < 45; i++) { await new Promise(r => setTimeout(r, 2000)); const s = await rpc('cek_tarikan', { p_id: id }); if (s.status === 'selesai') return s.jumlah; if (s.status === 'gagal') throw new Error(s.pesan || 'Gagal menarik data'); }
-  throw new Error('Server Absensi belum menjawab. Proses tetap berjalan di belakang; cek lagi sebentar.');
+  throw new Error('Server belum menjawab. Proses tetap berjalan di belakang; cek lagi sebentar.');
 }
 
 // ---------- Izin ----------
@@ -149,21 +149,28 @@ rute('laporan/presensi', halamanLaporan({ judul: 'Laporan Presensi', remah: 'Lap
 ] }));
 
 // ---------- Integrasi ----------
+const SAMBUNG = {
+  absensi: { judul: 'Aplikasi Absensi', menu: 'Absensi', url: 'https://script.google.com/macros/s/AKfycbyOUpFqIEK8_GEZFRhECpu58aTQ48-uKMLmFIrSEfblUwjST9uvKd4CsoDlmvE5xQI/exec', rpc: 'atur_integrasi_absensi', siap: 'Presensi 7 hari terakhir ditarik otomatis 3 kali sehari.', uji: 'Tarik 31 hari terakhir' },
+  kinerja: { judul: 'Aplikasi Kinerja', menu: 'Kinerja', url: 'https://script.google.com/macros/s/AKfycbzICYK3JV92Wb3lXLOdAaijvZliUE3eVKX8dBSBuXmawHVW_CICfnlBUEQETv3S22Y6/exec', rpc: 'atur_integrasi_kinerja', siap: 'Nilai triwulan yang sudah Final ditarik otomatis setiap pagi.', uji: 'Tarik nilai sekarang' },
+};
 rute('pengaturan/integrasi', async el => {
+  const kartu = (j, s, tambahan) => { const c = SAMBUNG[j], siap = s.url && s.kunci;
+    return `<div class="kartu" data-sambung="${j}"><h3>${c.judul}</h3><p class="pesan ${siap ? 'info' : 'peringatan'}">${siap ? '✓ Kunci tersimpan. ' + c.siap : `Belum tersambung. Di Google Sheet ${c.menu}: menu <b>${c.menu} → Buat kunci baca Aplikasi Apotek</b>, lalu tempel kuncinya di sini.`}</p>
+      <form class="form-grid" onsubmit="return false" autocomplete="off"><label class="isian lebar"><span>Alamat server ${c.menu}</span><input name="url" required value="${esc(s.url || c.url)}"></label><label class="isian lebar"><span>Kunci baca</span><input name="kunci" type="password" autocomplete="new-password" placeholder="${s.kunci ? 'Sudah tersimpan. Isi hanya bila diganti.' : 'Tempel 64 karakter'}"><small>Disimpan terenkripsi di server dan tidak bisa dilihat lagi dari aplikasi.</small></label></form>
+      <div class="judul-halaman" style="margin:0"><button class="tombol" data-simpan>Simpan</button>${siap ? `<button class="tombol kedua" data-uji>${c.uji}</button>` : ''}</div>${tambahan}</div>`; };
   const muat = async () => {
-    let s; try { s = await rpc('status_integrasi'); } catch (e) { return galat(el, e); }
-    const siap = s.url && s.kunci;
-    el.innerHTML = judulHalaman('Integrasi', 'Pengaturan / Integrasi') + `<div class="kartu"><h3>Aplikasi Absensi</h3><p class="pesan ${siap ? 'info' : 'peringatan'}">${siap ? '✓ Tersambung. Presensi 7 hari terakhir ditarik otomatis 3 kali sehari.' : 'Belum tersambung. Di Google Sheet Absensi: menu <b>Absensi → Buat kunci baca Aplikasi Apotek</b>, lalu tempel kuncinya di sini.'}</p>
-      <form class="form-grid" onsubmit="return false" autocomplete="off"><label class="isian lebar"><span>Alamat server Absensi</span><input name="url" required value="${esc(s.url || 'https://script.google.com/macros/s/AKfycbyOUpFqIEK8_GEZFRhECpu58aTQ48-uKMLmFIrSEfblUwjST9uvKd4CsoDlmvE5xQI/exec')}"></label><label class="isian lebar"><span>Kunci baca</span><input name="kunci" type="password" autocomplete="new-password" placeholder="${s.kunci ? 'Sudah tersimpan. Isi hanya bila diganti.' : 'Tempel 64 karakter'}"><small>Disimpan terenkripsi di server dan tidak bisa dilihat lagi dari aplikasi.</small></label></form>
-      <div class="judul-halaman" style="margin:0"><button class="tombol" data-simpan>Simpan</button>${siap ? '<button class="tombol kedua" data-uji>Tarik 31 hari terakhir</button>' : ''}</div>
-      ${s.belum_terhubung.length ? `<p class="pesan peringatan" style="margin-top:12px">Nama di Absensi yang belum dihubungkan ke Data Karyawan: <b>${s.belum_terhubung.map(esc).join(', ')}</b></p>` : ''}</div>
-      <div class="kartu"><h3>Riwayat penarikan</h3>${tabelHtml([{ l: 'Waktu', n: r => r.dibuat, h: r => waktu(r.dibuat) }, { l: 'Rentang', n: r => r.dari, h: r => `<span>${tanggal(r.dari)} s.d. ${tanggal(r.sampai)}</span>` }, { l: 'Status', n: r => r.status, h: r => `<span class="chip ${{ selesai: 'hijau', gagal: 'merah', jalan: 'oranye' }[r.status]}">${r.status}</span>` }, { l: 'Data', n: r => r.jumlah, t: 'angka' }, { l: 'Oleh', n: r => r.oleh }, { l: 'Catatan', n: r => r.pesan }], s.tarikan, { kosong: 'Belum ada.' })}</div>
-      <div class="kartu"><h3>Aplikasi Kinerja</h3><p style="margin:0;color:var(--teks-2)">Disambungkan di bagian KPI (6D).</p></div>`;
+    let s, n; try { [s, n] = await Promise.all([rpc('status_integrasi'), rpc('status_kinerja')]); } catch (e) { return galat(el, e); }
+    const lepas = [...new Set(n.nilai.filter(x => !x.terhubung).map(x => x.nama))], belum = t => `<p class="pesan peringatan" style="margin-top:12px">Nama di ${t} yang belum dihubungkan ke Data Karyawan: <b>`;
+    el.innerHTML = judulHalaman('Integrasi', 'Pengaturan / Integrasi') + kartu('absensi', s, s.belum_terhubung.length ? belum('Absensi') + s.belum_terhubung.map(esc).join(', ') + '</b></p>' : '')
+      + kartu('kinerja', n, (lepas.length ? belum('Kinerja') + lepas.map(esc).join(', ') + '</b></p>' : '') + `<p style="color:var(--teks-2);margin:12px 0 0">Yang dibaca hanya nilai total dan nilai ujian. Bonus, catatan, dan PIN tidak ikut. Dipakai di Parameter KPI dengan sumber <b>Nilai triwulan (aplikasi Kinerja)</b>; bulan yang triwulannya belum berakhir memakai nilai triwulan sebelumnya.</p>`
+        + (n.nilai.length ? `<div style="margin-top:12px">${tabelHtml([{ l: 'Triwulan', n: r => r.periode }, { l: 'Nama', n: r => r.nama }, { l: 'Nilai', n: r => r.total, t: 'angka' }, { l: 'Predikat', n: r => r.predikat }, { l: 'Ujian', n: r => r.ujian, t: 'angka' }], n.nilai)}</div>` : ''))
+      + `<div class="kartu"><h3>Riwayat penarikan</h3>${tabelHtml([{ l: 'Waktu', n: r => r.dibuat, h: r => waktu(r.dibuat) }, { l: 'Aplikasi', n: r => r.jenis === 'kinerja' ? 'Kinerja' : 'Absensi' }, { l: 'Rentang', n: r => r.dari, h: r => `<span>${tanggal(r.dari)} s.d. ${tanggal(r.sampai)}</span>` }, { l: 'Status', n: r => r.status, h: r => `<span class="chip ${{ selesai: 'hijau', gagal: 'merah', jalan: 'oranye' }[r.status]}">${r.status}</span>` }, { l: 'Data', n: r => r.jumlah, t: 'angka' }, { l: 'Oleh', n: r => r.oleh }, { l: 'Catatan', n: r => r.pesan }], s.tarikan, { kosong: 'Belum ada.' })}</div>`;
   };
   el.addEventListener('click', async e => {
-    const f = el.querySelector('form');
-    if (e.target.closest('[data-simpan]')) { if (!f.reportValidity()) return; try { await rpc('atur_integrasi_absensi', { p_url: f.url.value.trim(), p_kunci: f.kunci.value.trim() || null }); toast('Tersimpan', 'sukses'); muat(); } catch (x) { toast(pesanGalat(x), 'galat'); } }
-    const u = e.target.closest('[data-uji]'); if (u) { u.disabled = true; u.textContent = 'Menarik…'; try { const n = await tarik(geserHari(hariIni(), -30), hariIni()); toast(`${n} data presensi ditarik`, 'sukses'); } catch (x) { toast(pesanGalat(x), 'galat'); } muat(); }
+    const w = e.target.closest('[data-sambung]'); if (!w) return;
+    const j = w.dataset.sambung, f = w.querySelector('form');
+    if (e.target.closest('[data-simpan]')) { if (!f.reportValidity()) return; try { await rpc(SAMBUNG[j].rpc, { p_url: f.url.value.trim(), p_kunci: f.kunci.value.trim() || null }); toast('Tersimpan', 'sukses'); muat(); } catch (x) { toast(pesanGalat(x), 'galat'); } }
+    const u = e.target.closest('[data-uji]'); if (u) { u.disabled = true; u.textContent = 'Menarik…'; try { toast(j === 'kinerja' ? `${await tunggu(await rpc('tarik_kinerja'))} nilai Kinerja ditarik` : `${await tarik(geserHari(hariIni(), -30), hariIni())} data presensi ditarik`, 'sukses'); } catch (x) { toast(pesanGalat(x), 'galat'); } muat(); }
   });
   await muat();
 });
