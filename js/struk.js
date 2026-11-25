@@ -1,5 +1,5 @@
 // Desain struk: model, font, ukuran, dan bagian yang tampil. Dipakai nota, retur, rekap sesi, copy resep, dan pratinjau.
-import { esc, angka, waktu } from './ui.js?v=1.23.0';
+import { esc, angka, waktu } from './ui.js?v=1.24.0';
 
 export const MODEL = [['klasik', 'Klasik', 'Seperti struk selama ini'], ['ringkas', 'Ringkas', 'Hemat kertas, satu baris per barang'], ['lengkap', 'Lengkap', 'Kop besar, rincian dan jumlah barang'], ['modern', 'Modern', 'Logo besar, total menonjol']];
 export const FONT = [['courier', 'Courier (mesin kasir)', "'Courier New',monospace"], ['consolas', 'Consolas', "Consolas,'Courier New',monospace"], ['arial', 'Arial', 'Arial,sans-serif'], ['verdana', 'Verdana (lebar, jelas)', 'Verdana,sans-serif'], ['tahoma', 'Tahoma', 'Tahoma,sans-serif'], ['sempit', 'Arial Narrow (sempit)', "'Arial Narrow',Arial,sans-serif"]];
