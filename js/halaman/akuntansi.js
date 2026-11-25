@@ -1,9 +1,9 @@
 // Akuntansi: Daftar Akun, Buku Besar & Jurnal, Aktiva Tetap; Laporan Keuangan (laba rugi, neraca, arus kas).
-import { rute, sb, S, bisa } from '../inti.js?v=1.13.0';
-import { ikon } from '../menu.js?v=1.13.0';
-import { esc, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.13.0';
-import { rpc, hariIni, geserHari, barPeriode, tabelHtml, unduhTabel, cetakHtml } from '../tabel.js?v=1.13.0';
-import { akunKas, opsiKas } from './keuangan.js?v=1.13.0';
+import { rute, sb, S, bisa } from '../inti.js?v=1.14.0';
+import { ikon } from '../menu.js?v=1.14.0';
+import { esc, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.14.0';
+import { rpc, hariIni, geserHari, barPeriode, tabelHtml, unduhTabel, cetakHtml } from '../tabel.js?v=1.14.0';
+import { akunKas, opsiKas } from './keuangan.js?v=1.14.0';
 
 const TIPE = [['aset', 'Aset'], ['kewajiban', 'Kewajiban'], ['ekuitas', 'Ekuitas'], ['pendapatan', 'Pendapatan'], ['hpp', 'HPP'], ['beban', 'Beban']];
 const galat = (el, e) => { el.innerHTML = `<p class="pesan galat">${esc(pesanGalat(e))}</p>`; };
