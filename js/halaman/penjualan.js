@@ -1,16 +1,17 @@
 // Penjualan: Kasir (dengan sesi), Pesanan, Daftar, Retur, Tertolak, QRIS, Riwayat Sesi, cetak struk.
-import { rute, sb, S, bisa, lihatNominal, ambilRef, ambilSemua, muatSesi, KONEKSI, HOOK, atauOffline, putusJaringan } from '../inti.js?v=1.24.0';
-import * as OFF from '../offline.js?v=1.24.0';
-import { ikon } from '../menu.js?v=1.24.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.24.0';
-import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.24.0';
-import { halamanCrud } from '../crud.js?v=1.24.0';
-import { ambilKonfig } from './pengaturan.js?v=1.24.0';
-import { cetakStrukHtml, bacaPrinter } from '../cetak.js?v=1.24.0';
-import { isiNota } from '../struk.js?v=1.24.0';
-import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.24.0';
-import { bukaRetur, polaNota } from './retur.js?v=1.24.0';
-import { barcodeHtml } from '../label.js?v=1.24.0';
+import { rute, sb, S, bisa, lihatNominal, ambilRef, ambilSemua, muatSesi, KONEKSI, HOOK, atauOffline, putusJaringan } from '../inti.js?v=1.25.0';
+import * as OFF from '../offline.js?v=1.25.0';
+import { ikon } from '../menu.js?v=1.25.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.25.0';
+import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.25.0';
+import { halamanCrud } from '../crud.js?v=1.25.0';
+import { ambilKonfig } from './pengaturan.js?v=1.25.0';
+import { cetakStrukHtml, bacaPrinter } from '../cetak.js?v=1.25.0';
+import { UJI } from '../config.js?v=1.25.0';
+import { isiNota, teksNota } from '../struk.js?v=1.25.0';
+import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.25.0';
+import { bukaRetur, polaNota } from './retur.js?v=1.25.0';
+import { barcodeHtml } from '../label.js?v=1.25.0';
 
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const awalBulan = () => hariIni().slice(0, 8) + '01';
@@ -108,8 +109,38 @@ export async function cetakNota(j, k) {
   return cetakStrukHtml(isiNota(j, k.struk, k.struk.tampil_barcode === false ? '' : await barcodeHtml(j.no, pakai === '58' ? 48 : 72)), 'Struk ' + j.no, lebar, k.struk);
 }
 
+// Kirim struk lewat WhatsApp: manual, hanya member yang setuju. Persetujuan disimpan di data pelanggan.
+const noWA = t => { const n = String(t || '').replace(/\D/g, ''); return n.startsWith('0') ? '62' + n.slice(1) : n.startsWith('8') ? '62' + n : n; };
+export async function kirimWA(id) {
+  if (UJI) return toast('Kirim WA dimatikan di aplikasi uji', 'galat');
+  const { data: j, error } = await sb.from('penjualan').select('*, item:penjualan_item(*), bayar:penjualan_bayar(*, metode:metode_bayar_id(nama)), pelanggan:pelanggan_id(id,nama,telp,member,wa_setuju,wa_tanpa_obat), outlet:outlet_id(nama,alamat,telp)').eq('id', id).single();
+  if (error) return toast(pesanGalat(error), 'galat');
+  const p = j.pelanggan; if (!p?.member) return toast('Struk WA hanya untuk member', 'galat');
+  const peka = !!j.no_resep || !!j.resep_id || j.item.some(i => ['keras', 'okt', 'psikotropika', 'narkotika'].includes(i.golongan));
+  modal({ judul: 'Kirim Struk ke WhatsApp', isi: `<p style="margin-top:0"><b>${esc(p.nama)}</b> · ${esc(p.telp || 'nomor HP belum diisi')}</p>
+    <label class="cek"><input type="checkbox" data-setuju ${p.wa_setuju ? 'checked' : ''}> Member <b>setuju</b> menerima struk lewat WhatsApp${p.wa_setuju ? ` <small>(sejak ${tanggal(p.wa_setuju)})</small>` : ' <small>(tanyakan dulu)</small>'}</label>
+    <label class="cek"><input type="checkbox" data-tanpa ${p.wa_tanpa_obat || peka ? 'checked' : ''}> Tanpa nama obat (privasi)</label>
+    ${peka ? '<p class="pesan info">Ada obat keras/resep, jadi nama obat disembunyikan dulu. Hapus centang hanya bila member memintanya.</p>' : ''}
+    <label class="isian"><span>Isi pesan</span><textarea data-teks rows="11" readonly></textarea></label>
+    <small style="color:var(--teks-2)">WhatsApp terbuka dengan pesan ini. Tekan tombol kirim di WhatsApp.</small>`,
+    saatBuka: m => { const g = () => { m.querySelector('[data-teks]').value = teksNota(j, m.querySelector('[data-tanpa]').checked); }; m.querySelector('[data-tanpa]').onchange = g; g(); },
+    tombol: [{ teks: 'Batal', kelas: 'kedua' }, { teks: 'Buka WhatsApp', aksi: async m => {
+      const setuju = m.querySelector('[data-setuju]').checked, tanpa = m.querySelector('[data-tanpa]').checked;
+      if (!setuju) {
+        if (p.wa_setuju) { const { error: e2 } = await sb.rpc('tolak_wa', { p_pelanggan_id: p.id }); if (e2) throw e2; toast('Persetujuan dicabut, struk tidak dikirim'); return; }
+        toast('Member belum setuju', 'galat'); return false;
+      }
+      const w = window.open('', '_blank');      // dibuka sebelum menunggu server supaya tidak diblokir browser
+      const { data, error: e2 } = await sb.rpc('siapkan_wa_struk', { p_id: j.id, p_setuju: true, p_tanpa_obat: peka && tanpa ? null : tanpa });
+      if (e2) { w?.close(); throw e2; }
+      const url = `https://wa.me/${noWA(data.telp)}?text=${encodeURIComponent(teksNota(j, tanpa))}`;
+      if (w) { w.opener = null; w.location.href = url; } else { toast('Izinkan jendela pop-up untuk membuka WhatsApp', 'galat'); return false; }
+    } }] });
+}
+
 // ================= Kasir =================
-const kosongkan = () => ({ items: [], header: { jenis_pelayanan_id: null, pelanggan_id: null, dokter_id: null, no_resep: '', diskon_nota: 0, voucher_kode: '', poin_dipakai: 0 }, pelanggan: null, pesanan_id: null, resep: null, hasil: null });
+const BIAYA = [['biaya_servis', 'Biaya servis'], ['biaya_embalase', 'Embalase'], ['ongkir', 'Ongkos kirim'], ['biaya_lain', 'Biaya lainnya']];
+const kosongkan = () => ({ items: [], header: { jenis_pelayanan_id: null, pelanggan_id: null, dokter_id: null, no_resep: '', diskon_nota: 0, diskon_mode: 'rp', biaya_servis: 0, biaya_embalase: 0, ongkir: 0, biaya_lain: 0, ket_biaya: '', voucher_kode: '', poin_dipakai: 0 }, pelanggan: null, pesanan_id: null, resep: null, hasil: null });
 let K = kosongkan();
 
 rute('penjualan/kasir', async el => {
@@ -141,7 +172,7 @@ async function tampilKasir(induk) {
   induk.replaceChildren(el);
   induk = el.parentElement;
   const tampilKasir_ = () => tampilKasir(induk);
-  const [jp, dokter, metode, k] = await Promise.all([ambilRef('jenis_pelayanan', 'id,nama,aktif'), ambilRef('dokter', 'id,nama'), ambilRef('metode_bayar', 'id,nama,jenis,aktif,urutan', 'urutan'), ambilKonfig()]);
+  const [jp, dokter, metode, k] = await Promise.all([ambilRef('jenis_pelayanan', 'id,nama,aktif,markup_persen'), ambilRef('dokter', 'id,nama'), ambilRef('metode_bayar', 'id,nama,jenis,aktif,urutan', 'urutan'), ambilKonfig()]);
   const bundel = await atauOffline(async () => { const { data, error } = await sb.from('promo_bundel').select('id,nama,harga').eq('aktif', true).order('nama'); if (error) throw error; return data; }, OFF.bundelL);
   if (!K.header.jenis_pelayanan_id) K.header.jenis_pelayanan_id = jp.find(x => x.nama === 'Umum')?.id || jp[0]?.id || null;
   el.innerHTML = `<div class="kasir">
@@ -154,22 +185,26 @@ async function tampilKasir(induk) {
           <button class="tombol kedua kecil" data-printer title="Ukuran printer perangkat ini">🖨</button>
           <button class="tombol kedua kecil" data-tutup-sesi>Tutup Sesi</button>
           <button class="tombol kedua kecil" data-fokus>⛶ Layar penuh</button></span></div>
-      <div style="display:flex;gap:8px;margin:10px 0"><div style="flex:1"><input class="input input-besar" data-cari placeholder="Cari nama/kode obat atau scan barcode (F2)"></div>
+      <div style="display:flex;gap:8px;margin:10px 0"><div style="flex:1"><input class="input input-besar" data-cari placeholder="Cari nama, kode, atau keluhan; atau scan barcode (F2)"></div>
         ${bundel?.length ? `<select class="input" style="width:auto" data-paket><option value="">+ Paket</option>${bundel.map(b => `<option value="${b.id}">${esc(b.nama)} · ${rupiah(b.harga)}</option>`).join('')}</select>` : ''}</div>
       ${K.resep ? `<p class="pesan info" style="margin:0 0 8px">Menebus resep <b>${esc(K.resep.no)}</b> a.n. ${esc(K.resep.pasien)}${K.resep.racikan_ditebus ? ` · ${K.resep.racikan_ditebus} racikan` : ''}${K.resep.etiket ? ' · etiket dicetak setelah bayar' : ''}. <a href="#" data-lepas-resep>Lepas</a></p>` : ''}
       ${K.pesanan_id ? `<p class="pesan info" style="margin:0 0 8px">Mengerjakan pesanan <b>${esc(K.pesanan_no || '')}</b>${K.header.nama_pemesan ? ' atas nama ' + esc(K.header.nama_pemesan) : ''}. <a href="#" data-lepas-pesanan>Lepas</a></p>` : ''}
       <div class="bungkus-tabel"><table class="tabel tabel-kasir"><thead><tr><th>Produk</th><th>Satuan</th><th class="angka">Jumlah</th><th class="angka">Harga</th><th class="angka">Disk %</th><th class="angka">Subtotal</th><th></th></tr></thead><tbody data-keranjang></tbody></table></div>
     </div>
     <div class="kartu kasir-kanan">
+      <div class="total-layar"><small>TOTAL</small><b data-total-layar>Rp 0</b></div>
       <label class="isian"><span>Pelanggan</span><div style="position:relative"><input class="input" data-cari-pelanggan placeholder="Cari nama / no. HP (opsional)" value="${esc(K.pelanggan?.nama || '')}"><div class="hasil-cari sembunyi" data-hasil-pelanggan style="left:0;right:0;top:44px"></div></div>
         <small data-info-pelanggan>${K.pelanggan ? `${K.pelanggan.member ? `<span class="chip oranye">Member ${esc(K.pelanggan.kode || '')}</span> stamp ${angka(K.pelanggan.stamp)} · ` : ''}<a href="#" data-hapus-pelanggan>hapus</a>` : ''}</small></label>
-      <label class="isian"><span>Jenis Pelayanan</span><select data-h="jenis_pelayanan_id">${jp.filter(x => x.aktif !== false).map(x => `<option value="${x.id}" ${x.id === K.header.jenis_pelayanan_id ? 'selected' : ''}>${esc(x.nama)}</option>`).join('')}</select></label>
+      <label class="isian"><span>Pilihan harga / pelayanan</span><select data-h="jenis_pelayanan_id">${jp.filter(x => x.aktif !== false).map(x => `<option value="${x.id}" ${x.id === K.header.jenis_pelayanan_id ? 'selected' : ''}>${esc(x.nama)}${Number(x.markup_persen) ? ` (harga ${x.markup_persen > 0 ? '+' : ''}${angka(x.markup_persen)}%)` : ''}</option>`).join('')}</select></label>
       <div data-resep class="form-grid" style="gap:0 10px">
         <label class="isian"><span>Dokter</span><select data-h="dokter_id"><option value="">- pilih -</option>${dokter.map(d => `<option value="${d.id}" ${d.id === K.header.dokter_id ? 'selected' : ''}>${esc(d.nama)}</option>`).join('')}</select></label>
         <label class="isian"><span>No. Resep</span><input data-h="no_resep" value="${esc(K.header.no_resep || '')}"></label></div>
       <div class="form-grid" style="gap:0 10px">
-        <label class="isian"><span>Diskon nota (Rp)</span><input type="number" min="0" step="any" data-h="diskon_nota" value="${K.header.diskon_nota || ''}"></label>
+        <label class="isian"><span>Diskon nota</span><div class="gabung"><input type="number" min="0" step="any" data-h="diskon_nota" value="${K.header.diskon_nota || ''}"><select data-mode-diskon aria-label="Jenis diskon"><option value="rp">Rp</option><option value="persen" ${K.header.diskon_mode === 'persen' ? 'selected' : ''}>%</option></select></div></label>
         <label class="isian"><span>Kode voucher</span><input data-h="voucher_kode" value="${esc(K.header.voucher_kode || '')}" style="text-transform:uppercase"></label></div>
+      <details class="biaya-kasir" ${BIAYA.some(([f]) => K.header[f]) ? 'open' : ''}><summary>Biaya tambahan <b data-jml-biaya></b></summary><div class="form-grid" style="gap:0 10px">
+        ${BIAYA.map(([f, l]) => `<label class="isian"><span>${l}</span><input type="number" min="0" step="any" data-h="${f}" value="${K.header[f] || ''}"></label>`).join('')}
+        <label class="isian lebar"><span>Keterangan biaya lainnya</span><input data-h="ket_biaya" maxlength="80" value="${esc(K.header.ket_biaya || '')}" placeholder="wajib bila biaya lainnya diisi"></label></div></details>
       <div data-galat></div>
       <div data-total class="kasir-total"></div>
       <div style="display:flex;gap:8px;margin-top:12px"><button class="tombol kedua" data-tunda title="Simpan sebagai pesanan / tunda">Tunda</button>
@@ -196,17 +231,18 @@ async function tampilKasir(induk) {
   };
   const gambarTotal = () => {
     const h = K.hasil;
-    const t = el.querySelector('[data-total]');
+    const t = el.querySelector('[data-total]'), tl = el.querySelector('[data-total-layar]'), jb = BIAYA.reduce((a, [f]) => a + Number(K.header[f] || 0), 0);
+    tl.textContent = rupiah(K.items.length && h ? h.total : 0); el.querySelector('[data-jml-biaya]').textContent = jb ? rupiah(jb) : '';
     if (!h || !K.items.length) { t.innerHTML = '<div class="baris-total besar"><span>TOTAL</span><span>Rp 0</span></div>'; el.querySelector('[data-total-hp]').textContent = 'Rp 0'; return; }
     const r = (l, v, c = '') => v ? `<div class="baris-total ${c}"><span>${l}</span><span>${v}</span></div>` : '';
-    t.innerHTML = r('Subtotal', rupiah(h.subtotal)) + (h.diskon_pelanggan > 0 ? r('Diskon pelanggan', '- ' + rupiah(h.diskon_pelanggan)) : '') + (h.diskon_nota > 0 ? r('Diskon nota', '- ' + rupiah(h.diskon_nota)) : '')
+    t.innerHTML = r('Subtotal', rupiah(h.subtotal)) + (h.diskon_pelanggan > 0 ? r('Diskon pelanggan', '- ' + rupiah(h.diskon_pelanggan)) : '') + (h.diskon_nota > 0 ? r('Diskon nota' + (h.diskon_nota_persen > 0 ? ` ${angka(h.diskon_nota_persen)}%` : ''), '- ' + rupiah(h.diskon_nota)) : '')
       + (h.potongan_voucher > 0 ? r('Voucher', '- ' + rupiah(h.potongan_voucher)) : '') + (h.potongan_poin > 0 ? r(`Tukar ${angka(h.poin_dipakai)} poin`, '- ' + rupiah(h.potongan_poin)) : '')
-      + (h.jasa_racik > 0 ? r('Jasa racik', rupiah(h.jasa_racik)) : '') + (h.jasa_resep > 0 ? r('Jasa pelayanan resep', rupiah(h.jasa_resep)) : '') + (h.embalase > 0 ? r('Embalase', rupiah(h.embalase)) : '') + (h.tuslah > 0 ? r('Tuslah', rupiah(h.tuslah)) : '') + (h.pembulatan ? r('Pembulatan', rupiah(h.pembulatan)) : '')
+      + (h.jasa_racik > 0 ? r('Jasa racik', rupiah(h.jasa_racik)) : '') + (h.jasa_resep > 0 ? r('Jasa pelayanan resep', rupiah(h.jasa_resep)) : '') + (h.embalase > 0 ? r('Embalase', rupiah(h.embalase)) : '') + (h.tuslah > 0 ? r('Tuslah', rupiah(h.tuslah)) : '') + (h.biaya_servis > 0 ? r('Biaya servis', rupiah(h.biaya_servis)) : '') + (h.ongkir > 0 ? r('Ongkos kirim', rupiah(h.ongkir)) : '') + (h.biaya_lain > 0 ? r(esc(h.ket_biaya || 'Biaya lainnya'), rupiah(h.biaya_lain)) : '') + (h.pembulatan ? r('Pembulatan', rupiah(h.pembulatan)) : '')
       + r('TOTAL', rupiah(h.total), 'besar') + (h.stamp_didapat > 0 ? r('Stamp member didapat', '+' + angka(h.stamp_didapat)) : '');
     el.querySelector('[data-total-hp]').textContent = rupiah(h.total);
     el.querySelector('[data-resep]').classList.toggle('wajib-resep', !!h.perlu_resep);
   };
-  const muatanHitung = () => ({ ...K.header, pelanggan_id: K.pelanggan?.id || null, resep_id: K.resep?.resep_id || null, racikan_ditebus: K.resep?.racikan_ditebus || 0,
+  const muatanHitung = () => ({ ...K.header, ...(K.header.diskon_mode === 'persen' ? { diskon_nota: 0, diskon_nota_persen: K.header.diskon_nota || 0 } : { diskon_nota_persen: 0 }), pelanggan_id: K.pelanggan?.id || null, resep_id: K.resep?.resep_id || null, racikan_ditebus: K.resep?.racikan_ditebus || 0,
     items: K.items.map(r => r.bundel_id ? { bundel_id: r.bundel_id, qty: r.qty, diskon_persen: r.diskon_persen || 0 } : { produk_id: r.produk_id, satuan_id: r.satuan_id, qty: r.qty, diskon_persen: r.diskon_persen || 0, resep: !!r.resep }) });
   async function hitung() {
     const galat = el.querySelector('[data-galat]');
@@ -234,7 +270,7 @@ async function tampilKasir(induk) {
     if (e.key !== 'Enter' || !polaNota(e.target.value) || !bisa('penjualan.retur')) return;
     e.preventDefault(); e.stopImmediatePropagation(); const no = e.target.value.trim(); e.target.value = ''; e.target.dispatchEvent(new Event('input', { bubbles: true })); bukaRetur(no).catch(x => toast(pesanGalat(x), 'galat'));
   });
-  pasangCariProduk(el.querySelector('[data-cari]'), p => tambah(p).catch(e => toast(pesanGalat(e), 'galat')));
+  pasangCariProduk(el.querySelector('[data-cari]'), p => tambah(p).catch(e => toast(pesanGalat(e), 'galat')), { indikasi: true });
   el.querySelector('[data-paket]')?.addEventListener('change', e => {
     const b = bundel.find(x => String(x.id) === e.target.value); e.target.value = '';
     if (!b) return;
@@ -250,6 +286,7 @@ async function tampilKasir(induk) {
   });
   el.addEventListener('change', e => {
     const t = e.target;
+    if (t.hasAttribute('data-mode-diskon')) { K.header.diskon_mode = t.value; K.header.diskon_nota = 0; const i = el.querySelector('[data-h=diskon_nota]'); i.value = ''; i.focus(); hitung(); }
     if (t.dataset.f === 'satuan_id') { K.items[t.dataset.i].satuan_id = Number(t.value); hitung(); }
     if (t.dataset.h && t.tagName === 'SELECT') { K.header[t.dataset.h] = t.value ? Number(t.value) : null; hitung(); }
   });
@@ -293,6 +330,7 @@ async function tampilKasir(induk) {
     if (!K.hasil) return toast('Periksa pesan di kanan dulu', 'galat');
     const h = K.hasil;
     if (h.perlu_resep && h.wajib_resep && !K.header.dokter_id && !K.header.no_resep) return toast('Ada obat wajib resep: isi dokter atau nomor resep.', 'galat');
+    if (h.biaya_lain > 0 && !h.ket_biaya) { toast('Isi keterangan biaya lainnya', 'galat'); return el.querySelector('[data-h=ket_biaya]').focus(); }
     const uuid = crypto.randomUUID();       // kode unik: menekan Bayar dua kali / internet putus tidak membuat nota dobel
     let pernahKirim = false;
     const aktif = metode.filter(m => m.aktif !== false && (!KONEKSI.putus || OFF.METODE_OFFLINE.includes(m.jenis)));
@@ -345,21 +383,22 @@ async function tampilKasir(induk) {
           return OFF.jualL(uuid, p, hl, byr, byr.reduce((a, b) => a + b.jumlah, 0) - hl.total);
         });
         if (!data.offline) OFF.sinkron();
-        const resepTadi = K.resep;
+        const resepTadi = K.resep, pelTadi = K.pelanggan;
         K = kosongkan();
         tampilKasir_();
-        selesaiBayar(data, k, resepTadi);
+        selesaiBayar(data, k, resepTadi, pelTadi);
       } }] });
   }
 
-  function selesaiBayar(d, k, resep) {
+  function selesaiBayar(d, k, resep, pel) {
+    const bisaWA = pel?.member && !d.offline && d.id;
     const cetak = () => d.offline ? cetakNota(d.struk, k) : cetakStruk(d.id);
     if (k.struk.cetak_otomatis) cetak();
     if (resep?.etiket) ambilResep(resep.resep_id).then(r => cetakEtiket(r, resep.etiket_item)).catch(e => toast(pesanGalat(e), 'galat'));
     modal({ judul: 'Transaksi berhasil', ukuran: 'kecil', isi: `<div style="text-align:center"><div style="font-size:42px">✅</div><b>${esc(d.no)}</b>${d.offline ? '<p class="pesan info" style="margin:10px 0 0">Tersimpan di perangkat, dikirim otomatis saat online.</p>' : ''}
       <div class="total-bayar" style="margin-top:12px"><small>Total</small><b>${rupiah(d.total)}</b><small>Kembalian</small><b style="color:var(--hijau);font-size:28px">${rupiah(d.kembalian)}</b></div>
       ${d.stamp_didapat > 0 ? `<p class="pesan info">Member mendapat <b>+${angka(d.stamp_didapat)} stamp</b> (total ${angka(d.stamp_total)})</p>` : ''}</div>`,
-      tombol: [{ teks: 'Cetak Struk', kelas: 'kedua', aksi: () => { cetak(); return false; } }, { teks: 'Transaksi Baru', aksi: () => setTimeout(() => document.querySelector('[data-cari]')?.focus(), 50) }] });
+      tombol: [{ teks: 'Cetak Struk', kelas: 'kedua', aksi: () => { cetak(); return false; } }, ...(bisaWA ? [{ teks: 'Kirim WA', kelas: 'kedua', aksi: () => { kirimWA(d.id); return false; } }] : []), { teks: 'Transaksi Baru', aksi: () => setTimeout(() => document.querySelector('[data-cari]')?.focus(), 50) }] });
   }
 
   function tunda() {
@@ -412,7 +451,7 @@ async function tampilKasir(induk) {
 async function muatPesanan(p) {
   K = kosongkan();
   K.pesanan_id = p.id; K.pesanan_no = p.no;
-  Object.assign(K.header, { jenis_pelayanan_id: p.jenis_pelayanan_id, dokter_id: p.dokter_id, no_resep: p.no_resep || '', diskon_nota: Number(p.diskon_nota || 0), nama_pemesan: p.nama_pemesan });
+  Object.assign(K.header, { jenis_pelayanan_id: p.jenis_pelayanan_id, dokter_id: p.dokter_id, no_resep: p.no_resep || '', diskon_nota: Number(p.diskon_nota || 0), diskon_mode: 'rp', biaya_embalase: Number(p.embalase || 0), biaya_servis: Number(p.biaya_servis || 0), ongkir: Number(p.ongkir || 0), biaya_lain: Number(p.biaya_lain || 0), ket_biaya: p.ket_biaya || '', nama_pemesan: p.nama_pemesan });
   if (p.pelanggan_id) K.pelanggan = (await sb.from('pelanggan').select('id,nama,telp,kode,member,stamp').eq('id', p.pelanggan_id).single()).data;
   const info = await infoProduk(p.item.filter(i => i.produk_id).map(i => i.produk_id));
   K.items = p.item.sort((a, b) => a.id - b.id).map(i => i.bundel_id ? { bundel_id: i.bundel_id, nama: i.nama, qty: Number(i.qty), diskon_persen: Number(i.diskon_persen) }
@@ -465,9 +504,10 @@ rute('penjualan/pesanan', async el => {
 
 // ================= Daftar Penjualan =================
 export async function detailPenjualan(id, setelah) {
-  const { data: j, error } = await sb.from('penjualan').select('*, item:penjualan_item(*), bayar:penjualan_bayar(*, metode:metode_bayar_id(nama)), pelanggan:pelanggan_id(nama), dokter:dokter_id(nama), jp:jenis_pelayanan_id(nama), retur:retur_jual(no,total,status,waktu)').eq('id', id).single();
+  const { data: j, error } = await sb.from('penjualan').select('*, item:penjualan_item(*), bayar:penjualan_bayar(*, metode:metode_bayar_id(nama)), pelanggan:pelanggan_id(nama,member), dokter:dokter_id(nama), jp:jenis_pelayanan_id(nama), retur:retur_jual(no,total,status,waktu)').eq('id', id).single();
   if (error) return toast(pesanGalat(error), 'galat');
   const tombol = [{ teks: 'Cetak Struk', kelas: 'kedua', aksi: () => { cetakStruk(j.id); return false; } }];
+  if (j.status === 'selesai' && j.pelanggan?.member) tombol.push({ teks: 'Kirim WA', kelas: 'kedua', aksi: () => { kirimWA(j.id); return false; } });
   if (j.status === 'selesai' && bisa('penjualan.retur')) tombol.push({ teks: 'Retur', kelas: 'kedua', aksi: () => { bukaRetur({ id: j.id }, () => setelah?.()); } });
   if (j.status === 'selesai' && bisa('penjualan.batal')) tombol.push({ teks: 'Batalkan Transaksi', kelas: 'bahaya', aksi: async () => {
     const alasan = await mintaTeks('Batalkan ' + j.no, 'Alasan pembatalan (wajib). Stok akan dikembalikan.');
@@ -484,7 +524,7 @@ export async function detailPenjualan(id, setelah) {
     <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:12px"><div style="flex:1;min-width:220px"><b>Pembayaran</b>${j.bayar.map(b => `<div class="baris-total"><span>${esc(b.metode?.nama || '')}${b.referensi ? ' · ' + esc(b.referensi) : ''}</span><span>${rupiah(b.jumlah)}</span></div>`).join('')}
         <div class="baris-total"><span>Kembalian</span><span>${rupiah(j.kembalian)}</span></div>
         ${j.retur?.length ? `<b style="display:block;margin-top:10px">Retur</b>${j.retur.map(r => `<div class="baris-total"><span>${esc(r.no)} (${waktu(r.waktu)})</span><span>${rupiah(r.total)}</span></div>`).join('')}` : ''}</div>
-      <div style="flex:1;min-width:220px">${[['Subtotal', j.subtotal], ['Diskon pelanggan', -j.diskon_pelanggan], ['Diskon nota', -j.diskon_nota], ['Voucher', -j.potongan_voucher], ['Tukar poin', -j.potongan_poin], ['Embalase', j.embalase], ['Tuslah', j.tuslah], ['Pembulatan', j.pembulatan]]
+      <div style="flex:1;min-width:220px">${[['Subtotal', j.subtotal], ['Diskon pelanggan', -j.diskon_pelanggan], ['Diskon nota', -j.diskon_nota], ['Voucher', -j.potongan_voucher], ['Tukar poin', -j.potongan_poin], ['Jasa racik', j.jasa_racik], ['Jasa resep', j.jasa_resep], ['Embalase', j.embalase], ['Tuslah', j.tuslah], ['Biaya servis', j.biaya_servis], ['Ongkos kirim', j.ongkir], [esc(j.ket_biaya || 'Biaya lainnya'), j.biaya_lain], ['Pembulatan', j.pembulatan]]
         .filter(([, v]) => Number(v)).map(([l, v]) => `<div class="baris-total"><span>${l}</span><span>${rupiah(v)}</span></div>`).join('')}<div class="baris-total besar"><span>TOTAL</span><span>${rupiah(j.total)}</span></div></div></div>`, tombol });
 }
 function mintaTeks(judul, label) {
