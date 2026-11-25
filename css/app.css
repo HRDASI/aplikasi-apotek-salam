@@ -452,3 +452,9 @@ body.fokus-kasir .kasir-kanan { top: 12px; }
 .pil-status.putus i { background: #d22f35; }
 .pil-status.aman { background: rgba(255,255,255,.16); color: #fff; font-weight: 700; } .pil-status.aman i { background: #5df08a; }
 @media (max-width: 900px) { .pil-status.aman span { display: none; } .pil-status.aman { padding: 6px; background: none; } .kepala-hp .baris .kanan { align-items: center; } .kepala-hp .baris .kanan .pil-status { order: 0; margin: 0; } }
+
+/* ---------- Utang yang ditandai ---------- */
+.bar-ditandai { position: sticky; bottom: 0; z-index: 20; background: #fff; border: 2px solid var(--teal); border-radius: 14px; padding: 12px 16px; margin-top: 12px; box-shadow: 0 -4px 18px rgba(0,0,0,.1); }
+.bar-ditandai .atas { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; } .bar-ditandai .atas b { font-size: 24px; color: var(--teal-gelap); }
+.bar-ditandai .rinci { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; max-height: 96px; overflow: auto; } .bar-ditandai .alat { display: flex; gap: 8px; }
+@media (max-width: 900px) { .bar-ditandai { bottom: calc(64px + env(safe-area-inset-bottom)); } .bar-ditandai { padding: 8px 12px; } .bar-ditandai .atas { gap: 2px 12px; } .bar-ditandai .atas b { font-size: 20px; } .bar-ditandai .rinci { flex-wrap: nowrap; overflow-x: auto; margin: 4px 0 6px; } .bar-ditandai .rinci .chip { flex: none; } .alat-tabel[data-filter] { display: grid; grid-template-columns: 1fr 1fr; } .alat-tabel[data-filter] > * { width: 100% !important; max-width: none !important; min-width: 0; } }
