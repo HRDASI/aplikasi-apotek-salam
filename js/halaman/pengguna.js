@@ -1,7 +1,7 @@
 // Manajemen Pengguna: daftar pengguna, peran & hak akses, log aktivitas.
-import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.12.0';
-import { MENU, ikon } from '../menu.js?v=1.12.0';
-import { esc, waktu, toast, modal, konfirmasi, pesanGalat, bacaForm, judulHalaman, unduhCSV } from '../ui.js?v=1.12.0';
+import { rute, sb, S, bisa, ambilRef, hapusCache } from '../inti.js?v=1.13.0';
+import { MENU, ikon } from '../menu.js?v=1.13.0';
+import { esc, waktu, toast, modal, konfirmasi, pesanGalat, bacaForm, judulHalaman, unduhCSV } from '../ui.js?v=1.13.0';
 
 // ---------- Daftar Pengguna ----------
 rute('pengguna/daftar', async el => {
@@ -85,7 +85,9 @@ function pohonAkses(akses) {
         <div class="anak-akses">${g.anak.map(([k, t]) => `<label class="cek"><input type="checkbox" value="${g.k}.${k}" data-anak="${g.k}" ${grupPenuh || akses.includes(g.k + '.' + k) ? 'checked' : ''}> ${esc(t)}</label>`).join('')}</div></div>`;
     }).join('')}
     <div class="grup-akses"><label class="cek" style="margin:0"><input type="checkbox" value="persediaan.lihat" ${cek('persediaan.lihat') ? 'checked' : ''}> Lihat daftar produk saja (tanpa mengubah)</label></div>
-    <div class="grup-akses"><label class="cek" style="margin:0"><input type="checkbox" value="penjualan.batal" ${cek('penjualan.batal') || cek('penjualan') ? 'checked' : ''}> Boleh membatalkan transaksi penjualan</label></div>
+    <div class="grup-akses"><label class="cek" style="margin:0"><input type="checkbox" value="penjualan.batal" ${cek('penjualan.batal') || cek('penjualan') ? 'checked' : ''}> Boleh membatalkan transaksi penjualan</label>
+      <label class="cek" style="margin:6px 0 0"><input type="checkbox" value="penjualan.retur_setuju" ${cek('penjualan.retur_setuju') || cek('penjualan') ? 'checked' : ''}> Boleh menyetujui retur di luar batas kasir</label>
+      <label class="cek" style="margin:6px 0 0"><input type="checkbox" value="akses.nominal" ${cek('akses.nominal') ? 'checked' : ''}> Boleh melihat total nilai penjualan & selisih kas</label></div>
     <div class="grup-akses"><label class="cek" style="margin:0"><input type="checkbox" value="akses.tanpa_shift" ${cek('akses.tanpa_shift') ? 'checked' : ''}> Boleh login tanpa memilih shift (untuk Admin)</label>
       <label class="cek" style="margin:6px 0 0"><input type="checkbox" value="keuangan.laba" ${cek('keuangan.laba') || cek('keuangan') ? 'checked' : ''}> Boleh melihat laba & HPP (Laporan Keuangan, Dashboard Keuangan, Analisis Harga)</label>
       <label class="cek" style="margin:6px 0 0"><input type="checkbox" value="akuntansi.kunci" ${cek('akuntansi.kunci') || cek('akuntansi') ? 'checked' : ''}> Boleh mengunci/membuka periode pembukuan</label>
