@@ -1,9 +1,9 @@
 // Program Member model stamp: daftar member, kartu member (gambar + link publik), kirim WhatsApp,
 // katalog hadiah, penukaran, aturan stamp.
-import { rute, sb, S, bisa } from '../inti.js?v=1.18.0';
-import { ikon } from '../menu.js?v=1.18.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.18.0';
-import { halamanCrud } from '../crud.js?v=1.18.0';
+import { rute, sb, S, bisa } from '../inti.js?v=1.18.1';
+import { ikon } from '../menu.js?v=1.18.1';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.18.1';
+import { halamanCrud } from '../crud.js?v=1.18.1';
 
 // ---------- QR code (pustaka dimuat saat perlu) ----------
 let janjiQR;
@@ -25,7 +25,7 @@ function gambarQR(ctx, teks, x, y, ukuran) {
   for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) ctx.fillRect(x + (c + 1) * m, y + (r + 1) * m, Math.ceil(m), Math.ceil(m));
 }
 let janjiLogo;
-const muatLogo = () => janjiLogo ||= new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = 'img/logo-128.png'; });
+const muatLogo = () => janjiLogo ||= new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = 'img/logo-b-tebal.png'; });
 
 export const linkKartu = token => location.origin + location.pathname.replace(/index\.html$/, '') + '#/kartu/' + token;
 
@@ -39,8 +39,7 @@ export async function gambarKartu(d) {
   const g = x.createLinearGradient(0, 0, 1000, 620); g.addColorStop(0, '#16ada6'); g.addColorStop(1, '#0a5f5b');
   r(0, 0, 1000, 620, 36); x.fillStyle = g; x.fill();
   x.fillStyle = 'rgba(255,255,255,.07)'; x.beginPath(); x.arc(930, 40, 220, 0, 7); x.fill(); x.beginPath(); x.arc(60, 640, 180, 0, 7); x.fill();
-  x.fillStyle = '#fff'; x.beginPath(); x.arc(92, 92, 50, 0, 7); x.fill();
-  if (logo) x.drawImage(logo, 52, 52, 80, 80);
+  if (logo) x.drawImage(logo, 42, 42, 100, 100);
   x.fillStyle = '#fff'; x.font = '800 34px "Nunito Sans", Arial'; x.fillText(d.apotek?.nama || 'Apotek Salam', 160, 84);
   x.font = '600 20px "Nunito Sans", Arial'; x.globalAlpha = .9; x.fillText('Teman Sehat Keluarga', 160, 114); x.globalAlpha = 1;
   x.fillStyle = '#f5a01a'; r(760, 52, 190, 46, 23); x.fill();
