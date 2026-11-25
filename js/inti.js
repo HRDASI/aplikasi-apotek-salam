@@ -1,4 +1,4 @@
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=1.12.0';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=1.13.0';
 
 // ---------- Koneksi ----------
 // putus = server tidak terjangkau DAN perangkat ini siap offline (perangkat biasa tetap seperti semula)
@@ -45,7 +45,7 @@ export const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
 });
 
 export const DOMAIN_AKUN = '@apoteksalam.app';
-export const VERSI = '1.12.0';
+export const VERSI = '1.13.0';
 
 // Status sesi aplikasi
 export const S = { pengguna: null, peran: null, outlet: null, akses: [] };
@@ -57,6 +57,8 @@ export function bisa(kunci) {
   if (a.includes(kunci)) return true;
   return a.some(x => kunci.startsWith(x + '.'));
 }
+// total penjualan disembunyikan dari peran tanpa salah satu hak ini (sama dengan _nominal() di server)
+export const lihatNominal = () => ['akses.nominal', 'laporan.penjualan', 'dashboard.umum', 'dashboard.penjualan', 'keuangan.laba', 'penjualan.batal'].some(bisa);
 export const bisaSalahSatu = daftar => daftar.some(k => k === '*semua' || bisa(k));
 
 // Rute: '#/grup/item' -> fungsi(el, param)
@@ -86,7 +88,7 @@ export async function ambilSemua(buat, maks = 20000) {
   return hasil;
 }
 export async function muatSesi() {
-  const off = await import('./offline.js?v=1.12.0');
+  const off = await import('./offline.js?v=1.13.0');
   if (KONEKSI.putus) S.sesi = off.bacaSesi();
   else {
     const { data, error } = await sb.rpc('sesi_aktif');
