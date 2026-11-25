@@ -1,15 +1,15 @@
 // Penjualan: Kasir (dengan sesi), Pesanan, Daftar, Retur, Tertolak, QRIS, Riwayat Sesi, cetak struk.
-import { rute, sb, S, bisa, lihatNominal, ambilRef, ambilSemua, muatSesi, KONEKSI, HOOK, atauOffline, putusJaringan } from '../inti.js?v=1.16.0';
-import * as OFF from '../offline.js?v=1.16.0';
-import { ikon } from '../menu.js?v=1.16.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.16.0';
-import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.16.0';
-import { halamanCrud } from '../crud.js?v=1.16.0';
-import { ambilKonfig } from './pengaturan.js?v=1.16.0';
-import { cetakStrukHtml } from '../cetak.js?v=1.16.0';
-import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.16.0';
-import { bukaRetur, polaNota } from './retur.js?v=1.16.0';
-import { barcodeHtml } from '../label.js?v=1.16.0';
+import { rute, sb, S, bisa, lihatNominal, ambilRef, ambilSemua, muatSesi, KONEKSI, HOOK, atauOffline, putusJaringan } from '../inti.js?v=1.17.0';
+import * as OFF from '../offline.js?v=1.17.0';
+import { ikon } from '../menu.js?v=1.17.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.17.0';
+import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.17.0';
+import { halamanCrud } from '../crud.js?v=1.17.0';
+import { ambilKonfig } from './pengaturan.js?v=1.17.0';
+import { cetakStrukHtml } from '../cetak.js?v=1.17.0';
+import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.17.0';
+import { bukaRetur, polaNota } from './retur.js?v=1.17.0';
+import { barcodeHtml } from '../label.js?v=1.17.0';
 
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const awalBulan = () => hariIni().slice(0, 8) + '01';
@@ -226,7 +226,7 @@ async function tampilKasir(induk) {
     try { data = await atauOffline(async () => { const r = await sb.rpc('hitung_penjualan', { p }); if (r.error) throw r.error; return r.data; }, () => OFF.hitungL(p)); } catch (e) { error = e; }
     if (n !== urutHitung) return;
     if (error) { galat.innerHTML = `<div class="pesan galat">${esc(pesanGalat(error))}</div>`; K.hasil = null; }
-    else { galat.innerHTML = data.perlu_resep && data.wajib_resep && !K.header.dokter_id && !K.header.no_resep ? '<div class="pesan peringatan">Ada obat keras: isi dokter atau nomor resep.</div>' : ''; K.hasil = data; }
+    else { galat.innerHTML = data.perlu_resep && data.wajib_resep && !K.header.dokter_id && !K.header.no_resep ? '<div class="pesan peringatan">Ada obat wajib resep: isi dokter atau nomor resep.</div>' : ''; K.hasil = data; }
     gambarKeranjang(); gambarTotal();
   }
   const hitungNanti = () => { clearTimeout(jedaHitung); jedaHitung = setTimeout(hitung, 250); };
@@ -302,7 +302,7 @@ async function tampilKasir(induk) {
     await hitung();
     if (!K.hasil) return toast('Periksa pesan di kanan dulu', 'galat');
     const h = K.hasil;
-    if (h.perlu_resep && h.wajib_resep && !K.header.dokter_id && !K.header.no_resep) return toast('Ada obat keras: isi dokter atau nomor resep.', 'galat');
+    if (h.perlu_resep && h.wajib_resep && !K.header.dokter_id && !K.header.no_resep) return toast('Ada obat wajib resep: isi dokter atau nomor resep.', 'galat');
     const uuid = crypto.randomUUID();       // kode unik: menekan Bayar dua kali / internet putus tidak membuat nota dobel
     let pernahKirim = false;
     const aktif = metode.filter(m => m.aktif !== false && (!KONEKSI.putus || OFF.METODE_OFFLINE.includes(m.jenis)));
