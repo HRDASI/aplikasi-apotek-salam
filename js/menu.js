@@ -73,19 +73,19 @@ export const MENU = [
     ['pelanggan', 'Pelanggan', 1], ['sales', 'Sales/Pelayan', 1], ['dokter', 'Dokter', 1], ['supplier', 'Supplier', 1]] },
   { k: 'laporan', t: 'Laporan', i: 'laporan', anak: [
     ['penjualan', 'Laporan Penjualan', 1], ['pembelian', 'Laporan Pembelian', 1], ['persediaan', 'Laporan Persediaan', 1],
-    ['keuangan', 'Laporan Keuangan', 1, null, ['keuangan.laba']], ['presensi', 'Laporan Presensi', 6]] },
+    ['keuangan', 'Laporan Keuangan', 1, null, ['keuangan.laba']], ['presensi', 'Laporan Presensi', 1]] },
   { k: 'analisis', t: 'Analisis', i: 'analisis', anak: [
     ['pareto', 'Analisis Pareto', 1], ['pembelian', 'Analisis Pembelian', 1], ['harga', 'Analisis Harga', 1, null, ['keuangan.laba']]] },
   { k: 'pengguna', t: 'Manajemen Pengguna', i: 'pengguna', anak: [
-    ['daftar', 'Daftar Pengguna', 1], ['peran', 'Peran & Hak Akses', 1], ['jadwal', 'Jadwal Kerja', 6],
-    ['presensi', 'Riwayat Presensi', 6], ['sesi', 'Riwayat Shift/Sesi', 1, ['penjualan.kasir']], ['log', 'Log Aktivitas', 1, ['*semua']]] },
+    ['daftar', 'Daftar Pengguna', 1], ['peran', 'Peran & Hak Akses', 1], ['karyawan', 'Data Karyawan', 1], ['jadwal', 'Jadwal Kerja', 1, ['*semua']],
+    ['presensi', 'Riwayat Presensi', 1, ['*semua']], ['izin', 'Izin, Sakit & Cuti', 1, ['*semua']], ['sesi', 'Riwayat Shift/Sesi', 1, ['penjualan.kasir']], ['log', 'Log Aktivitas', 1, ['*semua']]] },
   { k: 'gaji', t: 'Gaji Karyawan', i: 'gaji', anak: [
     ['pokok', 'Daftar Gaji Pokok', 6], ['tunjangan', 'Daftar Tunjangan', 6], ['potongan', 'Daftar Potongan Gaji', 6],
     ['hitung', 'Perhitungan Gaji', 6], ['bayar', 'Pembayaran Gaji', 6]] },
   { k: 'kpi', t: 'Manajemen KPI', i: 'kpi', anak: [
     ['parameter', 'Parameter KPI', 6], ['karyawan', 'KPI Karyawan', 6], ['pencapaian', 'Pencapaian KPI', 6], ['laporan', 'Laporan KPI', 6]] },
   { k: 'pengaturan', t: 'Pengaturan', i: 'pengaturan', anak: [
-    ['profil', 'Profil Bisnis', 1], ['metode_bayar', 'Metode Pembayaran', 1], ['konfigurasi', 'Konfigurasi', 1], ['printer', 'Printer & Cetak', 1, ['*semua']], ['offline', 'Mode Offline & Sinkron', 1, ['*semua']], ['impor', 'Impor Data', 1], ['integrasi', 'Integrasi Platform Lain', 6]] },
+    ['profil', 'Profil Bisnis', 1], ['metode_bayar', 'Metode Pembayaran', 1], ['konfigurasi', 'Konfigurasi', 1], ['printer', 'Printer & Cetak', 1, ['*semua']], ['offline', 'Mode Offline & Sinkron', 1, ['*semua']], ['impor', 'Impor Data', 1], ['integrasi', 'Integrasi Platform Lain', 1]] },
   { k: 'outlet', t: 'Multi Outlet', i: 'outlet', anak: [['daftar', 'Daftar Outlet', 1]] },
   { k: 'master', t: 'Master Data', i: 'master', anak: [
     ['produk', 'Master Produk', 1], ['kategori', 'Master Kategori', 1], ['satuan', 'Master Satuan', 1], ['rak', 'Master Rak', 1],
