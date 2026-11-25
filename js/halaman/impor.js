@@ -1,8 +1,8 @@
 // Impor data dari Excel/CSV: pilih berkas → cocokkan kolom → pratinjau → simpan (bisa dibatalkan).
-import { rute, sb, S, hapusCache } from '../inti.js?v=1.14.0';
-import { ikon } from '../menu.js?v=1.14.0';
-import { esc, angka, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.14.0';
-import { GOLONGAN } from './master.js?v=1.14.0';
+import { rute, sb, S, hapusCache } from '../inti.js?v=1.15.0';
+import { ikon } from '../menu.js?v=1.15.0';
+import { esc, angka, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from '../ui.js?v=1.15.0';
+import { GOLONGAN } from './master.js?v=1.15.0';
 
 let janji;
 const muatXlsx = () => janji ||= new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'; s.onload = () => res(window.XLSX); s.onerror = () => { janji = null; rej(new Error('Gagal memuat pembaca Excel. Cek internet.')); }; document.head.append(s); });
