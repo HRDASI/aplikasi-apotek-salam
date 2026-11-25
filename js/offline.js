@@ -1,7 +1,7 @@
 // Mode offline: salinan data di perangkat (IndexedDB), antrean transaksi, masuk offline, dan sinkron otomatis.
 // Hanya aktif di perangkat yang sudah ditandai Pemilik. Antrean tidak pernah dihapus sebelum server menjawab "tercatat".
-import { sb, S, KONEKSI, cekServer, ambilSemua, HOOK } from './inti.js?v=1.18.1';
-import { toast } from './ui.js?v=1.18.1';
+import { sb, S, KONEKSI, cekServer, ambilSemua, HOOK } from './inti.js?v=1.19.0';
+import { toast } from './ui.js?v=1.19.0';
 
 const AGEN = 'http://localhost:8766';
 const MASA_LOGIN = 3 * 864e5;                 // masuk offline berlaku 3 hari sejak login online terakhir
