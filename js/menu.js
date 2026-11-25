@@ -48,7 +48,7 @@ export const MENU = [
   { k: 'home', t: 'Home', i: 'home', url: '#/home', tahap: 1 },
   { k: 'dashboard', t: 'Dashboard', i: 'dashboard', anak: [
     ['umum', 'Dashboard Umum', 1], ['penjualan', 'Dashboard Penjualan', 1], ['pembelian', 'Dashboard Pembelian', 1],
-    ['persediaan', 'Dashboard Persediaan', 1], ['keuangan', 'Dash. Keuangan', 1, null, ['keuangan.laba']]] },
+    ['persediaan', 'Dashboard Persediaan', 1], ['keuangan', 'Dash. Keuangan', 1, null, ['keuangan.laba']], ['karyawan', 'Dashboard Karyawan', 1, ['*semua']]] },
   { k: 'penjualan', t: 'Penjualan', i: 'penjualan', anak: [
     ['kasir', 'Kasir', 1], ['pesanan', 'Pesanan Penjualan', 1], ['daftar', 'Daftar Penjualan', 1],
     ['retur', 'Retur Penjualan', 1], ['tertolak', 'Penjualan Tertolak', 1], ['qris', 'QRIS', 1]] },
