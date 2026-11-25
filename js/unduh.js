@@ -1,7 +1,7 @@
 // Unduh data sebagai Excel, PDF, atau CSV. Dipakai semua laporan lewat unduhCSV()/unduhTabel().
 // kolom: { label, nilai(r), t: 'uang'|'angka'|'persen'|'tgl', jml }
-import { sb, S } from './inti.js?v=1.24.0';
-import { esc, angka, tanggal, toast, modal, pesanGalat } from './ui.js?v=1.24.0';
+import { sb, S } from './inti.js?v=1.25.0';
+import { esc, angka, tanggal, toast, modal, pesanGalat } from './ui.js?v=1.25.0';
 
 const skrip = {};
 const muatSkrip = (url, ada) => skrip[url] ||= ada() ? Promise.resolve() : new Promise((res, rej) => { const s = document.createElement('script'); s.src = url; s.onload = res; s.onerror = () => { delete skrip[url]; rej(new Error('Gagal memuat pembuat berkas. Cek internet.')); }; document.head.append(s); });
