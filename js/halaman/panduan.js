@@ -1,8 +1,8 @@
 // Panduan pemakaian. Isinya dibuat dari online/panduan/*.md lewat buat-panduan.js (jangan diubah di sini).
-import { rute } from '../inti.js?v=1.20.0';
-import { ikon } from '../menu.js?v=1.20.0';
-import { esc, judulHalaman } from '../ui.js?v=1.20.0';
-import isi from '../panduan-isi.js?v=1.20.0';
+import { rute } from '../inti.js?v=1.21.0';
+import { ikon } from '../menu.js?v=1.21.0';
+import { esc, judulHalaman } from '../ui.js?v=1.21.0';
+import isi from '../panduan-isi.js?v=1.21.0';
 
 rute('panduan', async el => {
   el.innerHTML = judulHalaman('Panduan', '', isi.pdf.map(p => `<a class="tombol kedua" href="${p.url}" target="_blank" rel="noopener">${ikon('unduh')} ${esc(p.nama)}</a>`).join(' '))
