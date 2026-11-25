@@ -1,9 +1,9 @@
 // Halaman dokumen transaksi (daftar + editor) yang dipakai ulang:
 // rencana pembelian, SP, faktur, retur, penyesuaian, opname, perpindahan, konsinyasi.
-import { sb, S, bisa, ambilRef, rute, atauOffline } from './inti.js?v=1.18.0';
-import { cariProdukL, infoProdukL } from './offline.js?v=1.18.0';
-import { ikon } from './menu.js?v=1.18.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.18.0';
+import { sb, S, bisa, ambilRef, rute, atauOffline } from './inti.js?v=1.18.1';
+import { cariProdukL, infoProdukL } from './offline.js?v=1.18.1';
+import { ikon } from './menu.js?v=1.18.1';
+import { esc, angka, rupiah, tanggal, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.18.1';
 
 export const STATUS = {
   draft: ['Draft', ''], posting: ['Diposting', 'hijau'], batal: ['Batal', 'merah'], diproses: ['Diproses', 'teal'],
@@ -400,7 +400,7 @@ export async function cetakDokumen(cfg, st) {
     body{font-family:Arial,sans-serif;font-size:12px;margin:24px;color:#000} h1{font-size:18px;text-align:center;margin:14px 0 4px} .kop{display:flex;gap:12px;align-items:center;border-bottom:2px solid #000;padding-bottom:8px}
     .kop b{font-size:16px} table{width:100%;border-collapse:collapse;margin-top:10px} td,th{border:1px solid #444;padding:4px 6px;text-align:left} .info td{border:0;padding:2px 6px}
     .ttd{display:flex;justify-content:space-between;margin-top:40px} .ttd div{text-align:center;width:40%} @media print{button{display:none}}</style></head><body>
-    <div class="kop"><img src="${location.href.split('#')[0].replace(/index\.html$/, '')}img/logo-128.png" width="56"><div><b>${esc(o?.nama || '')}</b><br>${esc(o?.alamat || '')}<br>${esc(o?.telp || '')}${o?.no_sia ? ' · SIA ' + esc(o.no_sia) : ''}</div></div>
+    <div class="kop"><img src="${location.href.split('#')[0].replace(/index\.html$/, '')}img/logo-b-256.png" width="56"><div><b>${esc(o?.nama || '')}</b><br>${esc(o?.alamat || '')}<br>${esc(o?.telp || '')}${o?.no_sia ? ' · SIA ' + esc(o.no_sia) : ''}</div></div>
     <h1>${esc(cfg.judulCetak || cfg.satuan.toUpperCase())}</h1><div style="text-align:center">No. ${esc(st.header.no)} · ${tanggal(st.header.tanggal)}</div>
     <table class="info">${info.map(([a, b]) => `<tr><td style="width:160px">${esc(a)}</td><td>: ${esc(b)}</td></tr>`).join('')}</table>
     <table><thead><tr><th>No</th>${kolom.map(k => `<th>${esc(k.label)}</th>`).join('')}</tr></thead><tbody>${isi}</tbody></table>
