@@ -1,8 +1,8 @@
 // Bantuan laporan: periode, tabel + unduh + cetak, grafik satu warna dengan tooltip.
-import { sb, S, bisa, ambilRef } from './inti.js?v=1.18.0';
-import { ikon } from './menu.js?v=1.18.0';
-import { esc, angka, rupiah, tanggal, toast, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.18.0';
-import { cetakKertasBiasa } from './cetak.js?v=1.18.0';
+import { sb, S, bisa, ambilRef } from './inti.js?v=1.18.1';
+import { ikon } from './menu.js?v=1.18.1';
+import { esc, angka, rupiah, tanggal, toast, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.18.1';
+import { cetakKertasBiasa } from './cetak.js?v=1.18.1';
 
 export const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 export const geserHari = (t, n) => { const d = new Date(t + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
