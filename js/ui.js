@@ -1,4 +1,4 @@
-import { ikon } from './menu.js?v=1.22.1';
+import { ikon } from './menu.js?v=1.23.0';
 
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -89,14 +89,9 @@ export function bacaForm(form) {
   return d;
 }
 
+// pilihan Excel / PDF / CSV (dimuat saat dipakai)
 export function unduhCSV(nama, kolom, baris) {
-  const sel = v => { const s = String(v ?? ''); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const isi = [kolom.map(k => sel(k.label)).join(';'), ...baris.map(r => kolom.map(k => sel(k.nilai(r))).join(';'))].join('\r\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['﻿' + isi], { type: 'text/csv;charset=utf-8' }));
-  a.download = nama + '.csv';
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  import('./unduh.js?v=1.23.0').then(m => m.unduhData(nama, kolom, baris)).catch(() => toast('Gagal memuat pengunduh. Cek internet.', 'galat'));
 }
 
 export function judulHalaman(judul, remah, aksiHtml = '') {
