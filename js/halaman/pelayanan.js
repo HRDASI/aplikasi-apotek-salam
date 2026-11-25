@@ -1,14 +1,14 @@
 // Pelayanan Apotek: Penerimaan Resep (foto + ketik, skrining, R/ jadi & racikan), Penebusan (ke kasir),
 // Template Racikan, Swamedikasi, Home Pharmacy Care, PIO, MESO, Catatan Pengobatan, Konseling,
 // cetak etiket (printer label) & copy resep (thermal / A5).
-import { rute, sb, S, bisa, ambilRef, KONEKSI, atauOffline } from '../inti.js?v=1.12.0';
-import * as OFF from '../offline.js?v=1.12.0';
-import { ikon } from '../menu.js?v=1.12.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.12.0';
-import { pasangCariProduk, infoProduk } from '../dokumen.js?v=1.12.0';
-import { halamanCrud } from '../crud.js?v=1.12.0';
-import { ambilKonfig } from './pengaturan.js?v=1.12.0';
-import { cetakStrukHtml, cetakLabelHtml, cetakKertasBiasa } from '../cetak.js?v=1.12.0';
+import { rute, sb, S, bisa, ambilRef, KONEKSI, atauOffline, lihatNominal } from '../inti.js?v=1.13.0';
+import * as OFF from '../offline.js?v=1.13.0';
+import { ikon } from '../menu.js?v=1.13.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.13.0';
+import { pasangCariProduk, infoProduk } from '../dokumen.js?v=1.13.0';
+import { halamanCrud } from '../crud.js?v=1.13.0';
+import { ambilKonfig } from './pengaturan.js?v=1.13.0';
+import { cetakStrukHtml, cetakLabelHtml, cetakKertasBiasa } from '../cetak.js?v=1.13.0';
 
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const awalBulan = () => hariIni().slice(0, 8) + '01';
@@ -465,7 +465,7 @@ rute('pelayanan/catatan', async el => {
       ...(ks.data || []).map(x => ({ t: x.tanggal, jenis: 'Konseling', w: 'hijau', isi: `${esc(x.obat || '')}${x.masalah ? '<br>Masalah: ' + esc(x.masalah) : ''}${x.pemahaman ? ' · ' + esc(x.pemahaman) : ''}` })),
       ...(ms.data || []).map(x => ({ t: x.tanggal, jenis: 'MESO', w: 'merah', isi: `<b>${esc(x.obat_dicurigai)}</b>: ${esc(x.reaksi)} (${esc(x.keparahan || '-')})` })),
       ...(hc.data || []).map(x => ({ t: x.tanggal, jenis: 'Home Care', w: 'oranye', isi: `${esc(x.tujuan || '')}${x.kepatuhan ? ' · kepatuhan: ' + esc(x.kepatuhan) : ''}` })),
-      ...(jl.data || []).map(x => ({ t: x.tanggal, jenis: 'Pembelian', w: '', isi: `${esc(x.no)} · ${rupiah(x.total)}<br><small>${x.item.map(i => esc(i.nama) + ' ×' + angka(i.qty)).join(', ')}</small>` })),
+      ...(jl.data || []).map(x => ({ t: x.tanggal, jenis: 'Pembelian', w: '', isi: `${esc(x.no)}${lihatNominal() ? ' · ' + rupiah(x.total) : ''}<br><small>${x.item.map(i => esc(i.nama) + ' ×' + angka(i.qty)).join(', ')}</small>` })),
     ].sort((a, b) => (b.t || '').localeCompare(a.t || ''));
     isi.innerHTML = `<div class="kartu"><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center"><h3 style="margin:0">${esc(p?.nama || nama)}</h3>
       ${p?.telp ? `<span>${esc(p.telp)}</span>` : ''}${p?.tgl_lahir ? `<span>${Math.floor((Date.now() - new Date(p.tgl_lahir)) / 3.15576e10)} th</span>` : ''}
