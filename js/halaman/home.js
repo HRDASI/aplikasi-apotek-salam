@@ -1,9 +1,10 @@
 // Home: sapaan, ikon modul (HP), ringkasan, aktivitas terakhir, pembaruan aplikasi.
-import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.19.0';
-import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.19.0';
-import { esc, angka, rupiah, waktu } from '../ui.js?v=1.19.0';
+import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.20.0';
+import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.20.0';
+import { esc, angka, rupiah, waktu } from '../ui.js?v=1.20.0';
 
 export const PEMBARUAN = [
+  ['2026-11-25', 'Menu Panduan, shift Admin, dan pilihan menampilkan kata sandi di layar masuk.'],
   ['2026-11-25', 'Kasir: tombol Layar penuh (F11). Akun Kasir langsung ke halaman Kasir dalam layar penuh.'],
   ['2026-11-25', 'Logo Apotek Salam tanpa latar di ikon aplikasi, layar masuk, menu, kartu member, dan cetakan.'],
   ['2026-11-25', 'Cadangan Data: salinan database otomatis 5 kali sehari ke Google Drive, dengan status dan peringatan bila terlambat.'],
@@ -62,7 +63,7 @@ rute('home', async el => {
       <div><small>Transaksi</small><b>${angka(h.trx)}</b><span>kemarin ${angka(k.trx)}</span></div>
       ${bisa('keuangan.laba') ? `<div><small>Laba kotor</small><b>${rupiah(h.laba)}</b><span>kemarin ${rupiah(k.laba)}</span></div>` : `<div><small>Rata-rata per nota</small><b>${rupiah(Number(h.trx) ? h.netto / h.trx : 0)}</b><span>&nbsp;</span></div>`}`; });
   })().catch(() => isi('[data-hari]', x => { x.innerHTML = '<p class="kosong">Ringkasan belum bisa dimuat.</p>'; }));
-  if (lihatStok) import('./persediaan.js?v=1.19.0').then(m => m.hitungPeringatan()).then(j => isi('[data-perhatian]', x => {
+  if (lihatStok) import('./persediaan.js?v=1.20.0').then(m => m.hitungPeringatan()).then(j => isi('[data-perhatian]', x => {
     x.innerHTML = Object.values(j).some(Boolean) ? JENIS.map(([k, l, w]) => `<a href="#/persediaan/peringatan/${k}" class="statistik ${j[k] ? w : 'aman'}"><small>${esc(l)}</small><b>${j[k] ? angka(j[k]) : '✓'}</b></a>`).join('') : '<p class="aman-semua">✓ Semua stok aman, tidak ada yang perlu ditindaklanjuti.</p>';
   })).catch(() => isi('[data-perhatian]', x => { x.textContent = 'Peringatan belum bisa dimuat.'; }));
   sb.from('log_aktivitas').select('waktu,keterangan,aksi').eq('pengguna_id', S.pengguna.id).order('waktu', { ascending: false }).limit(5).then(({ data }) => isi('[data-akt]', x => {
@@ -88,6 +89,7 @@ rute('lainnya', async el => {
   const grup = MENU.filter(g => g.anak && g.anak.some(([a]) => bisaSalahSatu(ITEM.find(i => i.kunci === `${g.k}.${a}`).akses)));
   el.innerHTML = `<div class="ikon-modul" style="margin-top:-14px">${grup.map(g => `<a href="#/modul/${g.k}"><span class="kotak">${ikon(g.i)}</span>${esc(LABEL_HP[g.k] || g.t)}</a>`).join('')}</div>
     <div class="kartu" style="padding:6px 0">
+      <a href="#/panduan" style="display:flex;gap:12px;padding:14px 18px;text-decoration:none;color:var(--teks);border-bottom:1px solid var(--garis)">${ikon('info')} Panduan</a>
       <a href="#/akun" style="display:flex;gap:12px;padding:14px 18px;text-decoration:none;color:var(--teks);border-bottom:1px solid var(--garis)">${ikon('kunci')} Ganti Kata Sandi</a>
       <a href="#/ganti-shift" style="display:flex;gap:12px;padding:14px 18px;text-decoration:none;color:var(--teks);border-bottom:1px solid var(--garis)">${ikon('muat')} Ganti Shift <small style="margin-left:auto;color:var(--teks-2)">${esc(S.shift?.nama || '')}</small></a>
       <a href="#/keluar" style="display:flex;gap:12px;padding:14px 18px;text-decoration:none;color:var(--merah)">${ikon('keluar')} Keluar</a></div>`;
