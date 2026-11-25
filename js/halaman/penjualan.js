@@ -1,15 +1,16 @@
 // Penjualan: Kasir (dengan sesi), Pesanan, Daftar, Retur, Tertolak, QRIS, Riwayat Sesi, cetak struk.
-import { rute, sb, S, bisa, lihatNominal, ambilRef, ambilSemua, muatSesi, KONEKSI, HOOK, atauOffline, putusJaringan } from '../inti.js?v=1.22.1';
-import * as OFF from '../offline.js?v=1.22.1';
-import { ikon } from '../menu.js?v=1.22.1';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.22.1';
-import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.22.1';
-import { halamanCrud } from '../crud.js?v=1.22.1';
-import { ambilKonfig } from './pengaturan.js?v=1.22.1';
-import { cetakStrukHtml } from '../cetak.js?v=1.22.1';
-import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.22.1';
-import { bukaRetur, polaNota } from './retur.js?v=1.22.1';
-import { barcodeHtml } from '../label.js?v=1.22.1';
+import { rute, sb, S, bisa, lihatNominal, ambilRef, ambilSemua, muatSesi, KONEKSI, HOOK, atauOffline, putusJaringan } from '../inti.js?v=1.23.0';
+import * as OFF from '../offline.js?v=1.23.0';
+import { ikon } from '../menu.js?v=1.23.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman, unduhCSV, bacaForm } from '../ui.js?v=1.23.0';
+import { pasangCariProduk, infoProduk, chipStatus } from '../dokumen.js?v=1.23.0';
+import { halamanCrud } from '../crud.js?v=1.23.0';
+import { ambilKonfig } from './pengaturan.js?v=1.23.0';
+import { cetakStrukHtml, bacaPrinter } from '../cetak.js?v=1.23.0';
+import { isiNota } from '../struk.js?v=1.23.0';
+import { ambilResep, cetakEtiket } from './pelayanan.js?v=1.23.0';
+import { bukaRetur, polaNota } from './retur.js?v=1.23.0';
+import { barcodeHtml } from '../label.js?v=1.23.0';
 
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const awalBulan = () => hariIni().slice(0, 8) + '01';
@@ -103,20 +104,8 @@ export async function cetakStruk(id) {
   return cetakNota(j, k);
 }
 export async function cetakNota(j, k) {
-  const o = j.outlet, ks = k.struk;
-  const logo = ks.tampil_logo ? `<img src="${location.href.split('#')[0].replace(/[^/]*$/, '')}img/logo-b-256.png" style="width:40px"><br>` : '';
-  const items = j.item.sort((a, b) => a.id - b.id).map(i => `<div class="n">${esc(i.nama)}</div>${baris(`  ${angka(i.qty)} ${i.satuan_nama || ''} x ${angka(i.harga)}`, angka(i.qty * i.harga))}
-    ${i.diskon_promo > 0 ? baris('  Promo', '-' + angka(i.diskon_promo)) : ''}${i.diskon_manual > 0 ? baris(`  Diskon ${angka(i.diskon_persen)}%`, '-' + angka(i.diskon_manual)) : ''}`).join('');
-  const pot = [['Diskon pelanggan', j.diskon_pelanggan], ['Diskon', j.diskon_nota], ['Voucher', j.potongan_voucher], [`Tukar ${angka(j.poin_dipakai)} poin`, j.potongan_poin]]
-    .filter(x => x[1] > 0).map(([a, b]) => baris(a, '-' + angka(b))).join('');
-  bukaJendelaCetak(`<div class="c">${logo}<b>${esc(o.nama)}</b><br>${esc(o.alamat || '')}${o.telp ? '<br>Telp ' + esc(o.telp) : ''}</div><hr>
-    ${baris(j.no, waktu(j.waktu))}${baris('Kasir', j.pengguna_nama || '')}${j.pelanggan ? baris('Pelanggan', j.pelanggan.nama) : ''}${j.dokter ? baris('Dokter', j.dokter.nama) : ''}${j.no_resep ? baris('No. resep', j.no_resep) : ''}<hr>
-    ${items}<hr>${baris('Subtotal', angka(j.subtotal))}${pot}${j.jasa_racik > 0 ? baris('Jasa racik', angka(j.jasa_racik)) : ''}${j.jasa_resep > 0 ? baris('Jasa resep', angka(j.jasa_resep)) : ''}${j.embalase > 0 ? baris('Embalase', angka(j.embalase)) : ''}${j.tuslah > 0 ? baris('Tuslah', angka(j.tuslah)) : ''}
-    ${j.pembulatan !== 0 ? baris('Pembulatan', angka(j.pembulatan)) : ''}<div class="r" style="font-size:13px;font-weight:bold"><span>TOTAL</span><span>${angka(j.total)}</span></div>
-    ${j.bayar.map(b => baris(b.metode?.nama || 'Bayar', angka(b.jumlah))).join('')}${baris('Kembali', angka(j.kembalian))}
-    ${j.stamp_didapat > 0 ? baris('Stamp member', `+${angka(j.stamp_didapat)} (total ${angka(j.pelanggan?.stamp)})`) : ''}${j.status === 'batal' ? '<div class="c"><b>*** DIBATALKAN ***</b></div>' : ''}${j.no.startsWith('OFF-') ? '<div class="c">Nota sementara (offline)</div>' : ''}<hr>
-    ${ks.tampil_apoteker && o.apoteker ? `<div class="c">Apoteker: ${esc(o.apoteker)}${o.sipa ? '<br>SIPA ' + esc(o.sipa) : ''}</div>` : ''}
-    <div class="c">${esc(o.catatan_struk || '')}</div>${await barcodeHtml(j.no, Number(await lebarStruk()) === 58 ? 48 : 72)}<div class="c" style="font-size:9px">${esc(j.no)} · simpan struk untuk retur</div>`, await lebarStruk(), 'Struk ' + j.no);
+  const lebar = k.struk.lebar || '80', pakai = bacaPrinter().struk.lebar || lebar;
+  return cetakStrukHtml(isiNota(j, k.struk, k.struk.tampil_barcode === false ? '' : await barcodeHtml(j.no, pakai === '58' ? 48 : 72)), 'Struk ' + j.no, lebar, k.struk);
 }
 
 // ================= Kasir =================
@@ -597,7 +586,7 @@ function kecilkanGambar(file, maks) {
 
 // ================= Riwayat Shift / Sesi =================
 rute('pengguna/sesi', async el => {
-  el.innerHTML = judulHalaman('Riwayat Shift/Sesi', 'Manajemen Pengguna / Riwayat Shift/Sesi') + `<div class="kartu"><div class="alat-tabel">
+  el.innerHTML = judulHalaman('Riwayat Shift/Sesi', 'Manajemen Pengguna / Riwayat Shift/Sesi', `<button class="tombol kedua" data-unduh>${ikon('unduh')} Unduh</button>`) + `<div class="kartu"><div class="alat-tabel">
     <label>Dari <input type="date" class="input" style="width:auto" data-dari value="${awalBulan()}"></label><label>Sampai <input type="date" class="input" style="width:auto" data-sampai value="${hariIni()}"></label></div>
     <div class="bungkus-tabel"><table class="tabel kartu-hp"><thead><tr><th>Kode Sesi</th><th>Kasir</th><th>Shift</th><th>Dibuka</th><th>Ditutup</th><th class="angka">Penjualan</th><th class="angka">Selisih Kas</th><th>Status</th></tr></thead><tbody data-isi></tbody></table></div></div>`;
   let data = [];
@@ -614,6 +603,7 @@ rute('pengguna/sesi', async el => {
       <td data-label="Status"><span class="chip ${s.status === 'buka' ? 'oranye' : ''}">${s.status === 'buka' ? 'Masih buka' : 'Tutup'}</span></td></tr>`).join('') : '<tr><td class="kosong" colspan="8">Belum ada sesi.</td></tr>';
   };
   el.addEventListener('change', muat);
+  el.querySelector('[data-unduh]').onclick = () => unduhCSV('riwayat-sesi', [{ label: 'Kode', nilai: s => s.kode }, { label: 'Kasir', nilai: s => s.pengguna_nama }, { label: 'Shift', nilai: s => s.shift_nama }, { label: 'Dibuka', nilai: s => waktu(s.dibuka) }, { label: 'Ditutup', nilai: s => s.ditutup ? waktu(s.ditutup) : '' }, ...(lihatNominal() ? [{ label: 'Penjualan', nilai: s => s.ringkasan?.omzet, t: 'uang', jml: true }, { label: 'Selisih kas', nilai: s => s.selisih, t: 'uang', jml: true }] : []), { label: 'Status', nilai: s => s.status }], data);
   el.addEventListener('click', async e => {
     const tr = e.target.closest('[data-buka]'); if (!tr) return;
     const s = data[tr.dataset.buka];
