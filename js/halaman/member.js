@@ -1,9 +1,9 @@
 // Program Member model stamp: daftar member, kartu member (gambar + link publik), kirim WhatsApp,
 // katalog hadiah, penukaran, aturan stamp.
-import { rute, sb, S, bisa } from '../inti.js?v=1.14.0';
-import { ikon } from '../menu.js?v=1.14.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.14.0';
-import { halamanCrud } from '../crud.js?v=1.14.0';
+import { rute, sb, S, bisa } from '../inti.js?v=1.15.0';
+import { ikon } from '../menu.js?v=1.15.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.15.0';
+import { halamanCrud } from '../crud.js?v=1.15.0';
 
 // ---------- QR code (pustaka dimuat saat perlu) ----------
 let janjiQR;
