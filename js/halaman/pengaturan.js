@@ -1,8 +1,8 @@
 // Pengaturan: Profil Bisnis (outlet aktif) & Konfigurasi.
-import { rute, sb, S, bisa, atauOffline, KONEKSI, HOOK } from '../inti.js?v=1.24.0';
-import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.24.0';
-import { bacaPrinter, simpanPrinter, statusAgen, cetakLabelHtml, cetakLabelPng, GAYA } from '../cetak.js?v=1.24.0';
-import { STRUK_BAWAAN } from '../struk.js?v=1.24.0';
+import { rute, sb, S, bisa, atauOffline, KONEKSI, HOOK } from '../inti.js?v=1.25.0';
+import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.25.0';
+import { bacaPrinter, simpanPrinter, statusAgen, cetakLabelHtml, cetakLabelPng, GAYA } from '../cetak.js?v=1.25.0';
+import { STRUK_BAWAAN } from '../struk.js?v=1.25.0';
 
 rute('pengaturan/profil', async el => {
   const boleh = bisa('pengaturan.profil');
@@ -69,9 +69,9 @@ rute('pengaturan/printer', async el => {
     const w = el.querySelector('[data-hasil-tes]'), j = b.dataset.tes, p = baca(), printer = j === 'struk' ? p.struk.printer : p.label.printer; b.disabled = true; w.textContent = 'Mengirim…';
     try {
       let r;
-      if (j === 'struk') { const k = await ambilKonfig(); r = await (await import('./struk.js?v=1.24.0')).cetakNotaContoh(k.struk); }
+      if (j === 'struk') { const k = await ambilKonfig(); r = await (await import('./struk.js?v=1.25.0')).cetakNotaContoh(k.struk); }
       else if (j === 'label') r = await cetakLabelHtml([`<div class="kop"><span>${esc(S.outlet?.nama || 'Apotek Salam')}</span><span>No. 001</span></div><div class="nm">CONTOH ETIKET</div><div class="signa">3 x sehari 1 tablet</div><div class="kecil">Sesudah makan · ${new Date().toLocaleDateString('id-ID')}</div><div class="jenis">OBAT DALAM</div>`], 'Tes etiket');
-      else { const l = await (await import('../label.js?v=1.24.0')).gambarLabel({ nama: 'CONTOH BARCODE', kode: 'CONTOH123', harga_jual: 15000 }, { lebar: p.label.lebar, tinggi: p.label.tinggi }); r = await cetakLabelPng([{ png: l.png, salinan: 1 }], 'Tes barcode'); }
+      else { const l = await (await import('../label.js?v=1.25.0')).gambarLabel({ nama: 'CONTOH BARCODE', kode: 'CONTOH123', harga_jual: 15000 }, { lebar: p.label.lebar, tinggi: p.label.tinggi }); r = await cetakLabelPng([{ png: l.png, salinan: 1 }], 'Tes barcode'); }
       w.innerHTML = `<span class="chip ${r === 'agen' ? 'hijau' : 'oranye'}">${r === 'agen' ? 'Terkirim ke ' + esc(printer) : 'Dibuka lewat dialog cetak' + (printer ? ' (agen tidak menyala)' : ' (printer belum dipilih)')}</span>`;
     } catch (x) { w.innerHTML = `<span class="chip merah">Gagal: ${esc(pesanGalat(x))}</span>`; }
     b.disabled = false;
@@ -81,7 +81,7 @@ rute('pengaturan/printer', async el => {
 // Konfigurasi disimpan di tabel konfigurasi (kunci -> jsonb)
 export const KONFIG_BAWAAN = {
   struk: { ...STRUK_BAWAAN },
-  penjualan: { stok_minus: false, pembulatan: 0, wajib_resep_obat_keras: false, diskon_maks_persen: 20 },
+  penjualan: { stok_minus: false, pembulatan: 0, wajib_resep_obat_keras: false, diskon_maks_persen: 20, maks_biaya: 50000 },
   persediaan: { peringatan_ed_hari: 90, metode_keluar: 'FEFO', batas_margin_persen: 5, margin_saran_persen: 20 },
   pelayanan: { tarif_racik: 5000, persen_resep: 0, cetak_etiket: true },
   retur: { maks_hari: 7, maks_nilai: 200000 },
@@ -118,6 +118,7 @@ rute('pengaturan/konfigurasi', async el => {
       <div class="form-grid">
         <label class="isian"><span>Pembulatan total (Rp)</span><select name="penjualan.pembulatan">${[0, 100, 500, 1000].map(v => `<option value="${v}" ${Number(k.penjualan.pembulatan) === v ? 'selected' : ''}>${v ? 'Ke atas, kelipatan ' + v : 'Tanpa pembulatan'}</option>`).join('')}</select></label>
         <label class="isian"><span>Diskon maksimal kasir (%)</span><input type="number" min="0" max="100" name="penjualan.diskon_maks_persen" value="${k.penjualan.diskon_maks_persen}"></label>
+        <label class="isian"><span>Biaya tambahan maksimal kasir (Rp)</span><input type="number" min="0" name="penjualan.maks_biaya" value="${k.penjualan.maks_biaya}"><small>Batas untuk tiap biaya: servis, embalase, ongkos kirim, dan lainnya. Pemilik tidak dibatasi.</small></label>
       </div></div>
     <div class="kartu"><h3>Retur oleh kasir</h3><p style="margin-top:0;color:var(--teks-2)">Di luar batas ini, dan untuk obat keras/OKT/psikotropika/narkotika, kasir perlu persetujuan Pemilik/Apoteker.</p><div class="form-grid">
       <label class="isian"><span>Umur nota paling lama (hari)</span><input type="number" min="0" name="retur.maks_hari" value="${k.retur.maks_hari}"></label>
