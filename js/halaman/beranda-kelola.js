@@ -1,9 +1,9 @@
 // Kelola Beranda: target, rencana kerja, rekap, dan isi (visi, misi, budaya, motivasi).
-import { rute } from '../inti.js?v=1.23.0';
-import { ikon } from '../menu.js?v=1.23.0';
-import { esc, angka, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.23.0';
-import { rpc, tabelHtml, hariIni } from '../tabel.js?v=1.23.0';
-import { isiBeranda } from '../beranda.js?v=1.23.0';
+import { rute } from '../inti.js?v=1.24.0';
+import { ikon } from '../menu.js?v=1.24.0';
+import { esc, angka, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.24.0';
+import { rpc, tabelHtml, hariIni } from '../tabel.js?v=1.24.0';
+import { isiBeranda } from '../beranda.js?v=1.24.0';
 
 const PERIODE = [['pekan', 'Pekanan'], ['bulan', 'Bulanan'], ['tahun', 'Tahunan']], ULANG = [['harian', 'Harian'], ['pekanan', 'Pekanan'], ['bulanan', 'Bulanan'], ['sekali', 'Sekali']], LINGKUP = [['semua', 'Semua'], ['posisi', 'Per posisi'], ['orang', 'Per orang']];
 const opsi = (d, v) => d.map(([k, l]) => `<option value="${esc(k)}" ${k === v ? 'selected' : ''}>${esc(l)}</option>`).join(''), nama = (d, k) => (d.find(x => x[0] === k) || [k, k])[1];
