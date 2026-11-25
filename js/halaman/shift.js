@@ -1,10 +1,10 @@
 // Laporan penjualan per shift. Tanpa hak nominal (kasir): hanya sesi sendiri dan jumlah transaksi, tanpa rupiah penjualan.
-import { rute, S, bisa, lihatNominal } from '../inti.js?v=1.18.1';
-import { ikon } from '../menu.js?v=1.18.1';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, pesanGalat, judulHalaman } from '../ui.js?v=1.18.1';
-import { rpc, barPeriode, tabelHtml, unduhTabel, cetakHtml, grafikBatang } from '../tabel.js?v=1.18.1';
-import { cetakStrukHtml } from '../cetak.js?v=1.18.1';
-import { ambilKonfig } from './pengaturan.js?v=1.18.1';
+import { rute, S, bisa, lihatNominal } from '../inti.js?v=1.19.0';
+import { ikon } from '../menu.js?v=1.19.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, pesanGalat, judulHalaman } from '../ui.js?v=1.19.0';
+import { rpc, barPeriode, tabelHtml, unduhTabel, cetakHtml, grafikBatang } from '../tabel.js?v=1.19.0';
+import { cetakStrukHtml } from '../cetak.js?v=1.19.0';
+import { ambilKonfig } from './pengaturan.js?v=1.19.0';
 
 const jml = (a, f) => a.reduce((x, r) => x + Number(r[f] || 0), 0);
 const kotak = (l, v, k = '') => `<div class="statistik"><small>${esc(l)}</small><b>${v}</b>${k ? `<small>${k}</small>` : ''}</div>`;
