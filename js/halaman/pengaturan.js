@@ -1,7 +1,7 @@
 // Pengaturan: Profil Bisnis (outlet aktif) & Konfigurasi.
-import { rute, sb, S, bisa, atauOffline, KONEKSI, HOOK } from '../inti.js?v=1.12.0';
-import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.12.0';
-import { bacaPrinter, simpanPrinter, statusAgen, cetakStrukHtml, cetakLabelHtml } from '../cetak.js?v=1.12.0';
+import { rute, sb, S, bisa, atauOffline, KONEKSI, HOOK } from '../inti.js?v=1.13.0';
+import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.13.0';
+import { bacaPrinter, simpanPrinter, statusAgen, cetakStrukHtml, cetakLabelHtml } from '../cetak.js?v=1.13.0';
 
 rute('pengaturan/profil', async el => {
   const boleh = bisa('pengaturan.profil');
@@ -78,6 +78,7 @@ export const KONFIG_BAWAAN = {
   penjualan: { stok_minus: false, pembulatan: 0, wajib_resep_obat_keras: true, diskon_maks_persen: 20 },
   persediaan: { peringatan_ed_hari: 90, metode_keluar: 'FEFO', batas_margin_persen: 5, margin_saran_persen: 20 },
   pelayanan: { tarif_racik: 5000, persen_resep: 0, cetak_etiket: true },
+  retur: { maks_hari: 7, maks_nilai: 200000 },
   pembelian: { ppn_mode: 'tambah', pajak_id: null },
 };
 export const MODE_PPN = [['tambah', 'Belum termasuk PPN (PPN ditambahkan)'], ['termasuk', 'Sudah termasuk PPN'], ['tanpa', 'Tidak kena PPN']];
@@ -115,6 +116,9 @@ rute('pengaturan/konfigurasi', async el => {
         <label class="isian"><span>Pembulatan total (Rp)</span><select name="penjualan.pembulatan">${[0, 100, 500, 1000].map(v => `<option value="${v}" ${Number(k.penjualan.pembulatan) === v ? 'selected' : ''}>${v ? 'Ke atas, kelipatan ' + v : 'Tanpa pembulatan'}</option>`).join('')}</select></label>
         <label class="isian"><span>Diskon maksimal kasir (%)</span><input type="number" min="0" max="100" name="penjualan.diskon_maks_persen" value="${k.penjualan.diskon_maks_persen}"></label>
       </div></div>
+    <div class="kartu"><h3>Retur oleh kasir</h3><p style="margin-top:0;color:var(--teks-2)">Di luar batas ini, dan untuk obat keras/OKT/psikotropika/narkotika, kasir perlu persetujuan Pemilik/Apoteker.</p><div class="form-grid">
+      <label class="isian"><span>Umur nota paling lama (hari)</span><input type="number" min="0" name="retur.maks_hari" value="${k.retur.maks_hari}"></label>
+      <label class="isian"><span>Nilai retur paling besar per nota (Rp)</span><input type="number" min="0" name="retur.maks_nilai" value="${k.retur.maks_nilai}"></label></div></div>
     <div class="kartu"><h3>Persediaan</h3><div class="form-grid">
       <label class="isian"><span>Peringatan kedaluwarsa (hari sebelum ED)</span><input type="number" min="1" name="persediaan.peringatan_ed_hari" value="${k.persediaan.peringatan_ed_hari}"></label>
       <label class="isian"><span>Urutan stok keluar</span><select name="persediaan.metode_keluar"><option value="FEFO" ${k.persediaan.metode_keluar === 'FEFO' ? 'selected' : ''}>FEFO (ED terdekat dulu)</option><option value="FIFO" ${k.persediaan.metode_keluar === 'FIFO' ? 'selected' : ''}>FIFO (masuk duluan dulu)</option></select></label>
