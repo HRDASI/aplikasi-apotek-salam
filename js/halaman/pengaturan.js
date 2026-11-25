@@ -1,7 +1,7 @@
 // Pengaturan: Profil Bisnis (outlet aktif) & Konfigurasi.
-import { rute, sb, S, bisa, atauOffline, KONEKSI, HOOK } from '../inti.js?v=1.16.0';
-import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.16.0';
-import { bacaPrinter, simpanPrinter, statusAgen, cetakStrukHtml, cetakLabelHtml } from '../cetak.js?v=1.16.0';
+import { rute, sb, S, bisa, atauOffline, KONEKSI, HOOK } from '../inti.js?v=1.17.0';
+import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.17.0';
+import { bacaPrinter, simpanPrinter, statusAgen, cetakStrukHtml, cetakLabelHtml } from '../cetak.js?v=1.17.0';
 
 rute('pengaturan/profil', async el => {
   const boleh = bisa('pengaturan.profil');
@@ -75,7 +75,7 @@ rute('pengaturan/printer', async el => {
 // Konfigurasi disimpan di tabel konfigurasi (kunci -> jsonb)
 export const KONFIG_BAWAAN = {
   struk: { lebar: '58', cetak_otomatis: false, tampil_logo: true, tampil_apoteker: true },
-  penjualan: { stok_minus: false, pembulatan: 0, wajib_resep_obat_keras: true, diskon_maks_persen: 20 },
+  penjualan: { stok_minus: false, pembulatan: 0, wajib_resep_obat_keras: false, diskon_maks_persen: 20 },
   persediaan: { peringatan_ed_hari: 90, metode_keluar: 'FEFO', batas_margin_persen: 5, margin_saran_persen: 20 },
   pelayanan: { tarif_racik: 5000, persen_resep: 0, cetak_etiket: true },
   retur: { maks_hari: 7, maks_nilai: 200000 },
@@ -110,7 +110,7 @@ rute('pengaturan/konfigurasi', async el => {
       ${cek('struk', 'tampil_logo', 'Tampilkan logo di struk')}
       ${cek('struk', 'tampil_apoteker', 'Tampilkan nama apoteker & SIPA di struk')}</div>
     <div class="kartu"><h3>Penjualan</h3>
-      ${cek('penjualan', 'wajib_resep_obat_keras', 'Obat keras wajib dicatat resepnya saat dijual')}
+      ${cek('penjualan', 'wajib_resep_obat_keras', 'Obat keras wajib dicatat resepnya saat dijual (OKT, psikotropika, narkotika, dan produk bertanda wajib resep selalu wajib)')}
       ${cek('penjualan', 'stok_minus', 'Izinkan menjual walau stok di sistem habis')}
       <div class="form-grid">
         <label class="isian"><span>Pembulatan total (Rp)</span><select name="penjualan.pembulatan">${[0, 100, 500, 1000].map(v => `<option value="${v}" ${Number(k.penjualan.pembulatan) === v ? 'selected' : ''}>${v ? 'Ke atas, kelipatan ' + v : 'Tanpa pembulatan'}</option>`).join('')}</select></label>
