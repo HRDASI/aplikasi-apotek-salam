@@ -80,8 +80,8 @@ export const MENU = [
     ['daftar', 'Daftar Pengguna', 1], ['peran', 'Peran & Hak Akses', 1], ['karyawan', 'Data Karyawan', 1], ['jadwal', 'Jadwal Kerja', 1, ['*semua']],
     ['presensi', 'Riwayat Presensi', 1, ['*semua']], ['izin', 'Izin, Sakit & Cuti', 1, ['*semua']], ['sesi', 'Riwayat Shift/Sesi', 1, ['penjualan.kasir']], ['log', 'Log Aktivitas', 1, ['*semua']]] },
   { k: 'gaji', t: 'Gaji Karyawan', i: 'gaji', anak: [
-    ['pokok', 'Daftar Gaji Pokok', 6], ['tunjangan', 'Daftar Tunjangan', 6], ['potongan', 'Daftar Potongan Gaji', 6],
-    ['hitung', 'Perhitungan Gaji', 6], ['bayar', 'Pembayaran Gaji', 6]] },
+    ['slip', 'Slip Gaji Saya', 1, ['*semua']], ['setting', 'Setting Gaji', 1], ['pokok', 'Daftar Gaji Pokok', 1], ['tunjangan', 'Daftar Tunjangan', 1], ['potongan', 'Daftar Potongan Gaji', 1], ['kasbon', 'Kasbon Karyawan', 1],
+    ['hitung', 'Perhitungan Gaji', 1], ['bayar', 'Pembayaran Gaji', 1]] },
   { k: 'kpi', t: 'Manajemen KPI', i: 'kpi', anak: [
     ['parameter', 'Parameter KPI', 6], ['karyawan', 'KPI Karyawan', 6], ['pencapaian', 'Pencapaian KPI', 6], ['laporan', 'Laporan KPI', 6]] },
   { k: 'pengaturan', t: 'Pengaturan', i: 'pengaturan', anak: [
