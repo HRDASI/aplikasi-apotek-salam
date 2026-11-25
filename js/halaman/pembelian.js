@@ -1,10 +1,11 @@
 // Pembelian: Rencana Pembelian, Pesanan Pembelian (SP), Faktur Pembelian, Retur Pembelian.
-import { sb, S } from '../inti.js?v=1.20.0';
-import { esc, angka, rupiah, tanggal, toast, pesanGalat } from '../ui.js?v=1.20.0';
-import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.20.0';
-import { ambilKonfig, MODE_PPN } from './pengaturan.js?v=1.20.0';
-import { tampilCekHarga } from './persediaan.js?v=1.20.0';
+import { sb, S } from '../inti.js?v=1.21.0';
+import { esc, angka, rupiah, tanggal, toast, pesanGalat } from '../ui.js?v=1.21.0';
+import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.21.0';
+import { ambilKonfig, MODE_PPN } from './pengaturan.js?v=1.21.0';
+import { tampilCekHarga } from './persediaan.js?v=1.21.0';
 
+const infoHeader = async h => (await import('./program.js?v=1.21.0')).infoProgram(h);
 const refSupplier = (wajib = true) => ({ f: 'supplier_id', label: 'Supplier / PBF', tipe: 'ref', ref: 'supplier', wajib });
 const gudangOutlet = { f: 'gudang_id', label: 'Masuk ke Gudang', tipe: 'ref', ref: 'gudang', refKolom: 'id,nama,outlet_id', saring: o => o.outlet_id === S.pengguna.outlet_id, bantu: 'Kosongkan untuk gudang utama.' };
 const kolomSupplierDaftar = { label: 'Supplier', nilai: r => esc(r.supplier?.nama || '-') };
@@ -40,7 +41,7 @@ rutekanDokumen({
 const JENIS_SP = [['reguler', 'Reguler'], ['prekursor', 'Prekursor'], ['oot', 'Obat-Obat Tertentu (OOT)'], ['psikotropika', 'Psikotropika'], ['narkotika', 'Narkotika']];
 rutekanDokumen({
   jenis: 'pesanan', rute: 'pembelian/pesanan', judul: 'Pesanan Pembelian', satuan: 'Surat Pesanan', judulCetak: 'SURAT PESANAN', remah: 'Pembelian / Pesanan Pembelian',
-  tabel: 'pesanan_beli', tabelItem: 'pesanan_beli_item', fk: 'pesanan_id', kunci: 'pembelian.pesanan', stok: false,
+  tabel: 'pesanan_beli', tabelItem: 'pesanan_beli_item', fk: 'pesanan_id', kunci: 'pembelian.pesanan', stok: false, infoHeader,
   statusOpsi: ['draft', 'dipesan', 'sebagian', 'selesai', 'batal'], selectDaftar: '*, supplier:supplier_id(nama)',
   daftarKolom: [kolomSupplierDaftar, { label: 'Jenis', nilai: r => esc((JENIS_SP.find(j => j[0] === r.jenis_sp) || [])[1] || '') }, { label: 'Perkiraan', angka: true, nilai: r => rupiah(r.total) }],
   header: [{ f: 'tanggal', label: 'Tanggal', tipe: 'tanggal', wajib: true }, refSupplier(), { f: 'jenis_sp', label: 'Jenis SP', tipe: 'pilih', opsi: JENIS_SP },
@@ -99,7 +100,7 @@ async function cekMarginFaktur(id) {
 }
 rutekanDokumen({
   jenis: 'faktur', rute: 'pembelian/faktur', judul: 'Faktur Pembelian', satuan: 'Faktur Pembelian', remah: 'Pembelian / Faktur Pembelian', stok: true,
-  tabel: 'faktur_beli', tabelItem: 'faktur_beli_item', fk: 'faktur_id', kunci: 'pembelian.faktur',
+  tabel: 'faktur_beli', tabelItem: 'faktur_beli_item', fk: 'faktur_id', kunci: 'pembelian.faktur', infoHeader,
   labelPosting: 'Simpan & Terima Barang', pesanPosting: 'Barang akan masuk ke stok, harga beli produk diperbarui, dan faktur tercatat sebagai utang (bila tempo). Lanjutkan?',
   statusOpsi: ['draft', 'posting', 'batal'], selectDaftar: '*, supplier:supplier_id(nama)', cariKolom: ['no', 'no_faktur'],
   daftarKolom: [{ label: 'No. Faktur', nilai: r => esc(r.no_faktur || '') }, kolomSupplierDaftar,
