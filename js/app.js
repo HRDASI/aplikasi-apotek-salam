@@ -1,21 +1,21 @@
-import { sb, S, RUTE, rute, bisa, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.19.0';
-import { MENU, ITEM, ikon } from './menu.js?v=1.19.0';
-import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.19.0';
-import './halaman/home.js?v=1.19.0';
-import { muatSesi, KONEKSI, cekServer, putusJaringan } from './inti.js?v=1.19.0';
-import * as OFF from './offline.js?v=1.19.0';
-import * as FOKUS from './fokus.js?v=1.19.0';
-import { halamanSegera } from './halaman/home.js?v=1.19.0';
+import { sb, S, RUTE, rute, bisa, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.20.0';
+import { MENU, ITEM, ikon } from './menu.js?v=1.20.0';
+import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.20.0';
+import './halaman/home.js?v=1.20.0';
+import { muatSesi, KONEKSI, cekServer, putusJaringan } from './inti.js?v=1.20.0';
+import * as OFF from './offline.js?v=1.20.0';
+import * as FOKUS from './fokus.js?v=1.20.0';
+import { halamanSegera } from './halaman/home.js?v=1.20.0';
 
 // Kode tiap modul baru diunduh saat menunya dibuka, supaya aplikasi cepat terbuka.
-const muatMaster = () => import('./halaman/master.js?v=1.19.0'), muatJual = () => import('./halaman/penjualan.js?v=1.19.0'), muatLaporan = () => Promise.all([import('./halaman/laporan.js?v=1.19.0'), import('./halaman/akuntansi.js?v=1.19.0'), import('./halaman/presensi.js?v=1.19.0'), import('./halaman/shift.js?v=1.19.0')]);
-const muatPresensi = () => import('./halaman/presensi.js?v=1.19.0');
-const muatStok = () => import('./halaman/persediaan.js?v=1.19.0');
+const muatMaster = () => import('./halaman/master.js?v=1.20.0'), muatJual = () => import('./halaman/penjualan.js?v=1.20.0'), muatLaporan = () => Promise.all([import('./halaman/laporan.js?v=1.20.0'), import('./halaman/akuntansi.js?v=1.20.0'), import('./halaman/presensi.js?v=1.20.0'), import('./halaman/shift.js?v=1.20.0')]);
+const muatPresensi = () => import('./halaman/presensi.js?v=1.20.0');
+const muatStok = () => import('./halaman/persediaan.js?v=1.20.0');
 const MODUL = {
-  master: muatMaster, kontak: muatMaster, outlet: muatMaster, pengaturan: () => Promise.all([import('./halaman/pengaturan.js?v=1.19.0'), muatMaster(), import('./halaman/offline.js?v=1.19.0'), import('./halaman/impor.js?v=1.19.0'), import('./halaman/cadangan.js?v=1.19.0'), muatPresensi()]),
-  pengguna: () => Promise.all([import('./halaman/pengguna.js?v=1.19.0'), muatJual(), muatPresensi()]), penjualan: muatJual, pelayanan: () => import('./halaman/pelayanan.js?v=1.19.0'), persediaan: muatStok,
-  pembelian: () => import('./halaman/pembelian.js?v=1.19.0'), konsinyasi: () => import('./halaman/konsinyasi.js?v=1.19.0'), promo: () => Promise.all([import('./halaman/promo.js?v=1.19.0'), import('./halaman/member.js?v=1.19.0')]),
-  gaji: () => import('./halaman/gaji.js?v=1.19.0'), kpi: () => import('./halaman/kpi.js?v=1.19.0'), keuangan: () => import('./halaman/keuangan.js?v=1.19.0'), akuntansi: () => import('./halaman/akuntansi.js?v=1.19.0'), laporan: muatLaporan, analisis: muatLaporan, dashboard: muatLaporan,
+  master: muatMaster, kontak: muatMaster, outlet: muatMaster, pengaturan: () => Promise.all([import('./halaman/pengaturan.js?v=1.20.0'), muatMaster(), import('./halaman/offline.js?v=1.20.0'), import('./halaman/impor.js?v=1.20.0'), import('./halaman/cadangan.js?v=1.20.0'), muatPresensi()]),
+  pengguna: () => Promise.all([import('./halaman/pengguna.js?v=1.20.0'), muatJual(), muatPresensi()]), penjualan: muatJual, pelayanan: () => import('./halaman/pelayanan.js?v=1.20.0'), persediaan: muatStok,
+  pembelian: () => import('./halaman/pembelian.js?v=1.20.0'), konsinyasi: () => import('./halaman/konsinyasi.js?v=1.20.0'), promo: () => Promise.all([import('./halaman/promo.js?v=1.20.0'), import('./halaman/member.js?v=1.20.0')]),
+  panduan: () => import('./halaman/panduan.js?v=1.20.0'), gaji: () => import('./halaman/gaji.js?v=1.20.0'), kpi: () => import('./halaman/kpi.js?v=1.20.0'), keuangan: () => import('./halaman/keuangan.js?v=1.20.0'), akuntansi: () => import('./halaman/akuntansi.js?v=1.20.0'), laporan: muatLaporan, analisis: muatLaporan, dashboard: muatLaporan,
 };
 
 const app = $('#app');
@@ -26,10 +26,11 @@ function layarMasuk(pesan = '') {
   document.title = 'Masuk | Apotek Salam';
   app.innerHTML = `<div class="layar-masuk"><form class="kotak-masuk" autocomplete="on">
     <img class="logo" src="${LOGO}" alt="">
-    <h1>Apotek Salam</h1><p class="sub">Masuk ke aplikasi apotek</p>
+    <h1 class="tanpa-sub">Apotek Salam</h1>
     ${pesan ? `<div class="pesan galat">${esc(pesan)}</div>` : ''}<div data-pesan></div>
     <label class="isian"><span>Username</span><input name="u" autocomplete="username" autocapitalize="none" required></label>
     <label class="isian"><span>Kata Sandi</span><input name="p" type="password" autocomplete="current-password" required></label>
+    <label class="cek lihat-sandi"><input type="checkbox" data-lihat-sandi> Tampilkan kata sandi</label>
     <label class="isian"><span>Shift</span><select name="s" data-shift><option value="">Memuat shift...</option></select></label>
     <button class="tombol penuh">Masuk</button>
     <p style="text-align:center;color:var(--teks-2);font-size:12px;margin:16px 0 0">Lupa kata sandi? Minta Pemilik mengatur ulang dari menu Daftar Pengguna.</p>
@@ -39,6 +40,7 @@ function layarMasuk(pesan = '') {
   f.onsubmit = async e => {
     e.preventDefault();
     const b = $('button', f); b.disabled = true; b.textContent = 'Memeriksa...';
+    const lihat = $('[data-lihat-sandi]', f); if (lihat.checked) { lihat.checked = false; f.p.type = 'password'; }      // jangan tertinggal terlihat
     const salah = m => { $('[data-pesan]', f).innerHTML = `<div class="pesan galat">${esc(m)}</div>`; b.disabled = false; b.textContent = 'Masuk'; };
     const u = f.u.value.trim().toLowerCase();
     const shiftPilih = () => f.s.value ? { id: Number(f.s.value), nama: f.s.selectedOptions[0].text.replace(/ \(.*/, '') } : { id: null, nama: 'Tanpa shift' };
@@ -67,6 +69,13 @@ let sandiMasuk = null;
 const wajibMasuk = v => { try { v ? localStorage.setItem('apotek-wajib-masuk', '1') : localStorage.removeItem('apotek-wajib-masuk'); } catch { /* */ } };
 const perluMasuk = () => { try { return !!localStorage.getItem('apotek-wajib-masuk'); } catch { return false; } };
 
+// Tampilkan / sembunyikan kata sandi dalam satu formulir
+document.addEventListener('change', e => {
+  if (!e.target.matches('[data-lihat-sandi]')) return;
+  const w = e.target.closest('form');
+  w.querySelectorAll('input[type=password], input[data-sandi-teks]').forEach(i => { i.type = e.target.checked ? 'text' : 'password'; i.toggleAttribute('data-sandi-teks', e.target.checked); });
+});
+
 // ================= Shift =================
 let daftarShift = null;
 async function ambilShift() {
@@ -77,7 +86,8 @@ async function ambilShift() {
 // Shift yang sedang berjalan menurut jam sekarang (dipilih otomatis)
 function shiftSekarang(list) {
   const j = new Date().toTimeString().slice(0, 5);
-  const cocok = list.filter(s => s.jam_mulai && s.jam_selesai && j >= s.jam_mulai.slice(0, 5) && j < s.jam_selesai.slice(0, 5));
+  // shift Admin bertumpuk dengan Pagi/Sore: harus dipilih sendiri
+  const cocok = list.filter(s => !/admin/i.test(s.nama) && s.jam_mulai && s.jam_selesai && j >= s.jam_mulai.slice(0, 5) && j < s.jam_selesai.slice(0, 5));
   return (cocok[cocok.length - 1] || list[0])?.id;
 }
 async function isiPilihanShift(sel, terpilih) {
@@ -124,6 +134,7 @@ function layarSiapkan() {
     <label class="isian"><span>Username</span><input name="u" required pattern="[a-z0-9._]{3,30}" autocapitalize="none" autocomplete="username"><small>Huruf kecil/angka/titik, 3-30 karakter.</small></label>
     <label class="isian"><span>Kata Sandi</span><input name="p" type="password" minlength="6" required autocomplete="new-password"></label>
     <label class="isian"><span>Ulangi Kata Sandi</span><input name="p2" type="password" minlength="6" required autocomplete="new-password"></label>
+    <label class="cek lihat-sandi"><input type="checkbox" data-lihat-sandi> Tampilkan kata sandi</label>
     <button class="tombol penuh">Buat Akun Pemilik</button></form></div>`;
   const f = $('form', app);
   f.onsubmit = async e => {
@@ -240,7 +251,7 @@ function menuAkun() {
 function gantiSandi() {
   modal({ judul: 'Ganti Kata Sandi', ukuran: 'kecil',
     isi: `<form onsubmit="return false"><label class="isian"><span>Kata sandi baru</span><input name="a" type="password" minlength="6" required autocomplete="new-password"></label>
-      <label class="isian"><span>Ulangi kata sandi baru</span><input name="b" type="password" minlength="6" required autocomplete="new-password"></label></form>`,
+      <label class="isian"><span>Ulangi kata sandi baru</span><input name="b" type="password" minlength="6" required autocomplete="new-password"></label><label class="cek lihat-sandi"><input type="checkbox" data-lihat-sandi> Tampilkan kata sandi</label></form>`,
     tombol: [{ teks: 'Batal', kelas: 'kedua' }, { teks: 'Simpan', aksi: async m => {
       const f = $('form', m); if (!f.reportValidity()) return false;
       if (f.a.value !== f.b.value) { toast('Kata sandi tidak sama', 'galat'); return false; }
@@ -297,8 +308,8 @@ async function tampilkan() {
   }
   let fn = RUTE[hash], param = [];
   if (KONEKSI.putus) {
-    const OFFLINE = ['home', 'lainnya', 'modul', 'penjualan/kasir', 'pelayanan/penerimaan_resep/baru', 'pengaturan/printer', 'pengaturan/offline'];
-    if (hash === 'home') fn = async el => (await import('./halaman/offline.js?v=1.19.0')).berandaOffline(el);
+    const OFFLINE = ['home', 'lainnya', 'modul', 'penjualan/kasir', 'pelayanan/penerimaan_resep/baru', 'pengaturan/printer', 'pengaturan/offline', 'panduan'];
+    if (hash === 'home') fn = async el => (await import('./halaman/offline.js?v=1.20.0')).berandaOffline(el);
     else if (!OFFLINE.some(x => hash === x || (x === 'modul' && hash.startsWith('modul/')))) fn = el => { el.innerHTML = `<div class="kartu segera"><h3>Menu ini perlu internet</h3><p>Saat offline yang bisa dipakai: Kasir, Resep Baru, cek harga & stok.</p><div class="aksi-cepat" style="justify-content:center;margin-top:14px"><a href="#/penjualan/kasir">Kasir</a><a href="#/pelayanan/penerimaan_resep/baru">Resep Baru</a><a href="#/home">Beranda offline</a></div></div>`; };
   }
   for (let n = bagian.length - 1; !fn && n >= 1; n--) {
@@ -364,7 +375,7 @@ function kepalaHp(hash, judul) {
 async function mulai() {
   // Kartu member publik: dibuka member dari link WhatsApp, tanpa login
   const kartu = location.hash.match(/^#\/kartu\/([0-9a-f]{16,})/);
-  if (kartu) return (await import('./halaman/member.js?v=1.19.0')).tampilKartuPublik(app, kartu[1]);
+  if (kartu) return (await import('./halaman/member.js?v=1.20.0')).tampilKartuPublik(app, kartu[1]);
   if (OFF.perangkat()) {
     await OFF.bacaSalinan();
     if (OFF.perangkatAktif() && !await cekServer(3500)) {
@@ -422,9 +433,10 @@ async function pilStatus() {
   if (!S.pengguna) return;
   const n = OFF.perangkat() ? (await OFF.daftarAntre()).length : 0, wajib = !KONEKSI.putus && perluMasuk();
   const teks = KONEKSI.putus ? 'Offline' + (n ? ' · ' + n + ' antre' : '') : OFF.sinkronJalan() ? 'Mengirim…' : n ? n + ' belum terkirim' : '';
+  const putus = KONEKSI.putus || !navigator.onLine, tampil = teks || (putus ? 'Offline' : 'Online');
   $$('.pil-status').forEach(x => x.remove());
-  $$('.fokus-info [data-net]').forEach(x => { x.textContent = teks || (navigator.onLine ? 'Online' : 'Internet putus'); x.className = 'chip ' + (KONEKSI.putus || !navigator.onLine ? 'merah' : teks ? 'oranye' : 'hijau'); });
-  if (teks) $$('.topbar .kanan, .kepala-hp .judul-hp, .kepala-hp .baris').forEach(k => k.insertAdjacentHTML(k.classList.contains('kanan') ? 'afterbegin' : 'beforeend', `<a class="pil-status ${KONEKSI.putus ? 'putus' : ''}" href="#/pengaturan/offline">${teks}</a>`));
+  $$('.fokus-info [data-net]').forEach(x => { x.textContent = tampil; x.className = 'chip ' + (putus ? 'merah' : teks ? 'oranye' : 'hijau'); });
+  $$('.topbar .kanan, .kepala-hp .judul-hp, .kepala-hp .baris' + (teks || putus ? '' : ' .kanan')).forEach(k => k.insertAdjacentHTML(k.classList.contains('kanan') ? 'afterbegin' : 'beforeend', `<a class="pil-status ${putus ? 'putus' : teks ? '' : 'aman'}" href="#/pengaturan/offline" title="Status internet: ${tampil}" aria-label="Status internet: ${tampil}"><i></i><span>${tampil}</span></a>`));
   pitaInfo('wajib', wajib ? 'Internet kembali. Masuk ulang untuk mengirim data offline. <button class="tombol kecil" onclick="location.reload()">Masuk</button>' : '');
 }
 OFF.saatBerubah(() => pilStatus());
