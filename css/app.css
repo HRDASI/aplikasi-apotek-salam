@@ -28,7 +28,7 @@ svg.ik { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none
 .sidebar { width: var(--sidebar); flex: none; background: linear-gradient(180deg, var(--teal) 0%, var(--teal-tua) 100%); color: #fff;
   position: fixed; inset: 0 auto 0 0; display: flex; flex-direction: column; z-index: 40; transition: transform .2s; }
 .sidebar .merek { display: flex; align-items: center; gap: 12px; padding: 18px 20px 12px; }
-.sidebar .merek img { width: 48px; height: 48px; border-radius: 50%; background: #fff; padding: 4px; object-fit: contain; }
+.sidebar .merek img { width: 54px; height: 54px; object-fit: contain; }
 .sidebar .merek b { display: block; font-size: 16px; }
 .sidebar .merek span { font-size: 13px; opacity: .85; }
 .cari-fitur { position: relative; padding: 4px 20px 12px; }
@@ -236,7 +236,7 @@ table.tabel { width: 100%; border-collapse: collapse; background: #fff; }
   .topbar { display: none; }
   .kepala-hp { display: block; background: var(--teal); color: #fff; position: sticky; top: 0; z-index: 30; }
   .kepala-hp .baris { display: flex; align-items: center; gap: 10px; padding: 12px 16px; }
-  .kepala-hp .baris img { width: 42px; height: 42px; border-radius: 50%; background: #fff; padding: 3px; object-fit: contain; }
+  .kepala-hp .baris img { width: 48px; height: 48px; object-fit: contain; }
   .kepala-hp .baris b { display: block; font-size: 17px; line-height: 1.1; }
   .kepala-hp .baris small { font-size: 12px; opacity: .9; }
   .kepala-hp .baris .kanan { margin-left: auto; display: flex; gap: 2px; }
@@ -332,7 +332,6 @@ body.memuat::before { content: ''; position: fixed; left: 0; top: 0; height: 3px
 @keyframes kilau { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 .halaman { animation: muncul .15s; }
 .buka-app { display: grid; justify-items: center; gap: 10px; color: #fff; font-size: 18px; }
-.buka-app img { background: #fff; border-radius: 50%; padding: 8px; }
 .buka-app i { width: 26px; height: 26px; border: 3px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%; animation: putar .8s linear infinite; }
 @keyframes putar { to { transform: rotate(360deg); } }
 .pita-info { position: fixed; left: 50%; transform: translateX(-50%); bottom: 20px; z-index: 190; background: var(--teks); color: #fff; padding: 10px 14px; border-radius: 12px; display: flex; gap: 10px; align-items: center; box-shadow: 0 8px 24px rgba(0,0,0,.25); width: max-content; max-width: 92vw; font-size: 13.5px; }
