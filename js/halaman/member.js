@@ -1,9 +1,10 @@
 // Program Member model stamp: daftar member, kartu member (gambar + link publik), kirim WhatsApp,
 // katalog hadiah, penukaran, aturan stamp.
-import { rute, sb, S, bisa } from '../inti.js?v=1.24.0';
-import { ikon } from '../menu.js?v=1.24.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.24.0';
-import { halamanCrud } from '../crud.js?v=1.24.0';
+import { UJI } from '../config.js?v=1.25.0';
+import { rute, sb, S, bisa } from '../inti.js?v=1.25.0';
+import { ikon } from '../menu.js?v=1.25.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.25.0';
+import { halamanCrud } from '../crud.js?v=1.25.0';
 
 // ---------- QR code (pustaka dimuat saat perlu) ----------
 let janjiQR;
@@ -92,13 +93,14 @@ export async function bukaKartu(p) {
     tombol: [
       { teks: 'Unduh Gambar', kelas: 'kedua', aksi: () => { const a = document.createElement('a'); a.href = url; a.download = `kartu-member-${p.kode}.png`; a.click(); return false; } },
       { teks: 'Salin Link', kelas: 'kedua', aksi: async () => { try { await navigator.clipboard.writeText(d.link); toast('Link disalin', 'sukses'); } catch { toast('Salin manual dari kotak link', 'galat'); } return false; } },
-      ...(bisaBagi ? [{ teks: 'Bagikan', kelas: 'kedua', aksi: async () => {
+      ...(bisaBagi && !UJI ? [{ teks: 'Bagikan', kelas: 'kedua', aksi: async () => {
         const blob = await (await fetch(url)).blob(); const file = new File([blob], `kartu-member-${p.kode}.png`, { type: 'image/png' });
         const data = { files: [file], text: pesanWA(d) };
         try { if (navigator.canShare(data)) await navigator.share(data); else await navigator.share({ text: pesanWA(d) }); } catch { /* dibatalkan */ }
         return false;
       } }] : []),
       { teks: 'Kirim WhatsApp', aksi: m => {
+        if (UJI) { toast('Kirim WA dimatikan di aplikasi uji', 'galat'); return false; }
         const n = noWA(m.querySelector('[data-wa]').value);
         if (n.length < 10) { toast('Isi nomor WhatsApp yang benar', 'galat'); return false; }
         window.open(`https://wa.me/${n}?text=${encodeURIComponent(pesanWA(d))}`, '_blank');
