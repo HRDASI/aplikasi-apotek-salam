@@ -1,20 +1,21 @@
-import { sb, S, RUTE, rute, bisa, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.18.1';
-import { MENU, ITEM, ikon } from './menu.js?v=1.18.1';
-import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.18.1';
-import './halaman/home.js?v=1.18.1';
-import { muatSesi, KONEKSI, cekServer, putusJaringan } from './inti.js?v=1.18.1';
-import * as OFF from './offline.js?v=1.18.1';
-import { halamanSegera } from './halaman/home.js?v=1.18.1';
+import { sb, S, RUTE, rute, bisa, bisaSalahSatu, DOMAIN_AKUN, VERSI } from './inti.js?v=1.19.0';
+import { MENU, ITEM, ikon } from './menu.js?v=1.19.0';
+import { $, $$, esc, toast, modal, pesanGalat } from './ui.js?v=1.19.0';
+import './halaman/home.js?v=1.19.0';
+import { muatSesi, KONEKSI, cekServer, putusJaringan } from './inti.js?v=1.19.0';
+import * as OFF from './offline.js?v=1.19.0';
+import * as FOKUS from './fokus.js?v=1.19.0';
+import { halamanSegera } from './halaman/home.js?v=1.19.0';
 
 // Kode tiap modul baru diunduh saat menunya dibuka, supaya aplikasi cepat terbuka.
-const muatMaster = () => import('./halaman/master.js?v=1.18.1'), muatJual = () => import('./halaman/penjualan.js?v=1.18.1'), muatLaporan = () => Promise.all([import('./halaman/laporan.js?v=1.18.1'), import('./halaman/akuntansi.js?v=1.18.1'), import('./halaman/presensi.js?v=1.18.1'), import('./halaman/shift.js?v=1.18.1')]);
-const muatPresensi = () => import('./halaman/presensi.js?v=1.18.1');
-const muatStok = () => import('./halaman/persediaan.js?v=1.18.1');
+const muatMaster = () => import('./halaman/master.js?v=1.19.0'), muatJual = () => import('./halaman/penjualan.js?v=1.19.0'), muatLaporan = () => Promise.all([import('./halaman/laporan.js?v=1.19.0'), import('./halaman/akuntansi.js?v=1.19.0'), import('./halaman/presensi.js?v=1.19.0'), import('./halaman/shift.js?v=1.19.0')]);
+const muatPresensi = () => import('./halaman/presensi.js?v=1.19.0');
+const muatStok = () => import('./halaman/persediaan.js?v=1.19.0');
 const MODUL = {
-  master: muatMaster, kontak: muatMaster, outlet: muatMaster, pengaturan: () => Promise.all([import('./halaman/pengaturan.js?v=1.18.1'), muatMaster(), import('./halaman/offline.js?v=1.18.1'), import('./halaman/impor.js?v=1.18.1'), import('./halaman/cadangan.js?v=1.18.1'), muatPresensi()]),
-  pengguna: () => Promise.all([import('./halaman/pengguna.js?v=1.18.1'), muatJual(), muatPresensi()]), penjualan: muatJual, pelayanan: () => import('./halaman/pelayanan.js?v=1.18.1'), persediaan: muatStok,
-  pembelian: () => import('./halaman/pembelian.js?v=1.18.1'), konsinyasi: () => import('./halaman/konsinyasi.js?v=1.18.1'), promo: () => Promise.all([import('./halaman/promo.js?v=1.18.1'), import('./halaman/member.js?v=1.18.1')]),
-  gaji: () => import('./halaman/gaji.js?v=1.18.1'), kpi: () => import('./halaman/kpi.js?v=1.18.1'), keuangan: () => import('./halaman/keuangan.js?v=1.18.1'), akuntansi: () => import('./halaman/akuntansi.js?v=1.18.1'), laporan: muatLaporan, analisis: muatLaporan, dashboard: muatLaporan,
+  master: muatMaster, kontak: muatMaster, outlet: muatMaster, pengaturan: () => Promise.all([import('./halaman/pengaturan.js?v=1.19.0'), muatMaster(), import('./halaman/offline.js?v=1.19.0'), import('./halaman/impor.js?v=1.19.0'), import('./halaman/cadangan.js?v=1.19.0'), muatPresensi()]),
+  pengguna: () => Promise.all([import('./halaman/pengguna.js?v=1.19.0'), muatJual(), muatPresensi()]), penjualan: muatJual, pelayanan: () => import('./halaman/pelayanan.js?v=1.19.0'), persediaan: muatStok,
+  pembelian: () => import('./halaman/pembelian.js?v=1.19.0'), konsinyasi: () => import('./halaman/konsinyasi.js?v=1.19.0'), promo: () => Promise.all([import('./halaman/promo.js?v=1.19.0'), import('./halaman/member.js?v=1.19.0')]),
+  gaji: () => import('./halaman/gaji.js?v=1.19.0'), kpi: () => import('./halaman/kpi.js?v=1.19.0'), keuangan: () => import('./halaman/keuangan.js?v=1.19.0'), akuntansi: () => import('./halaman/akuntansi.js?v=1.19.0'), laporan: muatLaporan, analisis: muatLaporan, dashboard: muatLaporan,
 };
 
 const app = $('#app');
@@ -251,6 +252,7 @@ function gantiSandi() {
 }
 
 async function keluar() {
+  FOKUS.lupakan();
   OFF.tandaiAktif(null);
   if (KONEKSI.putus) { wajibMasuk(true); S.pengguna = null; location.hash = ''; return layarMasuk('Anda keluar saat offline.'); }
   await sb.auth.signOut();
@@ -296,7 +298,7 @@ async function tampilkan() {
   let fn = RUTE[hash], param = [];
   if (KONEKSI.putus) {
     const OFFLINE = ['home', 'lainnya', 'modul', 'penjualan/kasir', 'pelayanan/penerimaan_resep/baru', 'pengaturan/printer', 'pengaturan/offline'];
-    if (hash === 'home') fn = async el => (await import('./halaman/offline.js?v=1.18.1')).berandaOffline(el);
+    if (hash === 'home') fn = async el => (await import('./halaman/offline.js?v=1.19.0')).berandaOffline(el);
     else if (!OFFLINE.some(x => hash === x || (x === 'modul' && hash.startsWith('modul/')))) fn = el => { el.innerHTML = `<div class="kartu segera"><h3>Menu ini perlu internet</h3><p>Saat offline yang bisa dipakai: Kasir, Resep Baru, cek harga & stok.</p><div class="aksi-cepat" style="justify-content:center;margin-top:14px"><a href="#/penjualan/kasir">Kasir</a><a href="#/pelayanan/penerimaan_resep/baru">Resep Baru</a><a href="#/home">Beranda offline</a></div></div>`; };
   }
   for (let n = bagian.length - 1; !fn && n >= 1; n--) {
@@ -312,6 +314,7 @@ async function tampilkan() {
   const wadah = document.createElement('div');
   wadah.className = 'halaman';
   konten.replaceChildren(wadah);
+  FOKUS.terapkan();
   $$('.latar-modal').forEach(m => m.remove()); // jendela dari halaman sebelumnya ikut ditutup
   window.scrollTo(0, 0);
   try {
@@ -361,7 +364,7 @@ function kepalaHp(hash, judul) {
 async function mulai() {
   // Kartu member publik: dibuka member dari link WhatsApp, tanpa login
   const kartu = location.hash.match(/^#\/kartu\/([0-9a-f]{16,})/);
-  if (kartu) return (await import('./halaman/member.js?v=1.18.1')).tampilKartuPublik(app, kartu[1]);
+  if (kartu) return (await import('./halaman/member.js?v=1.19.0')).tampilKartuPublik(app, kartu[1]);
   if (OFF.perangkat()) {
     await OFF.bacaSalinan();
     if (OFF.perangkatAktif() && !await cekServer(3500)) {
@@ -394,6 +397,8 @@ async function masukSebagai(p) {
   S.pengguna = p; S.peran = p.peran; S.outlet = p.outlet; S.akses = p.peran.akses || [];
   S.shift = bacaShift(p.id);
   S.sesi = undefined;
+  // Kasir langsung ke halaman Kasir (kecuali sudah memilih keluar layar penuh)
+  if (FOKUS.peranKasir() && FOKUS.aktif() && bisa('penjualan.kasir') && ['', '#', '#/', '#/home'].includes(location.hash)) history.replaceState(null, '', '#/penjualan/kasir');
   kerangka();
   muatSesi().catch(() => {});
   tampilkan();
@@ -406,7 +411,7 @@ async function masukSebagai(p) {
 }
 
 window.addEventListener('hashchange', () => { if (S.pengguna) tampilkan(); });
-sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_OUT' && S.pengguna) { S.pengguna = null; layarMasuk(); } });
+sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_OUT' && S.pengguna) { FOKUS.lupakan(); S.pengguna = null; layarMasuk(); } });
 mulai();
 
 // ---------- Koneksi & versi baru ----------
@@ -418,10 +423,12 @@ async function pilStatus() {
   const n = OFF.perangkat() ? (await OFF.daftarAntre()).length : 0, wajib = !KONEKSI.putus && perluMasuk();
   const teks = KONEKSI.putus ? 'Offline' + (n ? ' · ' + n + ' antre' : '') : OFF.sinkronJalan() ? 'Mengirim…' : n ? n + ' belum terkirim' : '';
   $$('.pil-status').forEach(x => x.remove());
+  $$('.fokus-info [data-net]').forEach(x => { x.textContent = teks || (navigator.onLine ? 'Online' : 'Internet putus'); x.className = 'chip ' + (KONEKSI.putus || !navigator.onLine ? 'merah' : teks ? 'oranye' : 'hijau'); });
   if (teks) $$('.topbar .kanan, .kepala-hp .judul-hp, .kepala-hp .baris').forEach(k => k.insertAdjacentHTML(k.classList.contains('kanan') ? 'afterbegin' : 'beforeend', `<a class="pil-status ${KONEKSI.putus ? 'putus' : ''}" href="#/pengaturan/offline">${teks}</a>`));
   pitaInfo('wajib', wajib ? 'Internet kembali. Masuk ulang untuk mengirim data offline. <button class="tombol kecil" onclick="location.reload()">Masuk</button>' : '');
 }
 OFF.saatBerubah(() => pilStatus());
+document.addEventListener('kasir-tampil', () => { FOKUS.terapkan(); pilStatus(); });
 let putusLama = false;
 KONEKSI.saatBerubah.push(() => {
   if (!S.pengguna || putusLama === KONEKSI.putus) return; putusLama = KONEKSI.putus;
@@ -430,8 +437,8 @@ KONEKSI.saatBerubah.push(() => {
   // kasir & resep yang sedang diisi tidak diganggu
   if (!/penjualan\/kasir|penerimaan_resep/.test(location.hash) && !$('.latar-modal')) tampilkan();
 });
-addEventListener('online', cekSinyal);
-addEventListener('offline', cekSinyal);
+addEventListener('online', () => { cekSinyal(); pilStatus(); });
+addEventListener('offline', () => { cekSinyal(); pilStatus(); });
 cekSinyal();
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').then(r => {
   r.addEventListener('updatefound', () => {
