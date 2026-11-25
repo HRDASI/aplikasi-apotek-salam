@@ -1,8 +1,8 @@
 // Manajemen KPI bulanan: parameter & bobot, target karyawan, pencapaian, laporan, KPI saya.
-import { rute, bisa } from '../inti.js?v=1.18.1';
-import { ikon } from '../menu.js?v=1.18.1';
-import { esc, angka, rupiah, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.18.1';
-import { rpc, tabelHtml, unduhTabel, cetakHtml, grafikBatang, grafikGaris } from '../tabel.js?v=1.18.1';
+import { rute, bisa } from '../inti.js?v=1.19.0';
+import { ikon } from '../menu.js?v=1.19.0';
+import { esc, angka, rupiah, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.19.0';
+import { rpc, tabelHtml, unduhTabel, cetakHtml, grafikBatang, grafikGaris } from '../tabel.js?v=1.19.0';
 
 const BLN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 const namaBulan = b => `${BLN[Number(b.slice(5)) - 1]} ${b.slice(0, 4)}`;
