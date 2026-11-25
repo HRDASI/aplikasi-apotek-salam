@@ -1,7 +1,7 @@
 // Layar penuh Kasir: menu & bar disembunyikan, lalu layar penuh browser (bila didukung) pada sentuhan pertama.
 // Peran Kasir: menyala sejak awal. Pilihan diingat per akun sampai logout.
-import { S } from './inti.js?v=1.21.0';
-import { toast } from './ui.js?v=1.21.0';
+import { S } from './inti.js?v=1.22.1';
+import { toast } from './ui.js?v=1.22.1';
 
 const KUNCI = 'apotek-fokus', akar = document.documentElement;
 const diKasir = () => location.hash.startsWith('#/penjualan/kasir');
