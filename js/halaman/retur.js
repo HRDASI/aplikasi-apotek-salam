@@ -1,9 +1,10 @@
 // Retur penjualan: jendela retur (dipakai di Kasir, Daftar Penjualan, dan halaman Retur), persetujuan, struk retur.
-import { rute, sb, S, bisa, ambilRef, KONEKSI } from '../inti.js?v=1.22.1';
-import { ikon } from '../menu.js?v=1.22.1';
-import { esc, angka, rupiah, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.22.1';
-import { cetakStrukHtml } from '../cetak.js?v=1.22.1';
-import { ambilKonfig } from './pengaturan.js?v=1.22.1';
+import { rute, sb, S, bisa, ambilRef, KONEKSI } from '../inti.js?v=1.23.0';
+import { ikon } from '../menu.js?v=1.23.0';
+import { esc, angka, rupiah, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.23.0';
+import { cetakStrukHtml } from '../cetak.js?v=1.23.0';
+import { unduhCSV } from '../ui.js?v=1.23.0';
+import { ambilKonfig } from './pengaturan.js?v=1.23.0';
 
 const ALASAN = ['Salah beli', 'Salah ambil / salah input', 'Tidak cocok / alergi', 'Kelebihan jumlah', 'Lainnya'];
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
@@ -127,7 +128,7 @@ export async function bukaRetur(awal, selesai) {
 // ================= Halaman Retur =================
 rute('penjualan/retur', async (el, [p]) => {
   const setuju = bisa('penjualan.retur_setuju');
-  el.innerHTML = judulHalaman('Retur Penjualan', 'Penjualan / Retur Penjualan', bisa('penjualan.retur') ? `<button class="tombol" data-buat>${ikon('tambah')} Buat Retur</button>` : '') +
+  el.innerHTML = judulHalaman('Retur Penjualan', 'Penjualan / Retur Penjualan', `<button class="tombol kedua" data-unduh>${ikon('unduh')} Unduh</button>` + (bisa('penjualan.retur') ? `<button class="tombol" data-buat>${ikon('tambah')} Buat Retur</button>` : '')) +
     `<div data-ajuan></div><div class="kartu"><div class="alat-tabel"><label>Dari <input type="date" class="input" style="width:auto" data-dari value="${awalBulan()}"></label><label>Sampai <input type="date" class="input" style="width:auto" data-sampai value="${hariIni()}"></label></div>
     <div class="bungkus-tabel"><table class="tabel kartu-hp"><thead><tr><th>No. Retur</th><th>Waktu</th><th>Dari Nota</th><th>Oleh</th><th>Alasan</th><th class="angka">Nilai</th><th></th></tr></thead><tbody data-isi></tbody></table></div></div>`;
   const muat = async () => {
@@ -138,6 +139,7 @@ rute('penjualan/retur', async (el, [p]) => {
       <td data-label="Nota">${esc(r.jual?.no || '-')}</td><td data-label="Oleh">${esc(r.pengguna_nama || '')}</td><td data-label="Alasan"><span>${esc(r.alasan || '')}<br><small>${r.item.map(i => `${esc(i.pi?.nama || '')} ×${angka(i.qty)}`).join(', ')}</small></span></td><td data-label="Nilai" class="angka">${rupiah(r.total)}</td>
       <td class="aksi"><button class="tombol kedua kecil" data-cetak="${r.id}">Struk</button></td></tr>`).join('') : '<tr><td class="kosong" colspan="7">Belum ada retur pada rentang ini.</td></tr>';
   };
+  el.querySelector('[data-unduh]').onclick = async () => { const { data, error } = await sb.from('retur_jual').select('*, jual:penjualan_id(no)').eq('outlet_id', S.pengguna.outlet_id).gte('tanggal', el.querySelector('[data-dari]').value).lte('tanggal', el.querySelector('[data-sampai]').value).order('waktu', { ascending: false }).limit(5000); if (error) return toast(pesanGalat(error), 'galat'); unduhCSV('retur-penjualan', [{ label: 'No retur', nilai: r => r.no }, { label: 'Tanggal', nilai: r => r.tanggal }, { label: 'Dari nota', nilai: r => r.jual?.no }, { label: 'Oleh', nilai: r => r.pengguna_nama }, { label: 'Alasan', nilai: r => r.alasan }, { label: 'Disetujui', nilai: r => r.disetujui_oleh }, { label: 'Nilai', nilai: r => r.total, t: 'uang', jml: true }], data); };
   let jam;
   const muatAjuan = async () => {
     clearTimeout(jam); if (!document.body.contains(el) || !location.hash.startsWith('#/penjualan/retur')) return;
