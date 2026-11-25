@@ -1,8 +1,8 @@
 // Bantuan laporan: periode, tabel + unduh + cetak, grafik satu warna dengan tooltip.
-import { sb, S, bisa, ambilRef } from './inti.js?v=1.22.1';
-import { ikon } from './menu.js?v=1.22.1';
-import { esc, angka, rupiah, tanggal, toast, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.22.1';
-import { cetakKertasBiasa } from './cetak.js?v=1.22.1';
+import { sb, S, bisa, ambilRef } from './inti.js?v=1.23.0';
+import { ikon } from './menu.js?v=1.23.0';
+import { esc, angka, rupiah, tanggal, toast, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.23.0';
+import { cetakKertasBiasa } from './cetak.js?v=1.23.0';
 
 export const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 export const geserHari = (t, n) => { const d = new Date(t + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
@@ -47,7 +47,7 @@ export function tabelHtml(kolom, baris, { maks = 500, kosong = 'Tidak ada data p
     ? baris.slice(0, maks).map(r => `<tr>${kolom.map(k => `<td data-label="${esc(k.l)}" class="${kanan(k)}">${tampil(k, r)}</td>`).join('')}</tr>`).join('') + total : `<tr><td class="kosong" colspan="99">${kosong}</td></tr>`}</tbody></table></div>
     ${baris.length > maks ? `<p style="color:var(--teks-2)">Ditampilkan ${maks} dari ${angka(baris.length)} baris. Unduh untuk semua data.</p>` : ''}`;
 }
-export function unduhTabel(nama, kolom, baris) { unduhCSV(nama, kolom.filter(k => k.l).map(k => ({ label: k.l, nilai: k.n })), baris); }
+export function unduhTabel(nama, kolom, baris) { unduhCSV(nama, kolom.filter(k => k.l).map(k => ({ label: k.l, nilai: k.n, t: k.t, jml: k.jml })), baris); }
 export const CSS_A4 = `body{font:11px Arial;color:#000}h2,h3{margin:0 0 4px}table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border-bottom:1px solid #bbb;padding:3px 5px;text-align:left}.angka{text-align:right}.ikon-aksi,button,svg{display:none}thead{display:table-header-group}`;
 export function cetakHtml(judul, sub, html) { cetakKertasBiasa(`<h2>${esc(S.outlet?.nama || 'Apotek Salam')}</h2><h3>${esc(judul)}</h3><div>${esc(sub)}</div>${html}`, CSS_A4, judul, 'A4'); }
 
