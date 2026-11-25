@@ -1,9 +1,9 @@
 // Retur penjualan: jendela retur (dipakai di Kasir, Daftar Penjualan, dan halaman Retur), persetujuan, struk retur.
-import { rute, sb, S, bisa, ambilRef, KONEKSI } from '../inti.js?v=1.18.1';
-import { ikon } from '../menu.js?v=1.18.1';
-import { esc, angka, rupiah, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.18.1';
-import { cetakStrukHtml } from '../cetak.js?v=1.18.1';
-import { ambilKonfig } from './pengaturan.js?v=1.18.1';
+import { rute, sb, S, bisa, ambilRef, KONEKSI } from '../inti.js?v=1.19.0';
+import { ikon } from '../menu.js?v=1.19.0';
+import { esc, angka, rupiah, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.19.0';
+import { cetakStrukHtml } from '../cetak.js?v=1.19.0';
+import { ambilKonfig } from './pengaturan.js?v=1.19.0';
 
 const ALASAN = ['Salah beli', 'Salah ambil / salah input', 'Tidak cocok / alergi', 'Kelebihan jumlah', 'Lainnya'];
 const hariIni = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
