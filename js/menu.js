@@ -46,7 +46,6 @@ export const ikon = (n, cls = '') => `<svg class="ik ${cls}" viewBox="0 0 24 24"
 
 export const MENU = [
   { k: 'home', t: 'Home', i: 'home', url: '#/home', tahap: 1 },
-  { k: 'panduan', t: 'Panduan', i: 'info', url: '#/panduan', tahap: 1, akses: ['*semua'] },
   { k: 'dashboard', t: 'Dashboard', i: 'dashboard', anak: [
     ['umum', 'Dashboard Umum', 1], ['penjualan', 'Dashboard Penjualan', 1], ['pembelian', 'Dashboard Pembelian', 1],
     ['persediaan', 'Dashboard Persediaan', 1], ['keuangan', 'Dash. Keuangan', 1, null, ['keuangan.laba']]] },
@@ -61,13 +60,13 @@ export const MENU = [
     ['produk', 'Daftar Produk', 1, ['persediaan.lihat']], ['peringatan', 'Peringatan Stok', 1, ['persediaan.lihat']], ['defecta', 'Defecta', 1], ['kedaluwarsa', 'Stok Kedaluwarsa', 1],
     ['opname', 'Stok Opname', 1], ['penyesuaian', 'Penyesuaian Stok', 1], ['perpindahan', 'Perpindahan Stok', 1]] },
   { k: 'pembelian', t: 'Pembelian', i: 'pembelian', anak: [
-    ['rencana', 'Rencana Pembelian', 1], ['pesanan', 'Pesanan Pembelian', 1], ['faktur', 'Faktur Pembelian', 1], ['retur', 'Retur Pembelian', 1]] },
+    ['rencana', 'Rencana Pembelian', 1], ['pesanan', 'Pesanan Pembelian', 1], ['faktur', 'Faktur Pembelian', 1], ['retur', 'Retur Pembelian', 1], ['program', 'Program & MOU', 1, ['akses.program_ubah', 'akses.program_nominal']]] },
   { k: 'konsinyasi', t: 'Konsinyasi Masuk', i: 'konsinyasi', anak: [
     ['masuk', 'Konsinyasi Masuk', 1], ['status', 'Status Konsinyasi', 1], ['retur', 'Retur Konsinyasi', 1], ['stok', 'Stok Konsinyasi', 1]] },
   { k: 'promo', t: 'Program Promo', i: 'promo', anak: [
     ['bundel', 'Bundel/Paket Produk', 1], ['diskon', 'Diskon Produk', 1], ['voucher', 'Voucher Diskon', 1], ['member', 'Program Member', 1]] },
   { k: 'keuangan', t: 'Keuangan', i: 'keuangan', anak: [
-    ['akun_kas', 'Daftar Akun Kas', 1], ['buku_kas', 'Buku Kas', 1], ['utang', 'Utang Usaha', 1], ['piutang', 'Piutang Usaha', 1]] },
+    ['akun_kas', 'Daftar Akun Kas', 1], ['buku_kas', 'Buku Kas', 1], ['utang', 'Utang Usaha', 1], ['piutang', 'Piutang Usaha', 1], ['konsinyasi', 'Barang Titipan', 1]] },
   { k: 'akuntansi', t: 'Akuntansi', i: 'akuntansi', anak: [
     ['akun', 'Daftar Akun', 1], ['buku_besar', 'Buku Besar', 1], ['aktiva', 'Aktiva Tetap', 1]] },
   { k: 'kontak', t: 'Kontak', i: 'kontak', anak: [
