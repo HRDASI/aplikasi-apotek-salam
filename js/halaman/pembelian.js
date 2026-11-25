@@ -1,11 +1,11 @@
 // Pembelian: Rencana Pembelian, Pesanan Pembelian (SP), Faktur Pembelian, Retur Pembelian.
-import { sb, S } from '../inti.js?v=1.21.0';
-import { esc, angka, rupiah, tanggal, toast, pesanGalat } from '../ui.js?v=1.21.0';
-import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.21.0';
-import { ambilKonfig, MODE_PPN } from './pengaturan.js?v=1.21.0';
-import { tampilCekHarga } from './persediaan.js?v=1.21.0';
+import { sb, S } from '../inti.js?v=1.22.1';
+import { esc, angka, rupiah, tanggal, toast, pesanGalat } from '../ui.js?v=1.22.1';
+import { rutekanDokumen, barisTotal } from '../dokumen.js?v=1.22.1';
+import { ambilKonfig, MODE_PPN } from './pengaturan.js?v=1.22.1';
+import { tampilCekHarga } from './persediaan.js?v=1.22.1';
 
-const infoHeader = async h => (await import('./program.js?v=1.21.0')).infoProgram(h);
+const infoHeader = async h => (await import('./program.js?v=1.22.1')).infoProgram(h);
 const refSupplier = (wajib = true) => ({ f: 'supplier_id', label: 'Supplier / PBF', tipe: 'ref', ref: 'supplier', wajib });
 const gudangOutlet = { f: 'gudang_id', label: 'Masuk ke Gudang', tipe: 'ref', ref: 'gudang', refKolom: 'id,nama,outlet_id', saring: o => o.outlet_id === S.pengguna.outlet_id, bantu: 'Kosongkan untuk gudang utama.' };
 const kolomSupplierDaftar = { label: 'Supplier', nilai: r => esc(r.supplier?.nama || '-') };
