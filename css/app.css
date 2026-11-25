@@ -412,3 +412,11 @@ details summary { cursor: pointer; color: var(--teal-tua); font-weight: 700; pad
 .jadwal th.ahad { color: #b4262c; } .jadwal .kini { box-shadow: inset 2px 0 var(--oranye), inset -2px 0 var(--oranye); } .jadwal .baris-saya td { background: #fff8ea !important; }
 .sel-jadwal { border: 0; min-width: 40px; min-height: 34px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 800; border-radius: 8px; } .sel-jadwal:disabled { cursor: default; opacity: 1; } .sel-jadwal.diubah { outline: 2px solid var(--oranye); }
 .jadwal .jumlah td { background: var(--latar) !important; font-weight: 700; } .jadwal .nol { color: #b4262c; }
+
+/* retur & shift */
+.daftar-nota { display: grid; gap: 8px; } .nota-retur { display: flex; flex-direction: column; gap: 2px; text-align: left; border: 1.5px solid var(--garis); background: #fff; border-radius: 12px; padding: 10px 14px; font: inherit; color: inherit; cursor: pointer; }
+.nota-retur:hover, .nota-retur:focus-visible { border-color: var(--teal); background: var(--teal-muda); } .nota-retur small { color: var(--teks-2); }
+.kepala-nota { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.brs-retur, .brs-ajuan { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px; border-top: 1px solid var(--garis); } .brs-retur.pilih { background: var(--teal-muda); border-radius: 10px; }
+.brs-retur .nm, .brs-ajuan .nm { flex: 1 1 220px; min-width: 0; } .brs-retur small, .brs-ajuan small { color: var(--teks-2); } .brs-retur select { width: auto; } .brs-retur .nl { min-width: 84px; text-align: right; font-variant-numeric: tabular-nums; }
+.kartu-sesi { border: 1px solid var(--garis); border-radius: 12px; padding: 12px; } .kartu-sesi small { color: var(--teks-2); }
