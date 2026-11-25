@@ -1,5 +1,6 @@
 // Desain struk: model, font, ukuran, dan bagian yang tampil. Dipakai nota, retur, rekap sesi, copy resep, dan pratinjau.
-import { esc, angka, waktu } from './ui.js?v=1.24.0';
+import { esc, angka, waktu } from './ui.js?v=1.25.0';
+import { UJI } from './config.js?v=1.25.0';
 
 export const MODEL = [['klasik', 'Klasik', 'Seperti struk selama ini'], ['ringkas', 'Ringkas', 'Hemat kertas, satu baris per barang'], ['lengkap', 'Lengkap', 'Kop besar, rincian dan jumlah barang'], ['modern', 'Modern', 'Logo besar, total menonjol']];
 export const FONT = [['courier', 'Courier (mesin kasir)', "'Courier New',monospace"], ['consolas', 'Consolas', "Consolas,'Courier New',monospace"], ['arial', 'Arial', 'Arial,sans-serif'], ['verdana', 'Verdana (lebar, jelas)', 'Verdana,sans-serif'], ['tahoma', 'Tahoma', 'Tahoma,sans-serif'], ['sempit', 'Arial Narrow (sempit)', "'Arial Narrow',Arial,sans-serif"]];
@@ -26,16 +27,29 @@ export function isiNota(j, s, barcode = '') {
     : m === 'lengkap' ? item.map((i, n) => `<div class="n"><b>${n + 1}. ${esc(i.nama)}</b></div>${br(`   ${qty(i)} x ${angka(i.harga)}`, angka(i.qty * i.harga))}${diskon(i)}`).join('')
       : item.map(i => `<div class="n">${m === 'modern' ? `<b>${esc(i.nama)}</b>` : esc(i.nama)}</div>${br(`  ${qty(i)} x ${angka(i.harga)}`, angka(i.qty * i.harga))}${diskon(i)}`).join('');
   const pot = [['Diskon pelanggan', j.diskon_pelanggan], ['Diskon', j.diskon_nota], ['Voucher', j.potongan_voucher], [`Tukar ${angka(j.poin_dipakai)} poin`, j.potongan_poin]].filter(y => y[1] > 0).map(([a, b]) => br(a, '-' + angka(b))).join('');
-  const biaya = [['Jasa racik', j.jasa_racik], ['Jasa resep', j.jasa_resep], ['Embalase', j.embalase], ['Tuslah', j.tuslah]].filter(y => y[1] > 0).map(([a, b]) => br(a, angka(b))).join('') + (Number(j.pembulatan) ? br('Pembulatan', angka(j.pembulatan)) : '');
+  const biaya = [['Jasa racik', j.jasa_racik], ['Jasa resep', j.jasa_resep], ['Embalase', j.embalase], ['Tuslah', j.tuslah], ['Biaya servis', j.biaya_servis], ['Ongkos kirim', j.ongkir], [j.ket_biaya || 'Biaya lainnya', j.biaya_lain]].filter(y => y[1] > 0).map(([a, b]) => br(a, angka(b))).join('') + (Number(j.pembulatan) ? br('Pembulatan', angka(j.pembulatan)) : '');
   const ada = pot || biaya, total = `<div class="r tot${m === 'modern' ? ' kotak' : ''}"><span>TOTAL</span><span>${m === 'modern' || m === 'lengkap' ? 'Rp ' : ''}${angka(j.total)}</span></div>`;
   const kop = m === 'ringkas' ? `<div class="c">${logo}<span class="nm">${esc(o.nama)}</span>${o.telp ? `<br><span class="kcl">${esc(o.telp)}</span>` : ''}</div>` : `<div class="c">${logo}<span class="nm">${esc(o.nama)}</span><br>${esc(o.alamat || '')}${o.telp ? '<br>Telp ' + esc(o.telp) : ''}${m === 'lengkap' && o.no_sia ? '<br>SIA ' + esc(o.no_sia) : ''}</div>`;
   const kepala = m === 'ringkas' ? `<div class="r kcl"><span>${esc(j.no)}</span><span>${waktu(j.waktu)}</span></div>` : br(j.no, waktu(j.waktu));
-  return `${j.contoh ? '<div class="c b">*** CONTOH ***</div>' : ''}${kop}<hr>${kepala}${x.tampil_kasir ? br('Kasir', j.pengguna_nama || '') : ''}${x.tampil_pelanggan && j.pelanggan ? br('Pelanggan', j.pelanggan.nama) : ''}${j.dokter ? br('Dokter', j.dokter.nama) : ''}${j.no_resep ? br('No. resep', j.no_resep) : ''}<hr>
+  return `${UJI ? '<div class="c b">*** DATA UJI, BUKAN NOTA ***</div>' : ''}${j.contoh ? '<div class="c b">*** CONTOH ***</div>' : ''}${kop}<hr>${kepala}${x.tampil_kasir ? br('Kasir', j.pengguna_nama || '') : ''}${x.tampil_pelanggan && j.pelanggan ? br('Pelanggan', j.pelanggan.nama) : ''}${j.dokter ? br('Dokter', j.dokter.nama) : ''}${j.no_resep ? br('No. resep', j.no_resep) : ''}<hr>
     ${baris}<hr>${m === 'lengkap' ? br('Jumlah jenis barang', angka(item.length)) : ''}${m !== 'ringkas' || ada ? br('Subtotal', angka(j.subtotal)) : ''}${pot}${biaya}${total}
     ${j.bayar.map(b => br(b.metode?.nama || 'Bayar', angka(b.jumlah))).join('')}${m !== 'ringkas' || Number(j.kembalian) ? br('Kembali', angka(j.kembalian)) : ''}
     ${x.tampil_stamp && j.stamp_didapat > 0 ? br('Stamp member', `+${angka(j.stamp_didapat)} (total ${angka(j.pelanggan?.stamp)})`) : ''}${j.status === 'batal' ? '<div class="c"><b>*** DIBATALKAN ***</b></div>' : ''}${j.no.startsWith('OFF-') ? '<div class="c">Nota sementara (offline)</div>' : ''}<hr>
     ${x.tampil_apoteker && o.apoteker ? `<div class="c${m === 'ringkas' ? ' kcl' : ''}">Apoteker: ${esc(o.apoteker)}${o.sipa ? '<br>SIPA ' + esc(o.sipa) : ''}</div>` : ''}<div class="c">${esc(o.catatan_struk || '')}</div>${x.kaki ? `<div class="c" style="white-space:pre-line">${esc(x.kaki)}</div>` : ''}
     ${x.tampil_barcode ? `${barcode}<div class="c kcl">${esc(j.no)} · simpan struk untuk retur</div>` : `<div class="c kcl">${esc(j.no)}</div>`}${j.contoh ? '<div class="c b">*** CONTOH, BUKAN NOTA ***</div>' : ''}`;
+}
+// Teks struk untuk WhatsApp. tanpaObat: nama barang tidak ditulis, hanya jumlah jenisnya.
+export function teksNota(j, tanpaObat) {
+  const o = j.outlet || {}, rp = n => 'Rp ' + angka(n), y = [`*${o.nama || 'Apotek Salam'}*`, [o.alamat, o.telp ? 'Telp ' + o.telp : ''].filter(Boolean).join(' · '), '', `No. ${j.no}`, waktu(j.waktu), ''].filter((x, i) => x || i > 1);
+  if (tanpaObat) y.push(`${angka(j.item.length)} jenis barang`);
+  else for (const i of [...j.item].sort((a, b) => a.id - b.id)) y.push(`${i.nama}\n   ${angka(i.qty)} ${i.satuan_nama || ''} x ${angka(i.harga)} = ${rp(i.subtotal)}`);
+  y.push('');
+  for (const [l, v] of [['Diskon pelanggan', -j.diskon_pelanggan], ['Diskon', -j.diskon_nota], ['Voucher', -j.potongan_voucher], ['Poin', -j.potongan_poin], ['Jasa racik', j.jasa_racik], ['Jasa resep', j.jasa_resep], ['Embalase', j.embalase], ['Tuslah', j.tuslah], ['Biaya servis', j.biaya_servis], ['Ongkos kirim', j.ongkir], [tanpaObat ? 'Biaya lainnya' : j.ket_biaya || 'Biaya lainnya', j.biaya_lain], ['Pembulatan', j.pembulatan]]) if (Number(v)) y.push(`${l}: ${rp(v)}`);
+  y.push(`*TOTAL: ${rp(j.total)}*`, ...j.bayar.map(b => `${b.metode?.nama || 'Bayar'}: ${rp(b.jumlah)}`));
+  if (Number(j.kembalian)) y.push(`Kembali: ${rp(j.kembalian)}`);
+  if (j.stamp_didapat > 0) y.push(`Stamp member: +${angka(j.stamp_didapat)}`);
+  y.push('', 'Terima kasih. Semoga lekas sehat.', 'Balas STOP bila tidak ingin menerima struk lewat WhatsApp.');
+  return y.join('\n');
 }
 export const notaContoh = (outlet, kasir) => ({ contoh: true, no: 'CONTOH-0001', waktu: new Date().toISOString(), outlet: outlet || { nama: 'Apotek Salam' }, pengguna_nama: kasir || 'Kasir', pelanggan: { nama: 'Pelanggan Contoh', stamp: 7 }, subtotal: 61500, diskon_nota: 1500, total: 60000, kembalian: 40000, stamp_didapat: 2, status: 'selesai',
   item: [{ id: 1, nama: 'Paracetamol 500 mg', qty: 2, satuan_nama: 'Strip', harga: 5000 }, { id: 2, nama: 'Vitamin C 500 mg Rasa Jeruk Isi 30 Tablet', qty: 1, satuan_nama: 'Botol', harga: 41500 }, { id: 3, nama: 'Minyak Kayu Putih 60 ml', qty: 1, satuan_nama: 'Botol', harga: 10000 }], bayar: [{ metode: { nama: 'Tunai' }, jumlah: 100000 }] });
