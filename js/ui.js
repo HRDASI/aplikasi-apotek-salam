@@ -1,4 +1,4 @@
-import { ikon } from './menu.js?v=1.23.0';
+import { ikon } from './menu.js?v=1.24.0';
 
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -91,7 +91,7 @@ export function bacaForm(form) {
 
 // pilihan Excel / PDF / CSV (dimuat saat dipakai)
 export function unduhCSV(nama, kolom, baris) {
-  import('./unduh.js?v=1.23.0').then(m => m.unduhData(nama, kolom, baris)).catch(() => toast('Gagal memuat pengunduh. Cek internet.', 'galat'));
+  import('./unduh.js?v=1.24.0').then(m => m.unduhData(nama, kolom, baris)).catch(() => toast('Gagal memuat pengunduh. Cek internet.', 'galat'));
 }
 
 export function judulHalaman(judul, remah, aksiHtml = '') {
