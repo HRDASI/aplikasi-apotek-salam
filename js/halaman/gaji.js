@@ -1,10 +1,10 @@
 // Gaji Karyawan: setting, gaji pokok, tunjangan, potongan, kasbon, perhitungan, pembayaran, slip.
-import { rute, S, bisa } from '../inti.js?v=1.22.1';
-import { ikon } from '../menu.js?v=1.22.1';
-import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.22.1';
-import { rpc, hariIni, tabelHtml, unduhTabel, cetakHtml } from '../tabel.js?v=1.22.1';
-import { cetakKertasBiasa } from '../cetak.js?v=1.22.1';
-import { akunKas, opsiKas } from './keuangan.js?v=1.22.1';
+import { rute, S, bisa } from '../inti.js?v=1.23.0';
+import { ikon } from '../menu.js?v=1.23.0';
+import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.23.0';
+import { rpc, hariIni, tabelHtml, unduhTabel, cetakHtml } from '../tabel.js?v=1.23.0';
+import { cetakKertasBiasa } from '../cetak.js?v=1.23.0';
+import { akunKas, opsiKas } from './keuangan.js?v=1.23.0';
 
 const BLN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 const namaBulan = b => `${BLN[Number(b.slice(5)) - 1]} ${b.slice(0, 4)}`;
@@ -93,12 +93,13 @@ for (const [jenis, judul] of [['tunjangan', 'Daftar Tunjangan'], ['potongan', 'D
 // ================= Kasbon =================
 rute('gaji/kasbon', async el => {
   const boleh = bisa('gaji.kasbon'); let d = [];
-  el.innerHTML = judulHalaman('Kasbon Karyawan', 'Gaji Karyawan / Kasbon', boleh ? `<button class="tombol" data-tambah>${ikon('tambah')} Kasbon Baru</button>` : '') + `<div class="kartu"><div data-isi>${kerangka}</div></div>`;
+  el.innerHTML = judulHalaman('Kasbon Karyawan', 'Gaji Karyawan / Kasbon', `<button class="tombol kedua" data-unduh-k>${ikon('unduh')} Unduh</button>` + (boleh ? `<button class="tombol" data-tambah>${ikon('tambah')} Kasbon Baru</button>` : '')) + `<div class="kartu"><div data-isi>${kerangka}</div></div>`;
   const muat = async () => { try { d = await rpc('daftar_kasbon');
     el.querySelector('[data-isi]').innerHTML = tabelHtml([{ l: 'No', n: r => r.no, h: r => `<span><b>${esc(r.no)}</b>${r.status === 'batal' ? ' <span class="chip merah">batal</span>' : ''}</span>` }, { l: 'Tanggal', n: r => r.tanggal, t: 'tgl' }, { l: 'Karyawan', n: r => r.nama }, { l: 'Keterangan', n: r => r.keterangan || '' }, { l: 'Jumlah', n: r => r.jumlah, t: 'uang' }, { l: 'Potong per gaji', n: r => r.cicilan, t: 'uang' }, { l: 'Sisa', n: r => r.sisa, t: 'uang', h: r => Number(r.sisa) > 0 ? `<b>${rupiah(r.sisa)}</b>` : r.status === 'batal' ? '-' : '<span class="chip hijau">lunas</span>' },
       { l: '', n: () => '', h: r => `<button class="tombol kedua kecil" data-lihat="${r.id}">Rincian</button>` }], d, { kosong: 'Belum ada kasbon.' }); } catch (e) { galat(el, e); } };
   el.addEventListener('click', async e => {
     const l = e.target.closest('[data-lihat]');
+    if (e.target.closest('[data-unduh-k]')) unduhTabel('kasbon', [{ l: 'No', n: r => r.no }, { l: 'Tanggal', n: r => r.tanggal, t: 'tgl' }, { l: 'Karyawan', n: r => r.nama }, { l: 'Keterangan', n: r => r.keterangan }, { l: 'Jumlah', n: r => r.jumlah, t: 'uang', jml: true }, { l: 'Sisa', n: r => r.sisa, t: 'uang', jml: true }, { l: 'Status', n: r => r.status }], d);
     if (e.target.closest('[data-tambah]')) await coba(async () => {
       const [g, ks] = await Promise.all([rpc('data_gaji'), akunKas()]), kas = ks.filter(k => k.jenis !== 'kasir');
       modal({ judul: 'Kasbon Baru', isi: `<form class="form-grid" onsubmit="return false"><label class="isian lebar"><span>Karyawan <i>*</i></span><select name="k" required><option value="">- pilih -</option>${g.karyawan.map(k => `<option value="${k.id}">${esc(k.nama)}</option>`).join('')}</select></label><label class="isian"><span>Jumlah (Rp) <i>*</i></span><input type="number" min="1" name="jumlah" required></label><label class="isian"><span>Potong per gaji (Rp) <i>*</i></span><input type="number" min="1" name="cicilan" required></label>
