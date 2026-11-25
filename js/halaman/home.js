@@ -1,9 +1,10 @@
 // Home: sapaan, ikon modul (HP), ringkasan, aktivitas terakhir, pembaruan aplikasi.
-import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.17.0';
-import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.17.0';
-import { esc, angka, rupiah, waktu } from '../ui.js?v=1.17.0';
+import { rute, sb, S, bisa, bisaSalahSatu } from '../inti.js?v=1.18.0';
+import { MENU, ITEM, MODUL_HP, LABEL_HP, ikon, NAMA_TAHAP } from '../menu.js?v=1.18.0';
+import { esc, angka, rupiah, waktu } from '../ui.js?v=1.18.0';
 
 export const PEMBARUAN = [
+  ['2026-11-25', 'Cadangan Data: salinan database otomatis 5 kali sehari ke Google Drive, dengan status dan peringatan bila terlambat.'],
   ['2026-11-25', 'Kasir: obat keras tidak lagi wajib diisi dokter atau nomor resep. OKT, psikotropika, dan narkotika tetap wajib.'],
   ['2026-11-25', 'Integrasi Kinerja: nilai triwulan dan nilai ujian dari aplikasi Kinerja bisa dipakai sebagai parameter KPI.'],
   ['2026-11-25', 'Manajemen KPI: parameter dan bobot per jabatan, target karyawan, nilai otomatis dan manual, laporan, serta KPI Saya.'],
@@ -39,6 +40,7 @@ rute('home', async el => {
     <div class="ikon-modul hanya-hp">${modul.map(g => `<a href="#/modul/${g.k}"><span class="kotak">${ikon(g.i)}</span>${esc(LABEL_HP[g.k] || g.t)}</a>`).join('')}</div>
     <div class="sapaan hanya-pc"><div><p class="kecil">${new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p><h2>${salam()}, ${esc(S.pengguna.nama)} 👋</h2>
       <p>Mau mulai dari mana hari ini?</p><div class="aksi-cepat">${cepat.map(([x, i, t]) => `<a href="${x.url}">${ikon(i)} ${esc(t)}</a>`).join('')}</div></div><img src="img/lamlam.png" alt="Si Lamlam menyapa" width="190" height="190"></div>
+    <div data-cadangan></div>
     ${lihatJual ? '<div class="kartu blok"><div class="kepala-blok"><h3>Penjualan hari ini</h3><a href="#/dashboard/penjualan">Lihat dashboard</a></div><div class="angka-utama" data-hari><div class="kerangka-muat"><i></i></div><div class="kerangka-muat"><i></i></div><div class="kerangka-muat"><i></i></div></div></div>' : ''}
     ${lihatStok ? `<div class="kartu blok"><div class="kepala-blok"><h3>Perlu perhatian</h3><a href="#/persediaan/peringatan">Lihat semua</a></div><div class="perhatian" data-perhatian>${JENIS.map(() => '<div class="kerangka-muat"><i></i></div>').join('')}</div></div>` : ''}
     <div class="grid-2 blok">
@@ -49,6 +51,7 @@ rute('home', async el => {
     </div>`;
   const isi = (s, f) => { const x = el.querySelector(s); if (x) f(x); };
 
+  if (bisa('pengaturan.cadangan')) sb.rpc('status_cadangan').then(({ data }) => { if (data?.terlambat) isi('[data-cadangan]', x => { x.innerHTML = '<p class="pesan galat">Cadangan data belum berjalan lebih dari 14 jam. <a href="#/pengaturan/cadangan">Periksa</a></p>'; }); });
   // tiap blok dimuat sendiri-sendiri; yang lambat/gagal tidak menahan yang lain
   if (lihatJual) (async () => {
     const ambil = async t => { const { data, error } = await sb.rpc('lap_penjualan', { p_dari: t, p_sampai: t, p_kelompok: 'total', p_outlet: null }); if (error) throw error; return data[0] || { trx: 0, netto: 0, laba: 0 }; };
@@ -57,7 +60,7 @@ rute('home', async el => {
       <div><small>Transaksi</small><b>${angka(h.trx)}</b><span>kemarin ${angka(k.trx)}</span></div>
       ${bisa('keuangan.laba') ? `<div><small>Laba kotor</small><b>${rupiah(h.laba)}</b><span>kemarin ${rupiah(k.laba)}</span></div>` : `<div><small>Rata-rata per nota</small><b>${rupiah(Number(h.trx) ? h.netto / h.trx : 0)}</b><span>&nbsp;</span></div>`}`; });
   })().catch(() => isi('[data-hari]', x => { x.innerHTML = '<p class="kosong">Ringkasan belum bisa dimuat.</p>'; }));
-  if (lihatStok) import('./persediaan.js?v=1.17.0').then(m => m.hitungPeringatan()).then(j => isi('[data-perhatian]', x => {
+  if (lihatStok) import('./persediaan.js?v=1.18.0').then(m => m.hitungPeringatan()).then(j => isi('[data-perhatian]', x => {
     x.innerHTML = Object.values(j).some(Boolean) ? JENIS.map(([k, l, w]) => `<a href="#/persediaan/peringatan/${k}" class="statistik ${j[k] ? w : 'aman'}"><small>${esc(l)}</small><b>${j[k] ? angka(j[k]) : '✓'}</b></a>`).join('') : '<p class="aman-semua">✓ Semua stok aman, tidak ada yang perlu ditindaklanjuti.</p>';
   })).catch(() => isi('[data-perhatian]', x => { x.textContent = 'Peringatan belum bisa dimuat.'; }));
   sb.from('log_aktivitas').select('waktu,keterangan,aksi').eq('pengguna_id', S.pengguna.id).order('waktu', { ascending: false }).limit(5).then(({ data }) => isi('[data-akt]', x => {
