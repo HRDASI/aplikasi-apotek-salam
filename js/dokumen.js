@@ -1,9 +1,9 @@
 // Halaman dokumen transaksi (daftar + editor) yang dipakai ulang:
 // rencana pembelian, SP, faktur, retur, penyesuaian, opname, perpindahan, konsinyasi.
-import { sb, S, bisa, ambilRef, rute, atauOffline } from './inti.js?v=1.20.0';
-import { cariProdukL, infoProdukL } from './offline.js?v=1.20.0';
-import { ikon } from './menu.js?v=1.20.0';
-import { esc, angka, rupiah, tanggal, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.20.0';
+import { sb, S, bisa, ambilRef, rute, atauOffline } from './inti.js?v=1.21.0';
+import { cariProdukL, infoProdukL } from './offline.js?v=1.21.0';
+import { ikon } from './menu.js?v=1.21.0';
+import { esc, angka, rupiah, tanggal, waktu, toast, konfirmasi, pesanGalat, judulHalaman, unduhCSV } from './ui.js?v=1.21.0';
 
 export const STATUS = {
   draft: ['Draft', ''], posting: ['Diposting', 'hijau'], batal: ['Batal', 'merah'], diproses: ['Diproses', 'teal'],
@@ -181,7 +181,7 @@ function halamanEditor(cfg) {
     el.innerHTML = judulHalaman(judul, cfg.remah, `<a class="tombol kedua" href="#/${cfg.rute}">${ikon('kiri')} Daftar</a>`) +
       `<div class="kartu"><div style="display:flex;gap:10px;align-items:center;margin-bottom:12px"><b>${esc(st.header.no || 'Dokumen baru')}</b>${chipStatus(st.status)}
         ${st.header.diposting ? `<small style="color:var(--teks-2)">diposting ${waktu(st.header.diposting)}</small>` : ''}</div>
-        <form class="form-grid" data-header onsubmit="return false"></form></div>
+        <form class="form-grid" data-header onsubmit="return false"></form><div data-info-header></div></div>
       <div class="kartu"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><h3 style="margin:0">Barang</h3>
         ${bisaUbah() ? `<div style="flex:1;min-width:240px;max-width:520px"><input class="input" data-cari-produk placeholder="Ketik nama/kode atau scan barcode, lalu Enter"></div>` : ''}
         <span data-tombol-item style="display:flex;gap:8px"></span></div>
@@ -210,6 +210,9 @@ function halamanEditor(cfg) {
       formH.innerHTML = html;
       if (!bisaUbah()) formH.querySelectorAll('input,select,textarea').forEach(i => i.disabled = true);
     }
+    let keInfo = 0;
+    const gambarInfo = async () => { if (!cfg.infoHeader) return; const n = ++keInfo; const h = await cfg.infoHeader(st.header).catch(() => ''); const w = el.querySelector('[data-info-header]'); if (n === keInfo && w) w.innerHTML = h; };
+    gambarInfo();
     formH.addEventListener('change', async e => {
       const k = cfg.header.find(x => x.f === e.target.name); if (!k) return;
       st.header[k.f] = e.target.value === '' ? null : (['ref', 'angka', 'uang', 'persen'].includes(k.tipe) ? Number(e.target.value) : e.target.value);
@@ -219,6 +222,7 @@ function halamanEditor(cfg) {
       }
       if (k.ubahBatch) { for (const r of st.items) { r._batch = null; } await hidrasi(st.items); gambarItem(); }
       if (k.tipe === 'ref' || k.tipe === 'pilih') await gambarHeader();
+      if (k.f === 'supplier_id') gambarInfo();
       gambarTotal();
     });
 
