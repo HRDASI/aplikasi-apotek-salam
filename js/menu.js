@@ -72,7 +72,7 @@ export const MENU = [
   { k: 'kontak', t: 'Kontak', i: 'kontak', anak: [
     ['pelanggan', 'Pelanggan', 1], ['sales', 'Sales/Pelayan', 1], ['dokter', 'Dokter', 1], ['supplier', 'Supplier', 1]] },
   { k: 'laporan', t: 'Laporan', i: 'laporan', anak: [
-    ['penjualan', 'Laporan Penjualan', 1], ['pembelian', 'Laporan Pembelian', 1], ['persediaan', 'Laporan Persediaan', 1],
+    ['penjualan', 'Laporan Penjualan', 1], ['shift', 'Laporan per Shift', 1, ['laporan.penjualan', 'penjualan.kasir']], ['pembelian', 'Laporan Pembelian', 1], ['persediaan', 'Laporan Persediaan', 1],
     ['keuangan', 'Laporan Keuangan', 1, null, ['keuangan.laba']], ['presensi', 'Laporan Presensi', 1]] },
   { k: 'analisis', t: 'Analisis', i: 'analisis', anak: [
     ['pareto', 'Analisis Pareto', 1], ['pembelian', 'Analisis Pembelian', 1], ['harga', 'Analisis Harga', 1, null, ['keuangan.laba']]] },
