@@ -1,14 +1,15 @@
 // Mode offline: salinan data di perangkat (IndexedDB), antrean transaksi, masuk offline, dan sinkron otomatis.
 // Hanya aktif di perangkat yang sudah ditandai Pemilik. Antrean tidak pernah dihapus sebelum server menjawab "tercatat".
-import { sb, S, KONEKSI, cekServer, ambilSemua, HOOK } from './inti.js?v=1.24.0';
-import { toast } from './ui.js?v=1.24.0';
+import { UJI } from './config.js?v=1.25.0';
+import { sb, S, KONEKSI, cekServer, ambilSemua, HOOK } from './inti.js?v=1.25.0';
+import { toast } from './ui.js?v=1.25.0';
 
 const AGEN = 'http://localhost:8766';
 const MASA_LOGIN = 3 * 864e5;                 // masuk offline berlaku 3 hari sejak login online terakhir
 export const METODE_OFFLINE = ['tunai', 'qris', 'transfer'];
 const uuidBaru = () => crypto.randomUUID();
 const ls = { baca: k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } }, tulis: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* penuh/diblokir */ } } };
-export const perangkat = () => ls.baca('apotek-perangkat');       // { id, nama, aktif }
+export const perangkat = () => UJI ? null : ls.baca('apotek-perangkat');       // { id, nama, aktif }
 export const perangkatAktif = () => !!perangkat()?.aktif;
 
 // ---------- IndexedDB ----------
@@ -48,7 +49,7 @@ export function unduhData(penuh = false) {
     await bacaSalinan();
     const o = S.pengguna.outlet_id, lama = D && D.outlet_id === o && !penuh && Date.now() - D.penuh < 36e5 ? D : null;
     const ambil = (t, k, u = 'id') => ambilSemua(() => sb.from(t).select(k).order(u));
-    const kolProduk = 'id,kode,barcode,nama,nama_generik,golongan,kategori_id,satuan_id,harga_jual,wajib_resep,aktif,diubah';
+    const kolProduk = 'id,kode,barcode,nama,nama_generik,indikasi,golongan,kategori_id,satuan_id,harga_jual,wajib_resep,aktif,diubah';
     const mulai = Date.now(), [stok, produk] = await Promise.all([
       ambilSemua(() => sb.from('stok_produk').select('produk_id,qty').eq('outlet_id', o).order('produk_id')),
       lama ? ambilSemua(() => sb.from('produk').select(kolProduk).gt('diubah', lama.produkSampai).order('id')) : ambil('produk', kolProduk),
@@ -94,12 +95,13 @@ function kurangiStok(items) {
 }
 
 // ---------- Pengganti kueri server ----------
-export function cariProdukL(q, batas = 15) {
+export function cariProdukL(q, batas = 15, indikasi = false) {
   const c = q.trim().toLowerCase(); if (!c) return [];
   const h = [];
   for (const p of D.produk) {
     const tepat = p.barcode === q.trim() || (p.kode || '').toLowerCase() === c;
     if (tepat || p.nama.toLowerCase().includes(c) || (p.kode || '').toLowerCase().includes(c) || (p.nama_generik || '').toLowerCase().includes(c)) h.push([tepat ? 0 : 1, p]);
+    else if (indikasi && (p.indikasi || '').toLowerCase().includes(c)) h.push([2, p]);
   }
   return h.sort((a, b) => a[0] - b[0] || a[1].nama.localeCompare(b[1].nama)).slice(0, batas).map(([, p]) => ({ ...p, satuan: ix().satuan.get(p.satuan_id), stok: D.stok[p.id] || 0 }));
 }
@@ -162,11 +164,16 @@ export function hitungL(p) {
   let sisa = sub; const dPel = pel?.kategori_pelanggan_id ? rd(sub * Number(kp.get(pel.kategori_pelanggan_id)?.diskon_persen || 0) / 100) : 0;
   sisa -= dPel;
   let dNota = Number(p.diskon_nota || 0);
+  const pn = Number(p.diskon_nota_persen || 0);
+  if (pn < 0 || pn > 100) throw new Error('Diskon nota tidak valid');
+  if (pn > 0) { if (pn > maks && !bebas) throw new Error(`Diskon nota maksimal ${maks} persen dari subtotal`); dNota = rd(sub * pn / 100); }
   if (dNota < 0) throw new Error('Diskon nota tidak valid');
-  if (dNota > sub * maks / 100 && !bebas) throw new Error(`Diskon nota maksimal ${maks} persen dari subtotal`);
+  if (!pn && dNota > sub * maks / 100 && !bebas) throw new Error(`Diskon nota maksimal ${maks} persen dari subtotal`);
   dNota = Math.min(dNota, sisa); sisa -= dNota;
-  const emb = Number(j?.embalase || 0), tus = Number(j?.tuslah || 0), dasar = Math.max(sisa + emb + tus, 0), k = Number(kj.pembulatan || 0), total = k > 0 ? Math.ceil(dasar / k) * k : rd(dasar);
-  return { items, subtotal: sub, diskon_pelanggan: dPel, diskon_nota: dNota, potongan_voucher: 0, potongan_poin: 0, embalase: emb, tuslah: tus, pembulatan: total - dasar, total, stamp_didapat: 0, jasa_racik: 0, jasa_resep: 0, perlu_resep: perlu, wajib_resep: true };
+  const mb = Number(kj.maks_biaya ?? 50000), by = f => rd(Number(p[f] || 0)), srv = by('biaya_servis'), bEmb = by('biaya_embalase'), kir = by('ongkir'), lain = by('biaya_lain');
+  for (const [l, v] of [['servis', srv], ['embalase', bEmb], ['ongkos kirim', kir], ['lainnya', lain]]) { if (v < 0) throw new Error(`Biaya ${l} tidak valid`); if (v > mb && !bebas) throw new Error(`Biaya ${l} maksimal Rp ${mb.toLocaleString('id-ID')}`); }
+  const emb = Number(j?.embalase || 0) + bEmb, tus = Number(j?.tuslah || 0), dasar = Math.max(sisa + emb + tus + srv + kir + lain, 0), k = Number(kj.pembulatan || 0), total = k > 0 ? Math.ceil(dasar / k) * k : rd(dasar);
+  return { items, subtotal: sub, diskon_pelanggan: dPel, diskon_nota: dNota, potongan_voucher: 0, potongan_poin: 0, biaya_servis: srv, ongkir: kir, biaya_lain: lain, ket_biaya: lain > 0 ? (p.ket_biaya || '').trim().slice(0, 80) || null : null, diskon_nota_persen: pn, embalase: emb, tuslah: tus, pembulatan: total - dasar, total, stamp_didapat: 0, jasa_racik: 0, jasa_resep: 0, perlu_resep: perlu, wajib_resep: true };
 }
 
 // ---------- Antrean ----------
@@ -212,8 +219,9 @@ export async function jualL(uuid, muatan, hasil, bayar, kembalian) {
   if (total < hasil.total) throw new Error('Pembayaran kurang');
   if (kembalian > tunai) throw new Error('Kembalian hanya bisa dari uang tunai');
   if (hasil.perlu_resep && hasil.wajib_resep && !muatan.dokter_id && !muatan.no_resep) throw new Error('Ada obat wajib resep: isi dokter atau nomor resep.');
+  if (hasil.biaya_lain > 0 && !hasil.ket_biaya) throw new Error('Isi keterangan biaya lainnya.');
   const no = noOff('OFF'), w = new Date().toISOString(), { items, ...header } = muatan;
-  await antrekan('jual', { no_offline: no, ...idSesi(S.sesi), waktu: w, header: { pelanggan_id: header.pelanggan_id, jenis_pelayanan_id: header.jenis_pelayanan_id, dokter_id: header.dokter_id, no_resep: header.no_resep, diskon_nota: header.diskon_nota }, items, hasil, bayar, kembalian }, uuid);
+  await antrekan('jual', { no_offline: no, ...idSesi(S.sesi), waktu: w, header: { pelanggan_id: header.pelanggan_id, jenis_pelayanan_id: header.jenis_pelayanan_id, dokter_id: header.dokter_id, no_resep: header.no_resep, diskon_nota: header.diskon_nota, diskon_nota_persen: header.diskon_nota_persen, biaya_servis: header.biaya_servis, biaya_embalase: header.biaya_embalase, ongkir: header.ongkir, biaya_lain: header.biaya_lain, ket_biaya: header.ket_biaya }, items, hasil, bayar, kembalian }, uuid);
   kurangiStok(hasil.items);
   return { id: null, no, total: hasil.total, dibayar: total, kembalian, stamp_didapat: 0, offline: true,
     struk: { ...hasil, no, waktu: w, pengguna_nama: S.pengguna.nama, kembalian, outlet: D.outlet, no_resep: header.no_resep, status: 'selesai', pelanggan: ix().pelanggan.get(Number(header.pelanggan_id)), dokter: D.dokter.find(d => d.id === Number(header.dokter_id)),
@@ -332,6 +340,7 @@ async function bersihkan() { D = null; indeks = null; await tx('data', 'readwrit
 
 // ---------- Pendaftaran & putaran rutin ----------
 export async function daftarkan(nama) {
+  if (UJI) throw new Error('Mode offline dimatikan di aplikasi uji.');
   const id = perangkat()?.id || uuidBaru();
   const { error } = await sb.rpc('daftar_perangkat_offline', { p_id: id, p_nama: nama }); if (error) throw error;
   ls.tulis('apotek-perangkat', { id, nama, aktif: true });
