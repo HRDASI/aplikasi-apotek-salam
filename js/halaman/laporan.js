@@ -1,11 +1,11 @@
 // Dashboard, Laporan (penjualan, pembelian, persediaan), Analisis (pareto, pembelian, harga).
-import { rute, S, bisa } from '../inti.js?v=1.12.0';
-import { ikon } from '../menu.js?v=1.12.0';
-import { esc, angka, rupiah, tanggal, pesanGalat, judulHalaman } from '../ui.js?v=1.12.0';
-import { rpc, hariIni, geserHari, barPeriode, tabelHtml, halamanLaporan, grafikBatang, grafikGaris, isiHari } from '../tabel.js?v=1.12.0';
-import { GOLONGAN } from './master.js?v=1.12.0';
-import { labaRugi } from './akuntansi.js?v=1.12.0';
-import { ambilKonfig } from './pengaturan.js?v=1.12.0';
+import { rute, S, bisa } from '../inti.js?v=1.13.0';
+import { ikon } from '../menu.js?v=1.13.0';
+import { esc, angka, rupiah, tanggal, pesanGalat, judulHalaman } from '../ui.js?v=1.13.0';
+import { rpc, hariIni, geserHari, barPeriode, tabelHtml, halamanLaporan, grafikBatang, grafikGaris, isiHari } from '../tabel.js?v=1.13.0';
+import { GOLONGAN } from './master.js?v=1.13.0';
+import { labaRugi } from './akuntansi.js?v=1.13.0';
+import { ambilKonfig } from './pengaturan.js?v=1.13.0';
 
 const laba = () => bisa('keuangan.laba');
 const jml = (a, f) => a.reduce((x, r) => x + Number(r[f] || 0), 0);
