@@ -46,6 +46,7 @@ export const ikon = (n, cls = '') => `<svg class="ik ${cls}" viewBox="0 0 24 24"
 
 export const MENU = [
   { k: 'home', t: 'Home', i: 'home', url: '#/home', tahap: 1 },
+  { k: 'panduan', t: 'Panduan', i: 'info', url: '#/panduan', tahap: 1, akses: ['*semua'] },
   { k: 'dashboard', t: 'Dashboard', i: 'dashboard', anak: [
     ['umum', 'Dashboard Umum', 1], ['penjualan', 'Dashboard Penjualan', 1], ['pembelian', 'Dashboard Pembelian', 1],
     ['persediaan', 'Dashboard Persediaan', 1], ['keuangan', 'Dash. Keuangan', 1, null, ['keuangan.laba']]] },
@@ -101,7 +102,7 @@ export const NAMA_TAHAP = {
 // Daftar datar semua item: { kunci, url, judul, grup, ikon, tahap, akses[] }
 export const ITEM = [];
 for (const g of MENU) {
-  if (!g.anak) { ITEM.push({ kunci: g.k, url: g.url, judul: g.t, grup: g.t, ikon: g.i, tahap: g.tahap, akses: [g.k] }); continue; }
+  if (!g.anak) { ITEM.push({ kunci: g.k, url: g.url, judul: g.t, grup: g.t, ikon: g.i, tahap: g.tahap, akses: g.akses || [g.k] }); continue; }
   // khusus = kunci pengganti: menu berisi laba/HPP tidak ikut terbuka oleh akses grup biasa
   for (const [k, t, tahap, alt, khusus] of g.anak) {
     const kunci = `${g.k}.${k}`;
