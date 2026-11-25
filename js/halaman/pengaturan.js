@@ -1,8 +1,8 @@
 // Pengaturan: Profil Bisnis (outlet aktif) & Konfigurasi.
-import { rute, sb, S, bisa, atauOffline, KONEKSI, HOOK } from '../inti.js?v=1.23.0';
-import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.23.0';
-import { bacaPrinter, simpanPrinter, statusAgen, cetakLabelHtml, cetakLabelPng, GAYA } from '../cetak.js?v=1.23.0';
-import { STRUK_BAWAAN } from '../struk.js?v=1.23.0';
+import { rute, sb, S, bisa, atauOffline, KONEKSI, HOOK } from '../inti.js?v=1.24.0';
+import { esc, toast, pesanGalat, bacaForm, judulHalaman } from '../ui.js?v=1.24.0';
+import { bacaPrinter, simpanPrinter, statusAgen, cetakLabelHtml, cetakLabelPng, GAYA } from '../cetak.js?v=1.24.0';
+import { STRUK_BAWAAN } from '../struk.js?v=1.24.0';
 
 rute('pengaturan/profil', async el => {
   const boleh = bisa('pengaturan.profil');
@@ -69,9 +69,9 @@ rute('pengaturan/printer', async el => {
     const w = el.querySelector('[data-hasil-tes]'), j = b.dataset.tes, p = baca(), printer = j === 'struk' ? p.struk.printer : p.label.printer; b.disabled = true; w.textContent = 'Mengirim…';
     try {
       let r;
-      if (j === 'struk') { const k = await ambilKonfig(); r = await (await import('./struk.js?v=1.23.0')).cetakNotaContoh(k.struk); }
+      if (j === 'struk') { const k = await ambilKonfig(); r = await (await import('./struk.js?v=1.24.0')).cetakNotaContoh(k.struk); }
       else if (j === 'label') r = await cetakLabelHtml([`<div class="kop"><span>${esc(S.outlet?.nama || 'Apotek Salam')}</span><span>No. 001</span></div><div class="nm">CONTOH ETIKET</div><div class="signa">3 x sehari 1 tablet</div><div class="kecil">Sesudah makan · ${new Date().toLocaleDateString('id-ID')}</div><div class="jenis">OBAT DALAM</div>`], 'Tes etiket');
-      else { const l = await (await import('../label.js?v=1.23.0')).gambarLabel({ nama: 'CONTOH BARCODE', kode: 'CONTOH123', harga_jual: 15000 }, { lebar: p.label.lebar, tinggi: p.label.tinggi }); r = await cetakLabelPng([{ png: l.png, salinan: 1 }], 'Tes barcode'); }
+      else { const l = await (await import('../label.js?v=1.24.0')).gambarLabel({ nama: 'CONTOH BARCODE', kode: 'CONTOH123', harga_jual: 15000 }, { lebar: p.label.lebar, tinggi: p.label.tinggi }); r = await cetakLabelPng([{ png: l.png, salinan: 1 }], 'Tes barcode'); }
       w.innerHTML = `<span class="chip ${r === 'agen' ? 'hijau' : 'oranye'}">${r === 'agen' ? 'Terkirim ke ' + esc(printer) : 'Dibuka lewat dialog cetak' + (printer ? ' (agen tidak menyala)' : ' (printer belum dipilih)')}</span>`;
     } catch (x) { w.innerHTML = `<span class="chip merah">Gagal: ${esc(pesanGalat(x))}</span>`; }
     b.disabled = false;
