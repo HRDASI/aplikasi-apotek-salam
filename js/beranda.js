@@ -1,8 +1,8 @@
 // Beranda karyawan: sapaan, target, rencana kerja, motivasi, visi-misi-budaya.
-import { sb, S, bisa } from './inti.js?v=1.22.1';
-import { ikon } from './menu.js?v=1.22.1';
-import { esc, angka, rupiah, tanggal, toast, pesanGalat } from './ui.js?v=1.22.1';
-import BAWAAN from './beranda-isi.js?v=1.22.1';
+import { sb, S, bisa } from './inti.js?v=1.23.0';
+import { ikon } from './menu.js?v=1.23.0';
+import { esc, angka, rupiah, tanggal, toast, pesanGalat } from './ui.js?v=1.23.0';
+import BAWAAN from './beranda-isi.js?v=1.23.0';
 
 export const isiBeranda = isi => ({ ...BAWAAN, ...(isi || {}), tampil: { ...BAWAAN.tampil, ...(isi?.tampil || {}) } });
 const rpc = async (n, p) => { const { data, error } = await sb.rpc(n, p); if (error) throw error; return data; };
