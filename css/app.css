@@ -406,3 +406,9 @@ details summary { cursor: pointer; color: var(--teal-tua); font-weight: 700; pad
 .pil-status { margin-left: auto; background: var(--oranye); color: #3a2300; font-weight: 800; font-size: 12.5px; padding: 5px 12px; border-radius: 999px; text-decoration: none; white-space: nowrap; align-self: center; }
 .pil-status.putus { background: #fff; color: #8f1f24; } .kepala-hp .baris .pil-status { order: 2; margin-left: 4px; } .kepala-hp .baris .kanan { order: 1; } .kepala-hp .baris { flex-wrap: wrap; }
 .pita-info.wajib { background: var(--teal-gelap); }
+
+/* ---------- Jadwal ---------- */
+.jadwal th, .jadwal td { padding: 6px 4px !important; text-align: center; } .jadwal .lengket { position: sticky; left: 0; z-index: 2; text-align: left; padding: 6px 12px !important; white-space: nowrap; background: #fff; } .jadwal th.lengket { background: #f1f5f8; }
+.jadwal th.ahad { color: #b4262c; } .jadwal .kini { box-shadow: inset 2px 0 var(--oranye), inset -2px 0 var(--oranye); } .jadwal .baris-saya td { background: #fff8ea !important; }
+.sel-jadwal { border: 0; min-width: 40px; min-height: 34px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 800; border-radius: 8px; } .sel-jadwal:disabled { cursor: default; opacity: 1; } .sel-jadwal.diubah { outline: 2px solid var(--oranye); }
+.jadwal .jumlah td { background: var(--latar) !important; font-weight: 700; } .jadwal .nol { color: #b4262c; }
