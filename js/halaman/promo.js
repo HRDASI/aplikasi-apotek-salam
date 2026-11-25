@@ -1,7 +1,7 @@
 // Program Promo: Diskon Produk, Bundel/Paket, Voucher, Program Member.
-import { rute, sb, ambilRef } from '../inti.js?v=1.15.0';
-import { esc, angka, rupiah } from '../ui.js?v=1.15.0';
-import { halamanCrud } from '../crud.js?v=1.15.0';
+import { rute, sb, ambilRef } from '../inti.js?v=1.16.0';
+import { esc, angka, rupiah } from '../ui.js?v=1.16.0';
+import { halamanCrud } from '../crud.js?v=1.16.0';
 
 const status = r => {
   const h = new Date().toISOString().slice(0, 10);
