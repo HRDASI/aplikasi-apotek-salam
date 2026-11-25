@@ -1,9 +1,9 @@
 // Program & MOU dari sales / PBF / pabrik: periode, target (dihitung dari faktur), bukti MOU, dan insentif.
-import { rute, sb, S, ambilRef } from '../inti.js?v=1.23.0';
-import { ikon } from '../menu.js?v=1.23.0';
-import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.23.0';
-import { rpc, hariIni, geserHari, tabelHtml, barPeriode, unduhTabel } from '../tabel.js?v=1.23.0';
-import { pasangCariProduk } from '../dokumen.js?v=1.23.0';
+import { rute, sb, S, ambilRef } from '../inti.js?v=1.24.0';
+import { ikon } from '../menu.js?v=1.24.0';
+import { esc, angka, rupiah, tanggal, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.24.0';
+import { rpc, hariIni, geserHari, tabelHtml, barPeriode, unduhTabel } from '../tabel.js?v=1.24.0';
+import { pasangCariProduk } from '../dokumen.js?v=1.24.0';
 
 const PIHAK = [['pbf', 'PBF / Distributor'], ['pabrik', 'Pabrik / Prinsipal'], ['sales', 'Sales perorangan'], ['lainnya', 'Lainnya']];
 export const JENIS = [['diskon', 'Diskon'], ['bonus', 'Bonus barang'], ['target', 'Target pembelian'], ['display', 'Display / sewa rak'], ['cashback', 'Cashback'], ['retur_ed', 'Retur ED'], ['lainnya', 'Lainnya']];
