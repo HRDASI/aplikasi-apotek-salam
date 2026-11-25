@@ -421,3 +421,16 @@ details summary { cursor: pointer; color: var(--teal-tua); font-weight: 700; pad
 .kartu-sesi { border: 1px solid var(--garis); border-radius: 12px; padding: 12px; } .kartu-sesi small { color: var(--teks-2); }
 .pisah { border: 0; border-top: 1px solid var(--garis); margin: 4px 0 14px; }
 .bar-kpi { display: inline-block; width: 110px; height: 8px; border-radius: 4px; background: var(--garis); overflow: hidden; vertical-align: middle; } .bar-kpi i { display: block; height: 100%; background: var(--teal-tua); border-radius: 4px; }
+
+/* ---------- Layar penuh Kasir ---------- */
+.fokus-info { display: none; gap: 6px; }
+body.fokus-kasir .sidebar, body.fokus-kasir .topbar, body.fokus-kasir .kepala-hp, body.fokus-kasir .nav-bawah, body.fokus-kasir .tutup-sidebar { display: none; }
+body.fokus-kasir .utama { margin-left: 0 !important; }
+body.fokus-kasir .konten { max-width: none; padding: 12px; }
+body.fokus-kasir .fokus-info { display: inline-flex; }
+body.fokus-kasir .kasir-kanan { top: 12px; }
+.keluar-fokus { position: fixed; right: 14px; top: 14px; z-index: 31; }
+@media (max-width: 900px) {
+  body.fokus-kasir .konten { padding: calc(10px + env(safe-area-inset-top)) 10px calc(90px + env(safe-area-inset-bottom)); }
+  body.fokus-kasir .kasir-bawah { bottom: 0; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+}
