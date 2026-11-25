@@ -83,7 +83,7 @@ export const MENU = [
     ['slip', 'Slip Gaji Saya', 1, ['*semua']], ['setting', 'Setting Gaji', 1], ['pokok', 'Daftar Gaji Pokok', 1], ['tunjangan', 'Daftar Tunjangan', 1], ['potongan', 'Daftar Potongan Gaji', 1], ['kasbon', 'Kasbon Karyawan', 1],
     ['hitung', 'Perhitungan Gaji', 1], ['bayar', 'Pembayaran Gaji', 1]] },
   { k: 'kpi', t: 'Manajemen KPI', i: 'kpi', anak: [
-    ['parameter', 'Parameter KPI', 6], ['karyawan', 'KPI Karyawan', 6], ['pencapaian', 'Pencapaian KPI', 6], ['laporan', 'Laporan KPI', 6]] },
+    ['saya', 'KPI Saya', 1, ['*semua']], ['parameter', 'Parameter KPI', 1], ['karyawan', 'KPI Karyawan', 1], ['pencapaian', 'Pencapaian KPI', 1], ['laporan', 'Laporan KPI', 1]] },
   { k: 'pengaturan', t: 'Pengaturan', i: 'pengaturan', anak: [
     ['profil', 'Profil Bisnis', 1], ['metode_bayar', 'Metode Pembayaran', 1], ['konfigurasi', 'Konfigurasi', 1], ['printer', 'Printer & Cetak', 1, ['*semua']], ['offline', 'Mode Offline & Sinkron', 1, ['*semua']], ['impor', 'Impor Data', 1], ['integrasi', 'Integrasi Platform Lain', 1]] },
   { k: 'outlet', t: 'Multi Outlet', i: 'outlet', anak: [['daftar', 'Daftar Outlet', 1]] },
