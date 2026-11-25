@@ -1,4 +1,4 @@
-import { ikon } from './menu.js?v=1.21.0';
+import { ikon } from './menu.js?v=1.22.1';
 
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
