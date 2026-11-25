@@ -1,7 +1,8 @@
 // Cetak terpadu: lewat Agen Cetak (langsung ke printer, tanpa dialog) bila tersedia,
 // atau dialog cetak browser sebagai cadangan.
 // Pengaturan printer disimpan PER PERANGKAT (localStorage), karena tiap PC punya printer sendiri.
-import { toast } from './ui.js?v=1.22.1';
+import { toast } from './ui.js?v=1.23.0';
+import { cssStruk } from './struk.js?v=1.23.0';
 
 export const AGEN = 'http://localhost:8766';
 const KUNCI = 'apotek-printer';
@@ -75,17 +76,17 @@ async function kirimAgen(printer, png, lebarMm, tinggiMm, salinan = 1) {
 }
 
 // ---------------- Kertas struk (thermal 58/80 mm) ----------------
-export const CSS_STRUK = `.kertas{font:11px/1.35 'Courier New',monospace;color:#000}.c{text-align:center}.r{display:flex;justify-content:space-between;gap:6px}
-  .r span:last-child{text-align:right;white-space:nowrap}hr{border:0;border-top:1px dashed #000;margin:4px 0}.n{margin-top:3px}img{max-width:60%}.b{font-weight:bold}.besar{font-size:13px;font-weight:bold}`;
-export async function cetakStrukHtml(isi, judul, lebarKonfig = '80') {
-  const p = bacaPrinter();
+// gaya terakhir dari Konfigurasi (diisi ambilKonfig), supaya retur, rekap, dan copy resep ikut font yang dipilih
+export const GAYA = { struk: null };
+export async function cetakStrukHtml(isi, judul, lebarKonfig = '80', gaya = GAYA.struk) {
+  const p = bacaPrinter(), css = cssStruk(gaya);
   const lebar = p.struk.lebar || lebarKonfig || '80';
   const cetakMm = lebar === '80' ? 72 : 48;               // lebar area cetak
   if (p.mode !== 'dialog' && p.struk.printer) {
-    try { await kirimAgen(p.struk.printer, await htmlKePng(isi, CSS_STRUK, cetakMm), cetakMm, 0); return 'agen'; }
+    try { await kirimAgen(p.struk.printer, await htmlKePng(isi, css, cetakMm), cetakMm, 0); return 'agen'; }
     catch (e) { toast('Agen cetak tidak tersedia (' + e.message + '). Memakai dialog cetak.', 'galat'); }
   }
-  dialogCetak(isi, CSS_STRUK + `.kertas{width:${cetakMm}mm;margin:0 auto}`, judul, `${lebar}mm auto`);
+  dialogCetak(isi, css + `.kertas{width:${cetakMm}mm;margin:0 auto}`, judul, `${lebar}mm auto`);
   return 'dialog';
 }
 
