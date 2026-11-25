@@ -1,8 +1,8 @@
 // Mode Offline & Sinkron: status perangkat, antrean, cadangan, daftar periksa, dan beranda saat offline.
-import { rute, sb, S, bisa, KONEKSI } from '../inti.js?v=1.17.0';
-import { ikon } from '../menu.js?v=1.17.0';
-import { esc, angka, rupiah, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.17.0';
-import * as OFF from '../offline.js?v=1.17.0';
+import { rute, sb, S, bisa, KONEKSI } from '../inti.js?v=1.18.0';
+import { ikon } from '../menu.js?v=1.18.0';
+import { esc, angka, rupiah, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.18.0';
+import * as OFF from '../offline.js?v=1.18.0';
 
 const JENIS = { jual: 'Penjualan', resep: 'Resep', sesi_buka: 'Buka sesi', sesi_tutup: 'Tutup sesi' };
 const tabelAntre = a => a.length ? `<div class="bungkus-tabel"><table class="tabel kartu-hp"><thead><tr><th>Data</th><th>Waktu</th><th>Oleh</th><th class="angka">Nilai</th><th>Status</th></tr></thead><tbody>${a.map(x => `<tr><td data-label="Data"><b>${JENIS[x.jenis]}</b>&nbsp;${esc(x.data.no_offline || '')}</td>
