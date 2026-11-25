@@ -1,7 +1,7 @@
 // Cadangan Data: status cadangan otomatis ke Google Drive, kunci, dan permintaan manual.
-import { rute } from '../inti.js?v=1.24.0';
-import { esc, angka, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.24.0';
-import { rpc, tabelHtml } from '../tabel.js?v=1.24.0';
+import { rute } from '../inti.js?v=1.25.0';
+import { esc, angka, waktu, toast, modal, konfirmasi, pesanGalat, judulHalaman } from '../ui.js?v=1.25.0';
+import { rpc, tabelHtml } from '../tabel.js?v=1.25.0';
 
 const galat = (el, e) => { el.innerHTML = `<div class="kartu"><p class="pesan galat">${esc(pesanGalat(e))}</p></div>`; };
 const ukuran = b => !b ? '' : b > 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : angka(Math.round(b / 1024)) + ' KB';
